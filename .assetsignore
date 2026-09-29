@@ -2,4 +2,8 @@
 .wrangler/
 .assetsignore
 CLAUDE.md
+RECORDING.md
 wrangler.jsonc
+tools/
+node_modules/
+.gitkeep

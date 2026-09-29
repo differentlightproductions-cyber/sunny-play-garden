@@ -1,0 +1,5 @@
+.git/
+.wrangler/
+.assetsignore
+CLAUDE.md
+wrangler.jsonc

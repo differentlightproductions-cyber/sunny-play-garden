@@ -40,11 +40,11 @@
       const dpr = SPG.ui.dpr();
       this.canvas.width = Math.round(this.w * dpr); this.canvas.height = Math.round(this.h * dpr);
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      this.bw = Math.max(130, Math.min(250, this.w * .21)); this.bh = this.bw * .8;
+      this.bw = Math.max(76, Math.min(250, Math.min(this.w * .21, this.h * .2))); this.bh = this.bw * .8;
       this.rimY = this.h - this.bh - this.h * .07;
       this.groundY = this.h * .95;
-      this.dropR = Math.max(15, Math.min(28, Math.min(this.w, this.h) * .032));
-      this.cs = Math.min(1.5, this.w / 700 + .5);
+      this.dropR = Math.max(11, Math.min(28, Math.min(this.w, this.h) * .036));
+      this.cs = Math.max(.55, Math.min(1.5, Math.min(this.w, this.h * 1.4) / 750 + .1));
       if (!this.bucket.x) this.bucket.x = this.bucket.tx = this.w / 2; else { this.bucket.x *= this.w / ow; this.bucket.tx *= this.w / ow; }
       this.draw();
     }
@@ -55,7 +55,7 @@
     destroy() { this.pause(); removeEventListener('keydown', this.onKey); removeEventListener('keyup', this.onKey); this.canvas.remove(); this.counter.el.remove(); this.petCounter?.el.remove(); }
 
     cloudX(i) { return this.w * (.2 + i * .3) + Math.sin(this.t * .35 + i * 2) * this.w * .06; }
-    cloudY() { return Math.max(110, this.h * .17); }
+    cloudY() { return Math.max(Math.min(this.h * .3, 78 * this.cs + 30), this.h * .17); }
 
     spawn() {
       const i = Math.floor(Math.random() * 3), gold = Math.random() < .12;
@@ -95,14 +95,14 @@
     }
 
     netGeom() {
-      const P = this.pets, sc = Math.min(this.h * .045, 38), half = Math.max(110, Math.min(230, this.w * .16));
+      const P = this.pets, sc = Math.max(12, Math.min(this.h * .045, this.w * .05, 38)), half = Math.max(70, Math.min(230, this.w * .17));
       const inOff = (1 - P.ffIn) * (this.w * .6), y0 = this.groundY - 4.35 * sc;
       return { sc, half, y0, x0: P.net.x - half - inOff, x1: P.net.x + half + inOff, base: this.h * .045 };
     }
 
     spawnPet() {
       const P = this.pets, kind = Math.random() < .5 ? 'cat' : 'dog', i = Math.floor(Math.random() * 3);
-      P.list.push({ kind, v: Math.floor(Math.random() * 4), color: Math.floor(Math.random() * 5), x: this.cloudX(i) + (Math.random() - .5) * 80 * this.cs, y: this.cloudY() + 30 * this.cs, vy: this.h * .05, vx: 0, s: this.h * .052, state: 'fall', t: Math.random() * 3, sway: Math.random() * 6, dir: 0 });
+      P.list.push({ kind, v: Math.floor(Math.random() * 4), color: Math.floor(Math.random() * 5), x: this.cloudX(i) + (Math.random() - .5) * 80 * this.cs, y: this.cloudY() + 30 * this.cs, vy: this.h * .05, vx: 0, s: Math.max(22, Math.min(this.h * .052, this.w * .085)), state: 'fall', t: Math.random() * 3, sway: Math.random() * 6, dir: 0 });
       P.spawned++; P.nextIn = 1.5 + Math.random() * .9;
     }
 

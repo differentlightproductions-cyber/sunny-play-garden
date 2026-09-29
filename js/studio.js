@@ -43,10 +43,10 @@
     const redraw = () => render(body);
 
     body.replaceChildren(...[
-      h('p', { class: 'lead' }, 'Record your own voice for the games. Choose who is recording, open a group, tap Record, say the line, and tap Stop. Anything you skip keeps using the tablet’s built-in voice.'),
+      h('p', { class: 'lead' }, SPG.config.recorder ? 'Record your own voice for the games. Choose who is recording, open a group, tap Record, say the line, and tap Stop. Anything you skip keeps using the tablet’s built-in voice.' : 'Choose which voice the games use, switch off lines you don’t want, and set how often the games cheer.'),
       message ? h('p', { class: 'notice' }, message) : null,
-      h('h3', {}, 'Who is recording?'),
-      seg(voice.SETS.map(s => [s.id, `${s.name} (${countFor(s.id)}/${keys.length})`]), activeSet, id => { if (recording) return; activeSet = id; message = ''; redraw(); }, 'Who is recording'),
+      SPG.config.recorder ? h('h3', {}, 'Who is recording?') : null,
+      SPG.config.recorder ? seg(voice.SETS.map(s => [s.id, `${s.name} (${countFor(s.id)}/${keys.length})`]), activeSet, id => { if (recording) return; activeSet = id; message = ''; redraw(); }, 'Who is recording') : null,
       h('h3', {}, 'Which voice do the games use?'),
       seg([['mix', 'Both, mixed'], ['male', 'Male only'], ['female', 'Female only'], ['builtin', 'Built-in only']], store.settings.voicePref || 'mix', v => { store.settings.voicePref = v; store.save(); redraw(); }, 'Voice used in games'),
       h('h3', {}, 'How often should the games cheer?'),
@@ -80,8 +80,8 @@
     const has = voice.hasClip(activeSet, key), mine = voice.hasDeviceClip(activeSet, key);
     const isRec = recording && recording.key === key;
     const r = h('div', { class: 'vrow' + (has ? ' done' : '') });
-    const rec = h('button', { class: 'btn small vrec' + (isRec ? ' rec-on' : ''), type: 'button', disabled: recording && !isRec }, isRec ? '■ Stop' : (has ? '● Re-record' : '● Record'));
-    rec.addEventListener('click', () => (isRec ? finish(redraw) : start(key, redraw)));
+    const rec = !SPG.config.recorder ? null : h('button', { class: 'btn small vrec' + (isRec ? ' rec-on' : ''), type: 'button', disabled: recording && !isRec }, isRec ? '■ Stop' : (has ? '● Re-record' : '● Record'));
+    if (rec) rec.addEventListener('click', () => (isRec ? finish(redraw) : start(key, redraw)));
     const hear = h('button', { class: 'btn small quiet', type: 'button', disabled: sound && !has }, 'Hear');
     hear.addEventListener('click', async () => {
       if (has) await voice.previewClip(activeSet, key); else voice.say({ say: voice.textFor(key) });
@@ -89,7 +89,7 @@
     const parts = [
       h('div', { class: 'vrow-text' }, h('b', {}, voice.textFor(key)), sound ? h('div', { class: 'fine' }, 'Just make the noise') : null),
       rec, hear
-    ];
+    ].filter(Boolean);
     if (mine) {
       const del = h('button', { class: 'btn small danger', type: 'button' }, 'Delete');
       del.addEventListener('click', async () => { await voice.deleteClip(activeSet, key); redraw(); });

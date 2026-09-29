@@ -43,7 +43,7 @@
       this.tool = 'shovel'; this.seed = 'sunflower';
       this.canMode = this.bag.canMode || 'grab'; this.can = null; this.recentKinds = [];
       this.creatures = []; this.fx = new art.Fx(); this.banners = []; this.banner = null;
-      this.t = 0; this.running = false; this.nudge = 0; this.said = {};
+      this.t = 0; this.running = false; this.nudge = 0; this.said = {}; this.ambientUntil = 0;
       this.canvas = el('canvas', 'game-canvas'); host.append(this.canvas);
       this.ctx = this.canvas.getContext('2d');
       this.tick = this.tick.bind(this);
@@ -138,7 +138,7 @@
       this.canvas.width = Math.round(this.w * dpr); this.canvas.height = Math.round(this.h * dpr);
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const n = this.slotCount(), barH = this.bar.getBoundingClientRect().height + 24;
-      const top = Math.max(112, this.h * .19);
+      const top = Math.max(84, this.h * .19);
       const cols = this.w > this.h ? 4 : (n === SLOTS_BASE ? 2 : 3), rows = n / cols;
       this.bed = { x: this.w * .05, y: top, w: this.w * .9, h: this.h - barH - top };
       this.cw = this.bed.w / cols; this.ch = this.bed.h / rows; this.cols = cols;
@@ -184,7 +184,7 @@
     spawnCreature(kind, x, y) {
       const info = CREATURES[kind];
       if (this.creatures.length >= 7) this.creatures.shift();
-      const cr = { kind, fly: info.fly, x, y, tx: x, ty: y, wait: 0, t: Math.random() * 9, jump: 0, dir: 1, s: this.ps * SIZE[kind] };
+      const cr = { kind, fly: info.fly, x, y, tx: x, ty: y, wait: 0, sndT: 1 + Math.random() * 5, hop: 0, t: Math.random() * 9, jump: 0, dir: 1, s: this.ps * SIZE[kind] };
       this.creatures.push(cr); this.retarget(cr);
       return cr;
     }
@@ -202,6 +202,18 @@
       cr.dir = toRight ? 1 : -1;
       sfx.boing(); voice.say('bye-bye');
       this.fx.burst(cr.x, cr.y - cr.s, 8, { colors: ['#ff7a8a', '#ff9db8', '#ffd54a'], speed: 120, g: -60, life: 1, size: 7, shape: 'heart' });
+    }
+
+    // A very quiet, single sound for one animal. A global gap keeps two animals from sounding at once.
+    critterVoice(cr) {
+      const now = performance.now();
+      if (now < this.ambientUntil || cr.leaving || this.banner || this.book || cr.x < 0 || cr.x > this.w) return;
+      cr.sndT = 8 + Math.random() * 10; // each animal speaks up only now and then
+      this.ambientUntil = now + 700; // reserve the slot straight away
+      voice.ambient('critter/' + cr.kind, .2).then(len => {
+        if (!len) len = sfx.critter(cr.kind);
+        this.ambientUntil = performance.now() + (len + .35) * 1000;
+      });
     }
 
     /* ---- input ---- */
@@ -455,6 +467,13 @@
           cr.leaveT += dt;
           if (cr.leaveT < .8) { cr.jump = Math.max(cr.jump, .5 + Math.sin(cr.leaveT * 14) * .3); continue; } // waving goodbye
           if (Math.random() < .5) this.fx.burst(cr.x, cr.y - cr.s * .5, 1, { colors: ['#ffd54a', '#fff', '#ff9db8'], speed: 40, g: 0, life: .7, size: 8, shape: 'star' });
+        }
+        cr.sndT -= dt;
+        if (cr.sndT <= 0 && !cr.leaving) {
+          if (cr.kind === 'bunny' || cr.kind === 'frog') { // hoppers make their sound as they land
+            const hop = Math.floor(cr.t * 4 / Math.PI);
+            if (hop !== cr.hop && Math.hypot(cr.tx - cr.x, cr.ty - cr.y) > 8) { cr.hop = hop; this.critterVoice(cr); }
+          } else this.critterVoice(cr);
         }
         const dx = cr.tx - cr.x, dy = cr.ty - cr.y, d = Math.hypot(dx, dy), speed = this.w * SPEED[cr.kind] * (cr.leaving ? 3.2 : 1);
         if (d > 8) { cr.x += dx / d * speed * dt; cr.y += dy / d * speed * dt; if (Math.abs(dx) > 4) cr.dir = dx > 0 ? 1 : -1; } else if (cr.wait <= 0 && !cr.leaving) this.retarget(cr);

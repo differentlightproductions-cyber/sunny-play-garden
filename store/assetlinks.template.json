@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.yourname.sunnyplaygarden",
+      "sha256_cert_fingerprints": [
+        "AA:BB:CC:...:REPLACE_WITH_THE_APP_SIGNING_KEY_SHA-256_FROM_PLAY_CONSOLE",
+        "DD:EE:FF:...:OPTIONAL_UPLOAD_KEY_SHA-256"
+      ]
+    }
+  }
+]

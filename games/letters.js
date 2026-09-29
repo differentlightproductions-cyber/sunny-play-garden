@@ -81,13 +81,17 @@
 
     layout() {
       const { w, h, g } = this;
-      const top = this.strip ? h * .26 : Math.max(120, h * .15), bottom = h * .2;
-      const availH = h - top - bottom;
+      const m = Math.min(w, h), ui = Math.max(46, Math.min(76, m * .11)), edge = Math.max(8, Math.min(14, m * .02)), arrow = Math.max(58, Math.min(92, m * .14));
+      const side = w > h && h < 520;                      // landscape phone: arrows sit at the sides
+      const top = this.strip ? h * .26 : ui + edge + 16;
+      const bottom = side ? ui * .9 + edge : arrow + edge + 14;
+      const inset = side ? arrow + edge + 12 : w * .05;
+      const availH = h - top - bottom, panelW = w - inset * 2;
       const ext = g.lower ? 145 : 100;
-      this.k = Math.min(availH / (ext + 26), (w * .8) / (g.w + 26));
+      this.k = Math.min(availH / (ext + 26), (panelW * .9) / (g.w + 26));
       this.ox = (w - g.w * this.k) / 2;
       this.oy = top + (availH - ext * this.k) / 2;
-      this.panel = { x: w * .05, y: top * .82, w: w * .9, h: h - top * .82 - bottom * .5 };
+      this.panel = { x: inset, y: Math.max(edge, top * .82), w: panelW, h: h - Math.max(edge, top * .82) - bottom * .4 };
     }
 
     start() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(t => this.frame(t)); }

@@ -48,6 +48,7 @@
 
   /* ------------------------------------------------------------ who's playing */
   function renderWho() {
+    $('install-hint').classList.toggle('hidden', !safe.needsInstallForFullscreen());
     const list = $('who-list');
     list.replaceChildren(...store.profiles.map(p => {
       const tile = h('button', { class: 'who-tile', type: 'button', 'aria-label': 'Play as ' + p.name }, avatarCanvas(p.avatar, 220), h('span', {}, p.name), h('span', { class: 'go-badge' }, icon('play')));
@@ -238,7 +239,7 @@
 
   function renderParent() {
     const body = $('parent-body');
-    const fsNow = !!document.fullscreenElement;
+    const fsNow = safe.isFullscreen();
     const fsBtn = h('button', { class: 'btn small', type: 'button' }, fsNow ? 'Leave full screen' : 'Go full screen');
     fsBtn.addEventListener('click', async () => { fsNow ? await safe.exitFullscreen() : await safe.enterFullscreen(); setTimeout(renderParent, 250); });
 
@@ -246,6 +247,13 @@
       h('h3', {}, 'Safe mode'),
       h('p', {}, 'The games never link to other websites. Full screen hides the address bar and tabs, and the back button stays inside the app. Only this grown-ups panel can change that.'),
       safe.standalone() ? h('p', { class: 'fine' }, 'Running as an installed app, which is already full screen.') : (safe.canFullscreen ? fsBtn : h('p', { class: 'fine' }, 'This browser cannot go full screen. Install the app from the browser menu instead.')));
+    if (safe.isIOS && !safe.standalone()) {
+      safeSection.append(h('p', {}, h('b', {}, 'Full screen on iPhone and iPad: ')), h('ol', { class: 'steps' },
+        h('li', {}, 'In Safari, tap the Share button (the square with an arrow).'),
+        h('li', {}, 'Choose \u201CAdd to Home Screen\u201D, then tap Add.'),
+        h('li', {}, 'Open Sunny Play Garden from your home screen. It opens full screen with no browser bars.')),
+        h('p', { class: 'fine' }, 'To keep a child inside the app on iPhone/iPad, also turn on Guided Access: Settings \u2192 Accessibility \u2192 Guided Access, then triple-click the side (or Home) button while the app is open.'));
+    }
     if (installPrompt) {
       const b = h('button', { class: 'btn small go', type: 'button', style: 'margin-top:8px' }, 'Install on this tablet');
       b.addEventListener('click', async () => { installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; b.remove(); });
@@ -275,6 +283,9 @@
           h('li', {}, 'Open Sunny Play Garden, then open Recent apps.'),
           h('li', {}, 'Tap the app icon at the top of its card and choose Pin.'),
           h('li', {}, 'To unpin later, hold Back and Recent apps together (or swipe up and hold, depending on the tablet).'))),
+      h('section', {}, h('h3', {}, 'About'),
+        h('p', {}, `Sunny Play Garden version ${SPG.version}. No ads, no accounts, no tracking. Everything stays on this device.`),
+        h('p', { class: 'fine' }, 'Names, stars, gardens and any voice recordings are stored only on this device. Nothing is sent to anyone. The full privacy policy is at /privacy.html on this site.')),
       h('section', {}, h('h3', {}, 'Voice recordings'),
         h('p', {}, 'Prompts are spoken by the tablet’s built-in voice until you add recordings. See RECORDING.md in the project for the list of lines and where the files go.')));
   }

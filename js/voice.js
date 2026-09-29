@@ -233,6 +233,18 @@
       if (A.ctx && !skip(soundKey) && chooseSet(soundKey)) return SPG.voice.say(soundKey);
       return fallbackKey ? SPG.voice.say(fallbackKey) : undefined;
     },
+    // Quietly play a recorded critter noise if there is one. Never interrupts speech. Resolves to its length in seconds (0 = none).
+    async ambient(key, gain = .2) {
+      if (!settings().voice || skip(key) || !A.ctx) return 0;
+      await ready;
+      const set = chooseSet(key); if (!set) return 0;
+      const buf = await loadBuffer(set, key); if (!buf) return 0;
+      const src = A.ctx.createBufferSource(); src.buffer = buf;
+      const g = A.ctx.createGain(); g.gain.value = (buf._gain || 1) * gain;
+      src.connect(g); g.connect(A.master);
+      const [off, dur] = buf._trim || [0, undefined]; src.start(0, off, dur);
+      return dur || buf.duration;
+    },
     stop() { token++; current?.stop(); },
     praise() { const k = [...PRAISE]; return SPG.voice.say(k[Math.floor(Math.random() * k.length)]); },
     startRecording, saveClip, deleteClip, previewClip

@@ -23,6 +23,12 @@ Progress and stars are saved per player in localStorage under `spg.v1`.
 ## Tuning notes
 Tracing tolerances are constants at the top of the Tracer section in `games/letters.js` (`TOLERANCE`, `START_RADIUS`, `LOOKAHEAD`); progress follows the nearest path point and cannot outrun the finger. Watering effort is `NEED_DROPS` and the drop rate (`cn.emit`) in `games/garden.js`. Kid-facing buttons use `SPG.ui.press` (touch-down); anything needing a completed tap (fullscreen, first sound) stays on `click`.
 
+## Phones, Safari and Google Play
+- Sizes scale with the screen (`--ui`, `--chip`, `--arrow`, `--edge` CSS variables from `vmin`); landscape phones (<520px tall) move the big arrows to the sides and compact the gate/setup. Game canvases size themselves from the canvas rect (bucket, clouds, crew and pets scale with the screen). Check new screens at 390x844, 844x390, 800x1280 and 1280x800.
+- Safari: `webkit` fullscreen API is used where it exists (iPad); iPhone has none, so grown-ups are shown the Add to Home Screen steps (Grown-ups panel and a hint on the who-screen) plus Guided Access notes.
+- Google Play: the plan is a Trusted Web Activity wrapper. Everything needed is in `store/` (listing text, `PLAY-STORE-GUIDE.md`, Bubblewrap/asset-links templates, generated graphics), plus `privacy.html`, `.well-known/assetlinks.json` (empty until the app is signed), and the manifest. `SPG.config.recorder` (js/core.js) removes all microphone use; `SPG.version` shows in the Grown-ups About section. Regenerate store graphics with `node tools/make-store-assets.mjs` (needs Playwright). Fill the two placeholders in `privacy.html` before publishing.
+- Garden animals make tiny, one-at-a-time sounds (`sfx.critter`, or a recorded `critter/<kind>` clip played very quietly by `voice.ambient`).
+
 ## Safe mode (what it is and is not)
 A website cannot lock a device. Safe mode = fullscreen (or installed PWA), no external links anywhere, CSP that blocks any outside load, back button stays in the app, fullscreen-lost overlay, and every way out is behind the parent gate (spelled-out addition). The real lock is Android screen pinning, explained in the grown-ups panel.
 

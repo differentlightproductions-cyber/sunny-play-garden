@@ -4,6 +4,11 @@
   const KEY = 'spg.v1';
 
   /* ---------------------------------------------------------------- store */
+  // Release settings. Set recorder to false to remove every use of the microphone (e.g. for a simpler
+  // store review); the games then use only the built-in voice and any audio files added to audio/voice/.
+  SPG.version = '1.0.0';
+  SPG.config = { recorder: true };
+
   SPG.store = (() => {
     const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] } });
     let data = fresh();
@@ -120,6 +125,27 @@
     boing() { tone(220, .32, { slide: 2.6, type: 'triangle', vol: .22 }); },
     oops() { tone(300, .22, { slide: .7, type: 'triangle', vol: .13 }); },
     water() { for (let i = 0; i < 5; i++) noise(.16, { freq: 2600 + i * 200, q: 2, vol: .06, at: i * .07 }); },
+    // Very quiet signature sound for each garden friend. Returns how long it lasts (seconds).
+    critter(kind, v = 1) {
+      const q = .04 * v;
+      switch (kind) {
+        case 'bee': tone(220, .3, { type: 'sawtooth', vol: q * .5, slide: 1.15 }); tone(226, .3, { type: 'sawtooth', vol: q * .5 }); return .32;
+        case 'butterfly': noise(.14, { freq: 3200, q: 1.5, vol: q * .7 }); return .16;
+        case 'ladybug': tone(1800, .04, { vol: q * .6 }); tone(2100, .04, { vol: q * .6, at: .07 }); return .14;
+        case 'bunny': tone(300, .09, { slide: 1.8, vol: q }); return .12;
+        case 'bird': tone(2200, .07, { slide: 1.15, vol: q }); tone(2600, .08, { slide: .9, vol: q, at: .09 }); tone(2300, .06, { vol: q * .8, at: .2 }); return .3;
+        case 'snail': tone(500, .16, { slide: .6, type: 'triangle', vol: q * .8 }); return .18;
+        case 'hedgehog': noise(.18, { freq: 900, q: .8, vol: q * .9 }); return .2;
+        case 'frog': tone(140, .1, { type: 'triangle', vol: q }); tone(170, .12, { type: 'triangle', vol: q, at: .13 }); return .28;
+        case 'duckling': tone(700, .07, { slide: .6, type: 'square', vol: q * .35 }); tone(650, .07, { slide: .6, type: 'square', vol: q * .35, at: .1 }); return .2;
+        case 'mouse': tone(2400, .05, { slide: 1.3, vol: q * .7 }); tone(2800, .05, { slide: 1.2, vol: q * .7, at: .07 }); return .14;
+        case 'turtle': tone(110, .14, { vol: q }); return .16;
+        case 'dragonfly': noise(.1, { freq: 5000, sweep: .5, q: 1.2, vol: q * .6 }); return .12;
+        case 'cat': tone(600, .22, { slide: 1.5, type: 'triangle', vol: q }); tone(900, .2, { slide: .6, type: 'triangle', vol: q * .8, at: .2 }); return .42;
+        case 'dog': tone(300, .07, { slide: .7, type: 'triangle', vol: q }); tone(320, .07, { slide: .7, type: 'triangle', vol: q, at: .12 }); return .2;
+      }
+      return 0;
+    },
     pat() { tone(110, .2, { slide: .55, type: 'sine', vol: .34 }); noise(.14, { freq: 500, vol: .12 }); },
     squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); }
   };
@@ -170,15 +196,26 @@
     on: true,           // keep the child inside the app
     wantFullscreen: false,
     standalone,
-    canFullscreen: !!document.documentElement.requestFullscreen,
+    // Safari (iPad) only has the prefixed version; iPhone Safari has none, so it needs "Add to Home Screen".
+    canFullscreen: !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen),
+    isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+    isFullscreen: () => !!(document.fullscreenElement || document.webkitFullscreenElement),
+    needsInstallForFullscreen: () => safe.isIOS && !standalone() && !safe.isFullscreen(),
     async enterFullscreen() {
       safe.wantFullscreen = true;
-      if (!safe.canFullscreen || document.fullscreenElement || standalone()) return;
-      try { await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (_) { /* browser refused; play continues */ }
+      const root = document.documentElement;
+      if (!safe.canFullscreen || safe.isFullscreen() || standalone()) return;
+      try {
+        const r = root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : root.webkitRequestFullscreen();
+        if (r && r.then) await r;
+      } catch (_) { /* browser refused; play continues */ }
     },
     async exitFullscreen() {
       safe.wantFullscreen = false;
-      try { if (document.fullscreenElement) await document.exitFullscreen(); } catch (_) { /* ignore */ }
+      try {
+        if (document.exitFullscreen && document.fullscreenElement) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen && document.webkitFullscreenElement) document.webkitExitFullscreen();
+      } catch (_) { /* ignore */ }
     },
     onBack: null,       // set by the app: called when the child presses back
     onFullscreenLost: null,
@@ -210,11 +247,11 @@
       // Any first touch unlocks sound (browsers require a gesture).
       const unlock = () => { A.unlock(); safe.keepAwake(); };
       addEventListener('pointerdown', unlock, { capture: true });
-      addEventListener('pointerup', unlock, { capture: true });
+      for (const t of ['pointerup', 'touchend', 'click']) addEventListener(t, unlock, { capture: true }); // iOS wants a finished tap
 
-      document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement && safe.wantFullscreen && safe.on && safe.onFullscreenLost) safe.onFullscreenLost();
-      });
+      const fsChanged = () => { if (!safe.isFullscreen() && safe.wantFullscreen && safe.on && safe.onFullscreenLost) safe.onFullscreenLost(); };
+      document.addEventListener('fullscreenchange', fsChanged);
+      document.addEventListener('webkitfullscreenchange', fsChanged);
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) SPG.voice.stop(); else safe.keepAwake();
         SPG.music.sync();

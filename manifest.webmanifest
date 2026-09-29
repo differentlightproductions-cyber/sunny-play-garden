@@ -1,20 +1,72 @@
 {
   "name": "Sunny Play Garden",
   "short_name": "Play Garden",
-  "description": "Free, safe games for little ones: letters, fruit, rain and a garden to grow.",
+  "description": "Free, gentle games for little ones: trace letters, slice fruit, catch rain and grow a garden. No ads, no accounts, no tracking.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
   "orientation": "any",
   "background_color": "#a9e1f3",
   "theme_color": "#a9e1f3",
-  "categories": ["kids", "education", "games"],
+  "categories": [
+    "kids",
+    "education",
+    "games"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "screenshots/phone-1-hub.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Pick a game"
+    },
+    {
+      "src": "screenshots/phone-2-trace.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Trace letters with a friendly bee"
+    },
+    {
+      "src": "screenshots/tablet-1-garden.png",
+      "sizes": "1920x1200",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Grow a garden"
+    }
   ]
 }

@@ -133,7 +133,7 @@
 
     spawn() {
       const count = Math.random() < .2 ? 2 + (Math.random() < .4 ? 1 : 0) : 1;
-      const r0 = Math.max(34, Math.min(68, Math.min(this.w * .09, this.h * .085)));
+      const r0 = Math.max(28, Math.min(68, Math.min(this.w * .09, this.h * .085)));
       const g = this.h * 1.05, mid = this.w * (.22 + Math.random() * .56);
       const apex = this.h * (.55 + Math.random() * .22);
       for (let i = 0; i < count; i++) {

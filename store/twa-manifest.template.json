@@ -1,0 +1,23 @@
+{
+  "_note": "Reference for Bubblewrap. 'bubblewrap init --manifest=...' generates the real twa-manifest.json; use these values when it asks.",
+  "packageId": "com.yourname.littlesproutpark",
+  "host": "YOUR-DOMAIN",
+  "name": "Little Sprout Park",
+  "launcherName": "Sprout Park",
+  "display": "fullscreen",
+  "orientation": "default",
+  "themeColor": "#A9E1F3",
+  "navigationColor": "#A9E1F3",
+  "backgroundColor": "#A9E1F3",
+  "startUrl": "/",
+  "iconUrl": "https://YOUR-DOMAIN/icons/icon-512.png",
+  "maskableIconUrl": "https://YOUR-DOMAIN/icons/icon-maskable-512.png",
+  "webManifestUrl": "https://YOUR-DOMAIN/manifest.webmanifest",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "enableNotifications": false,
+  "isChromeOSOnly": false,
+  "fallbackType": "customtabs",
+  "minSdkVersion": 21,
+  "signingKey": { "path": "./android.keystore", "alias": "android" }
+}

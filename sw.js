@@ -1,9 +1,9 @@
 // Offline support: the whole site is cached so it keeps working with no internet once opened.
 // Network first (so a new deploy shows up right away), cache as the fallback.
-const CACHE = 'spg-v1';
+const CACHE = 'spg-v3';
 const SHELL = [
   './', 'styles.css', 'manifest.webmanifest',
-  'js/glyphs.js', 'js/core.js', 'js/art.js', 'js/app.js',
+  'js/glyphs.js', 'js/core.js', 'js/voice.js', 'js/art.js', 'js/art-garden.js', 'js/art-pets.js', 'js/studio.js', 'js/app.js',
   'games/letters.js', 'games/fruit.js', 'games/rain.js', 'games/garden.js',
   'fonts/fredoka-latin-400-normal.woff2', 'fonts/fredoka-latin-600-normal.woff2', 'fonts/fredoka-latin-700-normal.woff2',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'

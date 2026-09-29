@@ -45,6 +45,8 @@
   }
 
   /* ================================================================ Tracer */
+  // Tracing tolerances, in glyph units (the pale track is 24 units wide, so 12 is "on the track").
+  const TOLERANCE = 12, START_RADIUS = 24, LOOKAHEAD = 12;
   class Tracer {
     constructor(host, { onStroke, onDone }) {
       this.canvas = el('canvas', 'lg-canvas'); host.append(this.canvas);
@@ -63,7 +65,7 @@
       const r = this.canvas.getBoundingClientRect();
       if (!r.width || !r.height) return;
       this.w = r.width; this.h = r.height;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = SPG.ui.dpr();
       this.canvas.width = Math.round(this.w * dpr); this.canvas.height = Math.round(this.h * dpr);
       this.c.setTransform(dpr, 0, 0, dpr, 0, 0);
       if (this.g) this.layout();
@@ -79,13 +81,17 @@
 
     layout() {
       const { w, h, g } = this;
-      const top = this.strip ? h * .26 : Math.max(120, h * .15), bottom = h * .2;
-      const availH = h - top - bottom;
+      const m = Math.min(w, h), ui = Math.max(46, Math.min(76, m * .11)), edge = Math.max(8, Math.min(14, m * .02)), arrow = Math.max(58, Math.min(92, m * .14));
+      const side = w > h && h < 520;                      // landscape phone: arrows sit at the sides
+      const top = this.strip ? h * .26 : ui + edge + 16;
+      const bottom = side ? ui * .9 + edge : arrow + edge + 14;
+      const inset = side ? arrow + edge + 12 : w * .05;
+      const availH = h - top - bottom, panelW = w - inset * 2;
       const ext = g.lower ? 145 : 100;
-      this.k = Math.min(availH / (ext + 26), (w * .8) / (g.w + 26));
+      this.k = Math.min(availH / (ext + 26), (panelW * .9) / (g.w + 26));
       this.ox = (w - g.w * this.k) / 2;
       this.oy = top + (availH - ext * this.k) / 2;
-      this.panel = { x: w * .05, y: top * .82, w: w * .9, h: h - top * .82 - bottom * .5 };
+      this.panel = { x: inset, y: Math.max(edge, top * .82), w: panelW, h: h - Math.max(edge, top * .82) - bottom * .4 };
     }
 
     start() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(t => this.frame(t)); }
@@ -100,7 +106,7 @@
       e.preventDefault(); this.pid = e.pointerId; try { this.canvas.setPointerCapture(e.pointerId); } catch (_) { /* capture is optional */ }
       const u = this.toUnits(e); this.finger = u; this.idle = 0;
       const st = this.g.strokes[this.si], p = st.pts[this.prog];
-      if (dist(u, p) <= 36) {
+      if (dist(u, p) <= START_RADIUS) {
         this.engaged = true;
         if (glyphs.isDot(st)) this.strokeDone();
       } else {
@@ -115,20 +121,27 @@
       e.preventDefault();
       const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
       for (const ev of (evs.length ? evs : [e])) {
-        const u = this.toUnits(ev); this.finger = u;
+        const u = this.toUnits(ev), prev = this.finger || u; this.finger = u;
         this.fx.burst(u.px, u.py, 1, { colors: [COLORS[(this.si + 2) % 6], '#fff'], speed: 34, g: 0, life: .45, size: 4 });
-        if (this.engaged) this.advance(u);
+        if (!this.engaged) continue;
+        // Walk from the last finger position to this one in small steps so a quick swipe can never skip ahead.
+        const n = Math.max(1, Math.ceil(dist(prev, u) / 4));
+        const stepLen = dist(prev, u) / n; // progress can never run ahead of how far the finger actually moved
+        for (let i = 1; i <= n && !this.done; i++) this.advance({ x: prev.x + (u.x - prev.x) * i / n, y: prev.y + (u.y - prev.y) * i / n }, Math.ceil(stepLen / 2.5) + 2);
       }
     }
 
     up(e) { if (e.pointerId !== this.pid) return; this.pid = null; this.engaged = false; this.finger = null; }
 
-    advance(u) {
+    // Progress only follows the finger along the path: the nearest point just ahead, and only when
+    // the finger is actually on the line. Off the line, or on a neighbouring stroke, nothing happens.
+    advance(u, ahead = LOOKAHEAD) {
       if (this.done) return;
-      const pts = this.g.strokes[this.si].pts;
-      let best = -1;
-      const max = Math.min(pts.length - 1, this.prog + 26);
-      for (let j = this.prog; j <= max; j++) if (dist(u, pts[j]) <= 19) best = j;
+      const st = this.g.strokes[this.si], pts = st.pts;
+      const max = Math.min(pts.length - 1, this.prog + ahead);
+      let best = -1, bd = Infinity;
+      for (let j = this.prog; j <= max; j++) { const d = dist(u, pts[j]); if (d < bd) { bd = d; best = j; } }
+      if (bd > TOLERANCE) return;
       if (best > this.prog) {
         if (Math.floor(best / 8) !== Math.floor(this.prog / 8)) sfx.note(Math.floor(best / 8) % 7, .08);
         this.prog = best; this.idle = 0;
@@ -178,8 +191,8 @@
       if (!w || !this.g) return;
       c.clearRect(0, 0, w, h);
       const P = this.panel;
-      c.save(); c.shadowColor = 'rgba(90,63,94,.16)'; c.shadowBlur = 30; c.shadowOffsetY = 10;
-      c.fillStyle = 'rgba(255,255,255,.82)'; art.rr(c, P.x, P.y, P.w, P.h, 44); c.fill(); c.restore();
+      c.fillStyle = 'rgba(90,63,94,.1)'; art.rr(c, P.x, P.y + 10, P.w, P.h, 44); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.82)'; art.rr(c, P.x, P.y, P.w, P.h, 44); c.fill();
 
       // name strip
       if (this.strip) {
@@ -263,13 +276,28 @@
     resume() { this.paused = false; this.tracer?.resume(); }
     resize() { this.tracer?.resize(); }
     destroy() { this.reset(); this.root.remove(); }
-    backButton() { const b = btn('lg-back lg-btn', 'Back', icon('back')); b.addEventListener('click', () => { sfx.tap(); this.menu(); }); return b; }
-    caseChip(onChange) {
-      const b = btn('lg-case', 'Upper or lower case');
-      const paintChip = () => { b.replaceChildren(glyphs.canvas(this.bag.case === 'upper' ? 'A' : 'a', 54, { color: '#5a3f5e', width: 14 })); };
+    backButton() { const b = btn('lg-back lg-btn', 'Back', icon('back')); SPG.ui.press(b, () => { sfx.tap(); this.menu(); }); return b; }
+    caseChip(onChange, { key = 'case', modes = ['upper', 'lower'] } = {}) {
+      const b = btn('lg-case', 'Change capital and lowercase');
+      const paintChip = () => {
+        const m = this.bag[key] || modes[0], inner = el('span', 'lg-case-inner');
+        if (m === 'mix') inner.append(glyphs.canvas('A', 44, { color: '#5a3f5e', width: 14 }), glyphs.canvas('a', 44, { color: '#5a3f5e', width: 14 }));
+        else inner.append(glyphs.canvas(m === 'upper' ? 'A' : 'a', 54, { color: '#5a3f5e', width: 14 }));
+        b.replaceChildren(inner);
+      };
       paintChip();
-      b.addEventListener('click', () => { this.bag.case = this.bag.case === 'upper' ? 'lower' : 'upper'; store.save(); sfx.tap(); paintChip(); onChange(); });
+      SPG.ui.press(b, () => { const i = modes.indexOf(this.bag[key] || modes[0]); this.bag[key] = modes[(i + 1) % modes.length]; store.save(); sfx.tap(); paintChip(); onChange(); });
       return b;
+    }
+
+    // Pick a letter from `source`, avoiding the last few so the games keep mixing things up.
+    pickLetter(source) {
+      this.recent = this.recent || [];
+      let choices = source.filter(l => !this.recent.includes(l));
+      if (!choices.length) choices = source;
+      const l = choices[Math.floor(Math.random() * choices.length)];
+      this.recent.push(l); if (this.recent.length > 9) this.recent.shift();
+      return l;
     }
 
     /* ---------------- menu ---------------- */
@@ -289,7 +317,7 @@
           }
           c.save(); c.translate(w / 2 + .1 * w, h / 2); c.rotate(.1);
           glyphs.draw(c, 'B', -s * .11, -s * .26, s * .3, { color: '#ff7a8a', width: 13 });
-          c.font = `${s * .22}px system-ui, "Noto Color Emoji"`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🐻', 0, s * .18);
+          c.font = `${s * .22}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🐻', 0, s * .18);
           c.restore();
         }, () => this.cards()],
         ['Find it', 'Find the letter', (c, w, h) => {
@@ -310,13 +338,29 @@
           let x = w / 2 - tw / 2;
           for (const ch of text) { glyphs.draw(c, ch, x, h / 2 - size * .3, size, { color: COLORS[(x | 0) % 6 === 0 ? 0 : Math.abs((x | 0)) % 6], width: 12 }); x += ((glyphs.get(ch)?.w ?? 30) + 10) * size / 100; }
           art.star(c, w / 2 + tw / 2 + size * .3, h / 2 - size * .45, size * .26);
-        }, () => this.nameMode()]
+        }, () => this.nameMode()],
+        ['Sounds', 'Which picture starts with the sound', (c, w, h) => {
+          const s = Math.min(w, h);
+          c.fillStyle = '#5a3f5e'; c.beginPath(); c.moveTo(w * .12, h * .42); c.lineTo(w * .2, h * .42); c.lineTo(w * .32, h * .3); c.lineTo(w * .32, h * .7); c.lineTo(w * .2, h * .58); c.lineTo(w * .12, h * .58); c.closePath(); c.fill();
+          c.strokeStyle = '#5a3f5e'; c.lineWidth = s * .03; c.lineCap = 'round';
+          for (const r of [.07, .13]) { c.beginPath(); c.arc(w * .34, h * .5, s * r, -.9, .9); c.stroke(); }
+          [['🐻', .58], ['🐱', .75], ['🐶', .92]].forEach(([e, x], i) => { c.fillStyle = '#fff'; art.rr(c, w * (x - .07), h * .3, w * .14, h * .4, s * .05); c.fill(); c.font = `${s * .14}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e, w * x, h * .5); });
+        }, () => this.sounds()],
+        ['Match', 'Match big and little letters', (c, w, h) => {
+          const s = Math.min(w * .3, h * .62);
+          [['A', -.6, '#ff7a8a'], ['a', .6, '#ff7a8a']].forEach(([ch, dx, col]) => {
+            const x = w / 2 + dx * s - s / 2, y = h / 2 - s * .6;
+            c.fillStyle = '#fff'; art.rr(c, x, y, s, s * 1.2, s * .16); c.fill();
+            glyphs.draw(c, ch, x + s * .2, y + s * (ch === 'A' ? .16 : .0), s * (ch === 'A' ? .68 : .5), { color: col, width: 14 });
+          });
+          art.heart(c, w / 2, h / 2 + s * .05, s * .17, '#ff7a8a');
+        }, () => this.match()]
       ];
       const grid = el('div', 'lg-modes');
       modes.forEach(([label, aria, draw, go], i) => {
         const canvas = el('canvas', 'lg-mode-art');
         const b = btn(`lg-mode m${i}`, aria, canvas, el('span', 'lg-mode-label', label));
-        b.addEventListener('click', () => { sfx.pop(); go(); });
+        SPG.ui.press(b, () => { sfx.pop(); go(); });
         grid.append(b); paint(canvas, draw);
       });
       this.root.append(grid);
@@ -333,7 +377,7 @@
           const done = this.bag.done[ch];
           const b = btn('lg-tile' + (done ? ' done' : ''), 'Letter ' + ch, glyphs.canvas(ch, px, { color: COLORS[i % 6], width: 13 }));
           if (done) { const f = el('canvas', 'lg-flower'); b.append(f); paint(f, (c, w, h) => { c.translate(w / 2, h / 2); for (let p = 0; p < 5; p++) { c.rotate(TAU / 5); c.fillStyle = '#ff9db8'; c.beginPath(); c.arc(0, -w * .24, w * .2, 0, TAU); c.fill(); } c.fillStyle = '#ffd54a'; c.beginPath(); c.arc(0, 0, w * .17, 0, TAU); c.fill(); }); }
-          b.addEventListener('click', () => { sfx.pop(); this.trace(list, i); });
+          SPG.ui.press(b, () => { sfx.pop(); this.trace(list, i); });
           return b;
         }));
       };
@@ -375,9 +419,9 @@
         if (name) voice.say(i === 0 ? 'write-name' : null, 'letter/' + lc);
         else voice.say('letter/' + lc, 'sound/' + lc, this.introCount++ < 2 ? 'follow-bee' : null);
       };
-      prev.addEventListener('click', () => { sfx.tap(); go(i - 1); });
-      next.addEventListener('click', () => { sfx.tap(); go(i + 1); });
-      say.addEventListener('click', () => { const lc = list[i].toLowerCase(); voice.say('letter/' + lc, 'sound/' + lc); });
+      SPG.ui.press(prev, () => { sfx.tap(); go(i - 1); });
+      SPG.ui.press(next, () => { sfx.tap(); go(i + 1); });
+      SPG.ui.press(say, () => { const lc = list[i].toLowerCase(); voice.say('letter/' + lc, 'sound/' + lc); });
       const nav = [this.backButton(), say];
       if (!name) nav.push(prev);
       nav.push(next);
@@ -421,13 +465,13 @@
         stage.replaceChildren(card);
         const lc = ch;
         const sayAll = () => voice.say('letter/' + lc, 'sound/' + lc, 'is-for', 'word/' + lc);
-        letter.addEventListener('click', () => { sfx.pop(); voice.say('letter/' + lc, 'sound/' + lc); });
-        pic.addEventListener('click', () => { sfx.boing(); pic.classList.remove('jig'); void pic.offsetWidth; pic.classList.add('jig'); voice.say('word/' + lc); });
+        SPG.ui.press(letter, () => { sfx.pop(); voice.say('letter/' + lc, 'sound/' + lc); });
+        SPG.ui.press(pic, () => { sfx.boing(); pic.classList.remove('jig'); void pic.offsetWidth; pic.classList.add('jig'); voice.say('word/' + lc); });
         this.later(sayAll, 350);
         if (++this.bag.seen % 5 === 0) { store.addStars(1); sfx.chime(); }
       };
       const go = d => { i = (i + d + 26) % 26; sfx.tap(); render(d); };
-      prev.addEventListener('click', () => go(-1)); next.addEventListener('click', () => go(1));
+      SPG.ui.press(prev, () => go(-1)); SPG.ui.press(next, () => go(1));
       stage.addEventListener('pointerdown', e => { sx = e.clientX; });
       stage.addEventListener('pointerup', e => { if (sx != null && Math.abs(e.clientX - sx) > 70) go(e.clientX < sx ? 1 : -1); sx = null; });
       this.root.append(this.backButton(), this.caseChip(() => render(0)), stage, prev, next);
@@ -436,33 +480,30 @@
 
     /* ---------------- find the letter ---------------- */
     pool() {
-      const nameLetters = [...new Set(glyphs.clean(displayName()).toLowerCase())];
-      const n = Math.min(26, 4 + Math.floor(this.bag.correct / 3));
-      return { name: nameLetters, all: [...new Set([...nameLetters, ...ALPHA.slice(0, n)])] };
+      const name = [...new Set(glyphs.clean(displayName()).toLowerCase())];
+      return { name, all: [...ALPHA] };
     }
 
     find() {
       this.reset('lg-find');
       const area = el('div', 'lg-options');
       const say = btn('lg-btn lg-say big', 'Hear the letter', icon('speaker'));
-      let target = null, last = null, wrong = 0, locked = false;
+      let target = null, qcase = 'upper', wrong = 0, locked = false;
       const ask = () => {
         const { name, all } = this.pool();
-        const cs = this.bag.case;
-        const source = name.length && Math.random() < .5 ? name : all;
-        do { target = source[Math.floor(Math.random() * source.length)]; } while (target === last && all.length > 1);
-        last = target; wrong = 0; locked = false;
-        const count = this.bag.correct >= 12 ? 4 : 3;
+        const mode = this.bag.findCase || 'mix';
+        qcase = mode === 'mix' ? (Math.random() < .5 ? 'upper' : 'lower') : mode;
+        target = this.pickLetter(name.length && Math.random() < .3 ? name : all);
+        wrong = 0; locked = false;
+        const count = this.bag.correct >= 12 ? 4 : (this.bag.correct >= 5 && Math.random() < .4 ? 4 : 3);
         const bad = CONFUSABLE[target] || '';
-        let others = all.filter(x => x !== target && !bad.includes(x));
-        if (others.length < count - 1) others = ALPHA.filter(x => x !== target && !bad.includes(x));
-        others.sort(() => Math.random() - .5);
+        const others = all.filter(x => x !== target && !bad.includes(x)).sort(() => Math.random() - .5);
         const choices = [target, ...others.slice(0, count - 1)].sort(() => Math.random() - .5);
         area.replaceChildren(...choices.map((ch, idx) => {
           const px = Math.round(Math.min(innerHeight * .34, innerWidth * .28));
-          const b = btn('lg-opt', 'Letter ' + ch, glyphs.canvas(withCase(ch, cs), px, { color: COLORS[(idx * 2 + 1) % 6], width: 14 }));
-          b.style.setProperty('--d', idx * .12 + 's');
-          b.addEventListener('click', () => choose(ch, b));
+          const b = btn('lg-opt', 'Letter ' + withCase(ch, qcase), glyphs.canvas(withCase(ch, qcase), px, { color: COLORS[(idx * 2 + 1) % 6], width: 14 }));
+          b.dataset.letter = ch; b.style.setProperty('--d', idx * .12 + 's');
+          SPG.ui.press(b, () => choose(ch, b));
           return b;
         }));
         say.classList.add('wiggle');
@@ -475,18 +516,104 @@
           this.bag.correct++; store.save();
           [...area.children].forEach(o => o.classList.toggle('fade', o !== b));
           b.classList.add('right');
-          const r = b.getBoundingClientRect(), fx = this.burst(r.left + r.width / 2, r.top + r.height / 2);
+          const r = b.getBoundingClientRect(); this.burst(r.left + r.width / 2, r.top + r.height / 2);
           voice.say('great-job', 'letter/' + target, 'sound/' + target);
           this.later(ask, 2600);
         } else {
           wrong++; sfx.oops(); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope');
           voice.say('try-again', 'letter/' + target);
-          if (wrong >= 2) [...area.children].forEach(o => { if (o.getAttribute('aria-label') === 'Letter ' + withCase(target, this.bag.case)) o.classList.add('hint'); });
+          if (wrong >= 2) [...area.children].forEach(o => { if (o.dataset.letter === target) o.classList.add('hint'); });
         }
       };
-      say.addEventListener('click', () => voice.say('find', 'letter/' + target));
-      this.root.append(this.backButton(), this.caseChip(ask), say, area);
+      SPG.ui.press(say, () => voice.say('find', 'letter/' + target));
+      this.root.append(this.backButton(), this.caseChip(ask, { key: 'findCase', modes: ['mix', 'upper', 'lower'] }), say, area);
       ask();
+    }
+
+    /* ---------------- sounds: which picture starts with the sound? ---------------- */
+    sounds() {
+      this.reset('lg-find');
+      const area = el('div', 'lg-options');
+      const say = btn('lg-btn lg-say big', 'Hear the sound', icon('speaker'));
+      const NO = 'xi'; // "box" ends in x, "ice cream" starts with a long vowel: skip them here
+      const same = (a, b) => a === b || ('ckq'.includes(a) && 'ckq'.includes(b));
+      const shuffle = a => a.sort(() => Math.random() - .5);
+      let target = null, wrong = 0, locked = false;
+      const ask = () => {
+        const { name, all } = this.pool();
+        const okAll = all.filter(l => !NO.includes(l)), okName = name.filter(l => !NO.includes(l));
+        target = this.pickLetter(okName.length && Math.random() < .3 ? okName : okAll);
+        wrong = 0; locked = false;
+        const picks = [];
+        for (const l of shuffle(ALPHA.filter(x => !NO.includes(x) && !same(x, target)))) { if (picks.length >= 2) break; if (!picks.some(p => same(p, l))) picks.push(l); }
+        const choices = shuffle([target, ...picks]);
+        area.replaceChildren(...choices.map((ch, idx) => {
+          const [word, emoji] = voice.WORDS[ch];
+          const b = btn('lg-opt', word, el('span', 'lg-emoji-opt', emoji));
+          b.dataset.letter = ch; b.style.setProperty('--d', idx * .12 + 's');
+          SPG.ui.press(b, () => choose(ch, b));
+          return b;
+        }));
+        say.classList.add('wiggle');
+        voice.say('starts-with', 'sound/' + target);
+      };
+      const choose = (ch, b) => {
+        if (locked) return;
+        if (ch === target) {
+          locked = true; sfx.win(); store.addStars(1); this.bag.correct++; store.save();
+          [...area.children].forEach(o => o.classList.toggle('fade', o !== b)); b.classList.add('right');
+          const r = b.getBoundingClientRect(); this.burst(r.left + r.width / 2, r.top + r.height / 2);
+          voice.say('great-job', 'sound/' + target, 'word/' + target);
+          this.later(ask, 3000);
+        } else {
+          wrong++; sfx.oops(); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope');
+          voice.say('try-again', 'sound/' + target);
+          if (wrong >= 2) [...area.children].forEach(o => { if (o.dataset.letter === target) o.classList.add('hint'); });
+        }
+      };
+      SPG.ui.press(say, () => voice.say('starts-with', 'sound/' + target));
+      this.root.append(this.backButton(), say, area);
+      ask();
+    }
+
+    /* ---------------- match: big letter with its little letter ---------------- */
+    match() {
+      this.reset('lg-match');
+      const level = Math.min(3, this.bag.matchLevel || 0), pairs = 3 + level;
+      const { name, all } = this.pool();
+      const letters = [];
+      if (name.length && Math.random() < .5) letters.push(name[Math.floor(Math.random() * name.length)]);
+      while (letters.length < pairs) { const l = this.pickLetter(all); if (!letters.includes(l)) letters.push(l); }
+      const cards = letters.flatMap(l => [{ l, up: true }, { l, up: false }]).sort(() => Math.random() - .5);
+      const cols = innerWidth > innerHeight ? Math.ceil(cards.length / 2) : Math.min(4, Math.ceil(cards.length / 3));
+      const grid = el('div', 'lg-match-grid'); grid.style.setProperty('--cols', cols);
+      const px = Math.round(Math.max(90, Math.min(190, innerHeight * .26, innerWidth / (cols + .8) * .8)));
+      let first = null, busy = false, found = 0;
+      cards.forEach(cd => {
+        const glyph = glyphs.canvas(cd.up ? cd.l.toUpperCase() : cd.l, px, { color: COLORS[ALPHA.indexOf(cd.l) % 6], width: 14 });
+        const b = btn('mcard', 'Card', el('div', 'mface', el('div', 'mback', el('span', 'mstar', '★')), el('div', 'mfront', glyph)));
+        cd.el = b; b.dataset.letter = cd.l;
+        SPG.ui.press(b, () => {
+          if (busy || b.classList.contains('up')) return;
+          b.classList.add('up'); sfx.tap(); voice.say('letter/' + cd.l);
+          if (!first) { first = cd; return; }
+          const a = first; first = null; busy = true;
+          if (a.l === cd.l) {
+            this.later(() => {
+              sfx.chime(); a.el.classList.add('done'); b.classList.add('done'); busy = false;
+              if (++found === pairs) {
+                sfx.win(); store.addStars(2); this.bag.matchLevel = Math.min(3, level + 1); store.save();
+                const r = grid.getBoundingClientRect(); this.burst(r.left + r.width / 2, r.top + r.height / 2);
+                voice.say('great-job', 'you-did-it'); this.later(() => this.match(), 3600);
+              }
+            }, 450);
+          } else {
+            this.later(() => { a.el.classList.remove('up'); b.classList.remove('up'); sfx.oops(); busy = false; }, 1300);
+          }
+        });
+        grid.append(b);
+      });
+      this.root.append(this.backButton(), grid);
     }
 
     // Confetti as tiny DOM canvas over the whole game.

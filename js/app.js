@@ -5,7 +5,7 @@
   const { store, voice, safe, art } = SPG;
   const $ = id => document.getElementById(id);
   const screens = { who: $('who'), setup: $('setup'), hub: $('hub'), stage: $('stage') };
-  const overlays = { gate: $('gate'), parent: $('parent'), fs: $('fs-resume') };
+  const overlays = { brk: $('break'), gate: $('gate'), parent: $('parent'), studio: $('studio'), fs: $('fs-resume') };
   let current = 'who';
   let running = null;
 
@@ -48,6 +48,7 @@
 
   /* ------------------------------------------------------------ who's playing */
   function renderWho() {
+    $('install-hint').classList.toggle('hidden', !safe.needsInstallForFullscreen());
     const list = $('who-list');
     list.replaceChildren(...store.profiles.map(p => {
       const tile = h('button', { class: 'who-tile', type: 'button', 'aria-label': 'Play as ' + p.name }, avatarCanvas(p.avatar, 220), h('span', {}, p.name), h('span', { class: 'go-badge' }, icon('play')));
@@ -63,7 +64,9 @@
     store.setActive(p.id);
     refreshHub();
     show('hub');
-    voice.say({ say: `Hi ${p.name}!` }, 'welcome');
+    SPG.music.sync();
+    voice.custom['player/' + p.id] = `Hi ${p.name}!`;
+    if (!checkLimit()) voice.say('player/' + p.id, 'welcome');
   }
 
   /* ------------------------------------------------------------ setup */
@@ -102,8 +105,8 @@
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, av.width, av.height);
     c.translate(32, 38); art.avatar(c, p.avatar, 22);
   }
-  $('hub-who').addEventListener('click', () => { voice.stop(); renderWho(); });
-  $('hub-lock').addEventListener('click', () => askGate(openParent));
+  SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
+  SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
   const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], garden: ['#dff5d0', '#a9d98f'] };
   function renderCards() {
@@ -113,7 +116,7 @@
       const canvas = document.createElement('canvas');
       const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-i * 1.1}s` },
         canvas, h('span', { class: 'card-name' }, h('span', {}, g.name), h('span', { class: 'go' }, icon('play'))));
-      card.addEventListener('click', () => openGame(g));
+      SPG.ui.press(card, () => openGame(g));
       card._draw = () => {
         const r = canvas.getBoundingClientRect();
         if (!r.width) return;
@@ -135,6 +138,7 @@
     $('stage-stars').textContent = store.active.stars;
     const host = $('game-host');
     host.replaceChildren();
+    document.body.classList.toggle('in-canvas', g.id !== 'letters');
     running = { game: g, inst: null, paused: false };
     running.inst = g.create(host);
     running.inst.start?.();
@@ -143,14 +147,14 @@
   function closeGame() {
     if (!running) return;
     running.inst.destroy?.();
-    running = null;
+    running = null; document.body.classList.remove('in-canvas');
     voice.stop();
     $('game-host').replaceChildren();
     refreshHub();
     show('hub');
     requestAnimationFrame(drawCards);
   }
-  $('btn-home').addEventListener('click', () => { SPG.sfx.tap(); closeGame(); });
+  SPG.ui.press($('btn-home'), () => { SPG.sfx.tap(); closeGame(); });
 
   SPG.onStars = n => {
     for (const id of ['hub-stars', 'stage-stars']) {
@@ -175,7 +179,7 @@
   }
   (() => {
     const pad = $('numpad');
-    const key = (label, cls, fn) => { const b = h('button', { type: 'button', class: cls || '' }, label); b.addEventListener('click', () => { SPG.sfx.tap(); fn(); }); return b; };
+    const key = (label, cls, fn) => { const b = h('button', { type: 'button', class: cls || '' }, label); SPG.ui.press(b, () => { SPG.sfx.tap(); fn(); }); return b; };
     for (let n = 1; n <= 9; n++) pad.append(key(String(n), '', () => type(String(n))));
     pad.append(key(icon('back'), '', () => { gateState.entry = gateState.entry.slice(0, -1); paintAnswer(); }));
     pad.append(key('0', '', () => type('0')));
@@ -194,7 +198,7 @@
       }
     }
   })();
-  $('gate-cancel').addEventListener('click', () => { gateState = null; closeOverlay(overlays.gate); });
+  SPG.ui.press($('gate-cancel'), () => { gateState = null; closeOverlay(overlays.gate); });
 
   /* ------------------------------------------------------------ grown-ups panel */
   let installPrompt = null;
@@ -204,16 +208,21 @@
   function closeParent() {
     closeOverlay(overlays.parent);
     if (!store.active) { store.profiles.length ? renderWho() : openSetup(false); }
-    else refreshHub();
+    else { refreshHub(); checkLimit(); }
   }
   $('parent-close').addEventListener('click', closeParent);
+
+  function openStudio() { SPG.studio.render($('studio-body')); openOverlay(overlays.studio); }
+  function closeStudio() { SPG.studio.abort(); voice.stop(); closeOverlay(overlays.studio); renderParent(); }
+  $('studio-close').addEventListener('click', closeStudio);
 
   function toggle(label, key) {
     const sw = h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': String(!!store.settings[key]), 'aria-label': label });
     sw.addEventListener('click', () => {
       store.settings[key] = !store.settings[key]; store.save();
       sw.setAttribute('aria-checked', String(store.settings[key]));
-      if (store.settings[key]) { key === 'sound' ? SPG.sfx.chime() : voice.say({ say: 'Hello!' }); }
+      SPG.music.sync();
+      if (store.settings[key] && key !== 'music') { key === 'sound' ? SPG.sfx.chime() : voice.say({ say: 'Hello!' }); }
     });
     return h('div', { class: 'setting' }, h('span', {}, label), sw);
   }
@@ -230,7 +239,7 @@
 
   function renderParent() {
     const body = $('parent-body');
-    const fsNow = !!document.fullscreenElement;
+    const fsNow = safe.isFullscreen();
     const fsBtn = h('button', { class: 'btn small', type: 'button' }, fsNow ? 'Leave full screen' : 'Go full screen');
     fsBtn.addEventListener('click', async () => { fsNow ? await safe.exitFullscreen() : await safe.enterFullscreen(); setTimeout(renderParent, 250); });
 
@@ -238,6 +247,13 @@
       h('h3', {}, 'Safe mode'),
       h('p', {}, 'The games never link to other websites. Full screen hides the address bar and tabs, and the back button stays inside the app. Only this grown-ups panel can change that.'),
       safe.standalone() ? h('p', { class: 'fine' }, 'Running as an installed app, which is already full screen.') : (safe.canFullscreen ? fsBtn : h('p', { class: 'fine' }, 'This browser cannot go full screen. Install the app from the browser menu instead.')));
+    if (safe.isIOS && !safe.standalone()) {
+      safeSection.append(h('p', {}, h('b', {}, 'Full screen on iPhone and iPad: ')), h('ol', { class: 'steps' },
+        h('li', {}, 'In Safari, tap the Share button (the square with an arrow).'),
+        h('li', {}, 'Choose \u201CAdd to Home Screen\u201D, then tap Add.'),
+        h('li', {}, 'Open Little Sprout Park from your home screen. It opens full screen with no browser bars.')),
+        h('p', { class: 'fine' }, 'To keep a child inside the app on iPhone/iPad, also turn on Guided Access: Settings \u2192 Accessibility \u2192 Guided Access, then triple-click the side (or Home) button while the app is open.'));
+    }
     if (installPrompt) {
       const b = h('button', { class: 'btn small go', type: 'button', style: 'margin-top:8px' }, 'Install on this tablet');
       b.addEventListener('click', async () => { installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; b.remove(); });
@@ -256,24 +272,90 @@
     players.append(add);
 
     body.replaceChildren(
-      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound')),
+      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music')),
+      voicesSection(),
+      timerSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
         h('p', {}, 'A website cannot stop a child using the tablet’s own buttons. For a true lock, use Android screen pinning together with full screen:'),
         h('ol', { class: 'steps' },
           h('li', {}, 'Settings → Security (or Security & privacy) → App pinning, and turn it on.'),
-          h('li', {}, 'Open Sunny Play Garden, then open Recent apps.'),
+          h('li', {}, 'Open Little Sprout Park, then open Recent apps.'),
           h('li', {}, 'Tap the app icon at the top of its card and choose Pin.'),
           h('li', {}, 'To unpin later, hold Back and Recent apps together (or swipe up and hold, depending on the tablet).'))),
+      h('section', {}, h('h3', {}, 'About'),
+        h('p', {}, `Little Sprout Park version ${SPG.version}. No ads, no accounts, no tracking. Everything stays on this device.`),
+        h('p', { class: 'fine' }, 'Names, stars, gardens and any voice recordings are stored only on this device. Nothing is sent to anyone. The full privacy policy is at /privacy.html on this site.')),
       h('section', {}, h('h3', {}, 'Voice recordings'),
         h('p', {}, 'Prompts are spoken by the tablet’s built-in voice until you add recordings. See RECORDING.md in the project for the list of lines and where the files go.')));
+  }
+
+  /* ------------------------------------------------------------ daily play time */
+  const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  const playLog = () => {
+    const s = store.settings;
+    if (!s.playLog || s.playLog.day !== dayKey()) s.playLog = { day: dayKey(), sec: 0 };
+    return s.playLog;
+  };
+  const limitReached = () => { const m = store.settings.timer || 0; return m > 0 && playLog().sec >= m * 60; };
+
+  function drawBreakArt() {
+    const cv = $('break-art'), c = cv.getContext('2d'), w = cv.width;
+    c.clearRect(0, 0, w, w);
+    for (const [x, y, r] of [[.15, .2, 6], [.82, .16, 8], [.9, .55, 5], [.1, .7, 7], [.7, .9, 5]]) art.star(c, x * w, y * w, r * 1.6, '#fff3b0');
+    c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(w / 2, w / 2, w * .32, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(255,214,120,.5)'; for (const [x, y, r] of [[-.12, -.1, .06], [.14, .08, .045], [-.05, .17, .035]]) { c.beginPath(); c.arc(w / 2 + x * w, w / 2 + y * w, r * w, 0, Math.PI * 2); c.fill(); }
+    c.save(); c.translate(w / 2, w / 2 + w * .02); art.face(c, w * .26, { mood: 'sleep' }); c.restore();
+    c.fillStyle = '#fff'; c.font = '700 44px Fredoka, system-ui'; c.fillText('z', w * .72, w * .32); c.font = '700 32px Fredoka, system-ui'; c.fillText('z', w * .82, w * .22);
+  }
+  function showBreak() {
+    if (!overlays.brk.classList.contains('hidden')) return;
+    drawBreakArt(); voice.say('break-time'); openOverlay(overlays.brk);
+  }
+  // Returns true if the rest screen is now showing.
+  function checkLimit() {
+    if (!limitReached() || (current !== 'hub' && current !== 'stage')) return false;
+    showBreak(); return true;
+  }
+  SPG.ui.press($('break-adult'), () => askGate(() => { closeOverlay(overlays.brk); openParent(); }));
+  setInterval(() => {
+    if (document.hidden || (current !== 'hub' && current !== 'stage') || anyOverlay()) return;
+    playLog().sec++; store.save();
+    if (limitReached()) showBreak();
+  }, 1000);
+
+  function voicesSection() {
+    const keys = voice.allKeys();
+    const n = set => keys.filter(k => voice.hasClip(set, k)).length;
+    const b = h('button', { class: 'btn small go', type: 'button' }, 'Record and choose voices');
+    b.addEventListener('click', openStudio);
+    return h('section', {}, h('h3', {}, 'Voices'),
+      h('p', {}, 'Record your own voice for the games (a male and a female voice can be mixed), switch off lines you don\u2019t want, and choose how often the games cheer.'),
+      h('p', { class: 'fine' }, `Recorded so far: male ${n('male')}, female ${n('female')} of ${keys.length} lines.`), b);
+  }
+
+  function timerSection() {
+    const cur = store.settings.timer || 0;
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Daily play time' });
+    for (const m of [0, 15, 30, 45, 60]) {
+      const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === m) }, m ? `${m} min` : 'No limit');
+      b.addEventListener('click', () => { store.settings.timer = m; store.save(); renderParent(); });
+      seg.append(b);
+    }
+    const used = Math.floor(playLog().sec / 60);
+    const reset = h('button', { class: 'btn small quiet', type: 'button' }, 'Give more time today');
+    reset.addEventListener('click', () => { playLog().sec = 0; store.save(); renderParent(); });
+    return h('section', {}, h('h3', {}, 'Play time'),
+      h('p', {}, 'When the daily limit is reached, a friendly rest screen appears. It can only be closed by a grown-up.'),
+      seg, h('p', { class: 'fine' }, `Played today: ${used} min`), reset);
   }
 
   /* ------------------------------------------------------------ safe mode wiring */
   safe.onBack = () => {
     if (!overlays.gate.classList.contains('hidden')) { gateState = null; closeOverlay(overlays.gate); return; }
+    if (!overlays.studio.classList.contains('hidden')) { closeStudio(); return; }
     if (!overlays.parent.classList.contains('hidden')) { closeParent(); return; }
-    if (!overlays.fs.classList.contains('hidden')) return;
+    if (!overlays.fs.classList.contains('hidden') || !overlays.brk.classList.contains('hidden')) return;
     if (current === 'stage') closeGame();
     else if (current === 'setup' && store.profiles.length) renderWho();
   };

@@ -6,10 +6,13 @@
   <meta name="theme-color" content="#a9e1f3">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Little Sprout Park">
+  <meta name="format-detection" content="telephone=no">
   <meta name="referrer" content="no-referrer">
   <!-- Nothing on this page can load from, or send data to, another website. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Sunny Play Garden</title>
+  <title>Little Sprout Park</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -45,8 +48,9 @@
 
   <!-- Who is playing -->
   <main id="who" class="screen who hidden">
-    <h1 class="logo">Sunny Play Garden</h1>
+    <h1 class="logo">Little Sprout Park</h1>
     <div id="who-list" class="who-list"></div>
+    <p id="install-hint" class="install-hint hidden">For full screen on iPhone or iPad: tap <b>Share</b>, then <b>Add to Home Screen</b>, then open it from your home screen.</p>
   </main>
 
   <!-- First-time / add-player setup -->
@@ -71,7 +75,7 @@
   <main id="hub" class="screen hub hidden">
     <header class="hub-top">
       <button id="hub-who" class="chip" type="button" aria-label="Switch player"><canvas id="hub-avatar" width="64" height="64"></canvas><span id="hub-name"></span></button>
-      <h1 class="hub-title">Sunny Play Garden</h1>
+      <h1 class="hub-title">Little Sprout Park</h1>
       <div class="hub-right">
         <div class="chip stars" aria-label="Stars"><svg class="ico"><use href="#i-star"/></svg><b id="hub-stars">0</b></div>
         <button id="hub-lock" class="chip round" type="button" aria-label="Grown-ups"><svg class="ico"><use href="#i-lock"/></svg></button>
@@ -86,6 +90,16 @@
     <button id="btn-home" class="hud-btn home" type="button" aria-label="Home"><svg><use href="#i-house"/></svg></button>
     <div class="hud-stars" aria-label="Stars"><svg class="ico"><use href="#i-star"/></svg><b id="stage-stars">0</b></div>
   </main>
+
+  <!-- Daily play time is up -->
+  <div id="break" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="break-title">
+    <div class="break-card">
+      <canvas id="break-art" width="320" height="320"></canvas>
+      <h2 id="break-title">Time for a little rest</h2>
+      <p>Play time is up for today.</p>
+      <button id="break-adult" class="btn quiet" type="button"><svg><use href="#i-lock"/></svg> Grown-up</button>
+    </div>
+  </div>
 
   <!-- Parent gate -->
   <div id="gate" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gate-title">
@@ -107,6 +121,14 @@
     </div>
   </div>
 
+  <!-- Record and choose voices -->
+  <div id="studio" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="studio-title">
+    <div class="sheet wide" data-scroll>
+      <div class="sheet-head"><h2 id="studio-title">Voices</h2><button id="studio-close" class="btn go small" type="button"><svg><use href="#i-check"/></svg> Done</button></div>
+      <div id="studio-body"></div>
+    </div>
+  </div>
+
   <!-- Shown if fullscreen was left by accident -->
   <div id="fs-resume" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Keep playing">
     <button id="fs-play" class="btn-play" type="button" aria-label="Keep playing"><svg><use href="#i-play"/></svg></button>
@@ -114,11 +136,15 @@
 
   <script src="js/glyphs.js"></script>
   <script src="js/core.js"></script>
+  <script src="js/voice.js"></script>
   <script src="js/art.js"></script>
+  <script src="js/art-garden.js"></script>
+  <script src="js/art-pets.js"></script>
   <script src="games/letters.js"></script>
   <script src="games/fruit.js"></script>
   <script src="games/rain.js"></script>
   <script src="games/garden.js"></script>
+  <script src="js/studio.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

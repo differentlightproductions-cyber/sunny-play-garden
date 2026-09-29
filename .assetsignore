@@ -7,3 +7,4 @@ wrangler.jsonc
 tools/
 node_modules/
 .gitkeep
+store/

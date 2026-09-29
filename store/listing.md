@@ -1,13 +1,13 @@
 # Google Play listing (copy and paste)
 
 ## App name (max 30)
-Sunny Play Garden
+Little Sprout Park
 
 ## Short description (max 80)
 Gentle games for little ones: letters, fruit, rain and a garden to grow.
 
 ## Full description (max 4000)
-Sunny Play Garden is a calm, colourful collection of games made for little hands (about ages 2 to 6). No ads, no accounts, no scary bits: just gentle play that a child can enjoy on their own, with big buttons and no reading needed.
+Little Sprout Park is a calm, colourful collection of games made for little hands (about ages 2 to 6). No ads, no accounts, no scary bits: just gentle play that a child can enjoy on their own, with big buttons and no reading needed.
 
 LETTER GARDEN
 Trace letters with a finger while a friendly bee shows the way, flip flash cards with pictures and sounds, find the letter that was asked for, match big and little letters, pick the picture that starts with a sound, and write their very own name.

@@ -1,6 +1,6 @@
 # Handoff
 
-Sunny Play Garden is a free, static, dependency-free browser games site for a young child (the first player is 3½, a pre-reader who is working on letters). Serve the folder on any static host or open `index.html` through a local server. No build step.
+Little Sprout Park is a free, static, dependency-free browser games site for a young child (the first player is 3½, a pre-reader who is working on letters). Serve the folder on any static host or open `index.html` through a local server. No build step.
 
 ## Layout
 - `index.html`, `styles.css`: shell, screens, overlays, all shared styles (game-specific styles are appended in sections).
@@ -43,6 +43,13 @@ Verified with headless Chromium (tablet landscape and portrait, fake microphone)
 
 ## Deploying
 Cloudflare Workers serves the repo root as static assets via `wrangler.jsonc`; `.assetsignore` keeps handoff/tools/config out of the public site. Build command: `npx wrangler deploy`. Bump `CACHE` in `sw.js` if you ever need to force-clear old offline caches.
+
+## Name and release tooling
+The app is called **Little Sprout Park** (launcher/short name "Sprout Park"). The Cloudflare worker and repo are still named `sunny-play-garden` on purpose; renaming them is the owner's call.
+- `node tools/check-release.mjs`: pre-flight for the Google Play release (manifest, icons, offline file list, CSP, privacy placeholders, assetlinks). FAIL = fix in code; WARN = owner to-dos (contact details, signing fingerprint, recorder switch).
+- `node tools/make-assetlinks.mjs <package.id> <SHA-256>`: writes `.well-known/assetlinks.json` once Play App Signing gives the fingerprint.
+- `node tools/make-icons.mjs`: renders PNG icons from `icons/*.svg`. `node tools/make-store-assets.mjs`: store screenshots and feature graphic. Both need Playwright.
+- `store/PLAY-STORE-GUIDE.md` is the owner's step-by-step for the Play Console side.
 
 ## Guidelines
 Keep play relaxed and unlimited, no losing, no reading required, big touch targets. Don't repeat game mechanics across games. Add new games through the `SPG.games` list.

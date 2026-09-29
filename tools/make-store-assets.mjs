@@ -92,7 +92,7 @@ for (const [kind, w, h] of [['phone', 540, 960], ['tablet', 960, 600]]) {
     c.save(); c.translate(520, 250); A.bee(c, 24, 1); c.restore();
     // title
     c.textBaseline = 'alphabetic'; c.lineJoin = 'round';
-    for (const [txt, y] of [['Sunny', 150], ['Play Garden', 230]]) { c.font = '700 84px Fredoka, system-ui'; c.lineWidth = 16; c.strokeStyle = '#fff'; c.strokeText(txt, 48, y); c.fillStyle = '#5a3f5e'; c.fillText(txt, 48, y); }
+    for (const [txt, y] of [['Little Sprout', 150], ['Park', 230]]) { c.font = '700 84px Fredoka, system-ui'; c.lineWidth = 16; c.strokeStyle = '#fff'; c.strokeText(txt, 48, y); c.fillStyle = '#5a3f5e'; c.fillText(txt, 48, y); }
     c.font = '600 30px Fredoka, system-ui'; c.lineWidth = 8; c.strokeStyle = '#fff'; c.strokeText('Gentle games for little ones', 52, 290); c.fillStyle = '#5a3f5e'; c.fillText('Gentle games for little ones', 52, 290);
     // letter tiles
     [['A', '#ff7a8a', -.1], ['b', '#4fb3e8', .05], ['C', '#59b96e', -.05]].forEach(([ch, col, rot], i) => { c.save(); c.translate(90 + i * 110, 395); c.rotate(rot); c.fillStyle = '#fff'; A.rr(c, -46, -62, 92, 124, 20); c.fill(); const g = SPG.glyphs.get(ch), sz = 74; SPG.glyphs.draw(c, ch, -g.w * sz / 200, -46, sz, { color: col, width: 14 }); c.restore(); });

@@ -251,7 +251,7 @@
       safeSection.append(h('p', {}, h('b', {}, 'Full screen on iPhone and iPad: ')), h('ol', { class: 'steps' },
         h('li', {}, 'In Safari, tap the Share button (the square with an arrow).'),
         h('li', {}, 'Choose \u201CAdd to Home Screen\u201D, then tap Add.'),
-        h('li', {}, 'Open Sunny Play Garden from your home screen. It opens full screen with no browser bars.')),
+        h('li', {}, 'Open Little Sprout Park from your home screen. It opens full screen with no browser bars.')),
         h('p', { class: 'fine' }, 'To keep a child inside the app on iPhone/iPad, also turn on Guided Access: Settings \u2192 Accessibility \u2192 Guided Access, then triple-click the side (or Home) button while the app is open.'));
     }
     if (installPrompt) {
@@ -280,11 +280,11 @@
         h('p', {}, 'A website cannot stop a child using the tablet’s own buttons. For a true lock, use Android screen pinning together with full screen:'),
         h('ol', { class: 'steps' },
           h('li', {}, 'Settings → Security (or Security & privacy) → App pinning, and turn it on.'),
-          h('li', {}, 'Open Sunny Play Garden, then open Recent apps.'),
+          h('li', {}, 'Open Little Sprout Park, then open Recent apps.'),
           h('li', {}, 'Tap the app icon at the top of its card and choose Pin.'),
           h('li', {}, 'To unpin later, hold Back and Recent apps together (or swipe up and hold, depending on the tablet).'))),
       h('section', {}, h('h3', {}, 'About'),
-        h('p', {}, `Sunny Play Garden version ${SPG.version}. No ads, no accounts, no tracking. Everything stays on this device.`),
+        h('p', {}, `Little Sprout Park version ${SPG.version}. No ads, no accounts, no tracking. Everything stays on this device.`),
         h('p', { class: 'fine' }, 'Names, stars, gardens and any voice recordings are stored only on this device. Nothing is sent to anyone. The full privacy policy is at /privacy.html on this site.')),
       h('section', {}, h('h3', {}, 'Voice recordings'),
         h('p', {}, 'Prompts are spoken by the tablet’s built-in voice until you add recordings. See RECORDING.md in the project for the list of lines and where the files go.')));

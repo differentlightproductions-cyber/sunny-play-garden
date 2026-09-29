@@ -1,4 +1,4 @@
-# Publishing Sunny Play Garden on Google Play
+# Publishing Little Sprout Park on Google Play
 
 The app is a web app that installs like an app (a PWA). For Google Play it is wrapped as a **Trusted Web Activity
 (TWA)**: a tiny Android app that opens the website full screen with no browser bars. Because the game files are
@@ -25,7 +25,7 @@ wrapper itself.
 **Easiest: PWABuilder (no command line)**
 1. Go to pwabuilder.com, enter your site address, and run the check. Fix anything it flags.
 2. Choose **Package for stores > Android**.
-3. Set: Package ID (e.g. `com.yourname.sunnyplaygarden`, permanent), App name `Sunny Play Garden`, Launcher name `Play Garden`, Display `Fullscreen`, Orientation `Default`, Notifications off. Let it generate a signing key (**keep the downloaded key file and its passwords safe and backed up**).
+3. Set: Package ID (e.g. `com.yourname.littlesproutpark`, permanent), App name `Little Sprout Park`, Launcher name `Sprout Park` (keep it short; Android truncates long launcher names), Display `Fullscreen`, Orientation `Default`, Notifications off. Let it generate a signing key (**keep the downloaded key file and its passwords safe and backed up**).
 4. Download the zip. It contains the app bundle (`.aab`), the signing key, and an `assetlinks.json` snippet.
 
 **Alternative: Bubblewrap (command line)**
@@ -69,3 +69,7 @@ Use `store/listing.md` for the text and the images in `store/` (icon, feature gr
 
 ## Things worth checking on a real Android phone and tablet
 Full screen with no bars; sound and voices; the back button never leaves the app (it goes back a screen); rotating the device; the microphone prompt in Grown-ups > Voices (if the recorder is enabled).
+
+
+## Before you upload
+Run `node tools/check-release.mjs` from the repo root. Everything must PASS; the WARN lines are the things only you can fill in (privacy policy name and email, the app-signing fingerprint via `node tools/make-assetlinks.mjs`, and deciding whether the voice recorder stays visible).

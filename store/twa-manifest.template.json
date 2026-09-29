@@ -1,9 +1,9 @@
 {
   "_note": "Reference for Bubblewrap. 'bubblewrap init --manifest=...' generates the real twa-manifest.json; use these values when it asks.",
-  "packageId": "com.yourname.sunnyplaygarden",
+  "packageId": "com.yourname.littlesproutpark",
   "host": "YOUR-DOMAIN",
-  "name": "Sunny Play Garden",
-  "launcherName": "Play Garden",
+  "name": "Little Sprout Park",
+  "launcherName": "Sprout Park",
   "display": "fullscreen",
   "orientation": "default",
   "themeColor": "#A9E1F3",

@@ -289,7 +289,7 @@
           }
           c.save(); c.translate(w / 2 + .1 * w, h / 2); c.rotate(.1);
           glyphs.draw(c, 'B', -s * .11, -s * .26, s * .3, { color: '#ff7a8a', width: 13 });
-          c.font = `${s * .22}px system-ui, "Noto Color Emoji"`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🐻', 0, s * .18);
+          c.font = `${s * .22}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🐻', 0, s * .18);
           c.restore();
         }, () => this.cards()],
         ['Find it', 'Find the letter', (c, w, h) => {
@@ -310,7 +310,23 @@
           let x = w / 2 - tw / 2;
           for (const ch of text) { glyphs.draw(c, ch, x, h / 2 - size * .3, size, { color: COLORS[(x | 0) % 6 === 0 ? 0 : Math.abs((x | 0)) % 6], width: 12 }); x += ((glyphs.get(ch)?.w ?? 30) + 10) * size / 100; }
           art.star(c, w / 2 + tw / 2 + size * .3, h / 2 - size * .45, size * .26);
-        }, () => this.nameMode()]
+        }, () => this.nameMode()],
+        ['Sounds', 'Which picture starts with the sound', (c, w, h) => {
+          const s = Math.min(w, h);
+          c.fillStyle = '#5a3f5e'; c.beginPath(); c.moveTo(w * .12, h * .42); c.lineTo(w * .2, h * .42); c.lineTo(w * .32, h * .3); c.lineTo(w * .32, h * .7); c.lineTo(w * .2, h * .58); c.lineTo(w * .12, h * .58); c.closePath(); c.fill();
+          c.strokeStyle = '#5a3f5e'; c.lineWidth = s * .03; c.lineCap = 'round';
+          for (const r of [.07, .13]) { c.beginPath(); c.arc(w * .34, h * .5, s * r, -.9, .9); c.stroke(); }
+          [['🐻', .58], ['🐱', .75], ['🐶', .92]].forEach(([e, x], i) => { c.fillStyle = '#fff'; art.rr(c, w * (x - .07), h * .3, w * .14, h * .4, s * .05); c.fill(); c.font = `${s * .14}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e, w * x, h * .5); });
+        }, () => this.sounds()],
+        ['Match', 'Match big and little letters', (c, w, h) => {
+          const s = Math.min(w * .3, h * .62);
+          [['A', -.6, '#ff7a8a'], ['a', .6, '#ff7a8a']].forEach(([ch, dx, col]) => {
+            const x = w / 2 + dx * s - s / 2, y = h / 2 - s * .6;
+            c.fillStyle = '#fff'; art.rr(c, x, y, s, s * 1.2, s * .16); c.fill();
+            glyphs.draw(c, ch, x + s * .2, y + s * (ch === 'A' ? .16 : .0), s * (ch === 'A' ? .68 : .5), { color: col, width: 14 });
+          });
+          art.heart(c, w / 2, h / 2 + s * .05, s * .17, '#ff7a8a');
+        }, () => this.match()]
       ];
       const grid = el('div', 'lg-modes');
       modes.forEach(([label, aria, draw, go], i) => {
@@ -487,6 +503,93 @@
       say.addEventListener('click', () => voice.say('find', 'letter/' + target));
       this.root.append(this.backButton(), this.caseChip(ask), say, area);
       ask();
+    }
+
+    /* ---------------- sounds: which picture starts with the sound? ---------------- */
+    sounds() {
+      this.reset('lg-find');
+      const area = el('div', 'lg-options');
+      const say = btn('lg-btn lg-say big', 'Hear the sound', icon('speaker'));
+      const NO = 'xi'; // "box" ends in x, "ice cream" starts with a long vowel: skip them here
+      const same = (a, b) => a === b || ('ckq'.includes(a) && 'ckq'.includes(b));
+      const shuffle = a => a.sort(() => Math.random() - .5);
+      let target = null, last = null, wrong = 0, locked = false;
+      const ask = () => {
+        const { name, all } = this.pool();
+        const okAll = all.filter(l => !NO.includes(l)), okName = name.filter(l => !NO.includes(l));
+        const source = okName.length && Math.random() < .5 ? okName : okAll;
+        do { target = source[Math.floor(Math.random() * source.length)]; } while (target === last && source.length > 1);
+        last = target; wrong = 0; locked = false;
+        const picks = [];
+        for (const l of shuffle(ALPHA.filter(x => !NO.includes(x) && !same(x, target)))) { if (picks.length >= 2) break; if (!picks.some(p => same(p, l))) picks.push(l); }
+        const choices = shuffle([target, ...picks]);
+        area.replaceChildren(...choices.map((ch, idx) => {
+          const [word, emoji] = voice.WORDS[ch];
+          const b = btn('lg-opt', word, el('span', 'lg-emoji-opt', emoji));
+          b.dataset.letter = ch; b.style.setProperty('--d', idx * .12 + 's');
+          b.addEventListener('click', () => choose(ch, b));
+          return b;
+        }));
+        say.classList.add('wiggle');
+        voice.say('starts-with', 'sound/' + target);
+      };
+      const choose = (ch, b) => {
+        if (locked) return;
+        if (ch === target) {
+          locked = true; sfx.win(); store.addStars(1); this.bag.correct++; store.save();
+          [...area.children].forEach(o => o.classList.toggle('fade', o !== b)); b.classList.add('right');
+          const r = b.getBoundingClientRect(); this.burst(r.left + r.width / 2, r.top + r.height / 2);
+          voice.say('great-job', 'sound/' + target, 'word/' + target);
+          this.later(ask, 3000);
+        } else {
+          wrong++; sfx.oops(); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope');
+          voice.say('try-again', 'sound/' + target);
+          if (wrong >= 2) [...area.children].forEach(o => { if (o.dataset.letter === target) o.classList.add('hint'); });
+        }
+      };
+      say.addEventListener('click', () => voice.say('starts-with', 'sound/' + target));
+      this.root.append(this.backButton(), say, area);
+      ask();
+    }
+
+    /* ---------------- match: big letter with its little letter ---------------- */
+    match() {
+      this.reset('lg-match');
+      const level = Math.min(3, this.bag.matchLevel || 0), pairs = 3 + level;
+      const { name, all } = this.pool();
+      const letters = [];
+      for (const l of [...name].sort(() => Math.random() - .5).slice(0, 2)) letters.push(l);
+      for (const l of [...all].sort(() => Math.random() - .5)) { if (letters.length >= pairs) break; if (!letters.includes(l)) letters.push(l); }
+      const cards = letters.flatMap(l => [{ l, up: true }, { l, up: false }]).sort(() => Math.random() - .5);
+      const cols = innerWidth > innerHeight ? Math.ceil(cards.length / 2) : Math.min(4, Math.ceil(cards.length / 3));
+      const grid = el('div', 'lg-match-grid'); grid.style.setProperty('--cols', cols);
+      const px = Math.round(Math.max(90, Math.min(190, innerHeight * .26, innerWidth / (cols + .8) * .8)));
+      let first = null, busy = false, found = 0;
+      cards.forEach(cd => {
+        const glyph = glyphs.canvas(cd.up ? cd.l.toUpperCase() : cd.l, px, { color: COLORS[ALPHA.indexOf(cd.l) % 6], width: 14 });
+        const b = btn('mcard', 'Card', el('div', 'mface', el('div', 'mback', el('span', 'mstar', '★')), el('div', 'mfront', glyph)));
+        cd.el = b; b.dataset.letter = cd.l;
+        b.addEventListener('click', () => {
+          if (busy || b.classList.contains('up')) return;
+          b.classList.add('up'); sfx.tap(); voice.say('letter/' + cd.l);
+          if (!first) { first = cd; return; }
+          const a = first; first = null; busy = true;
+          if (a.l === cd.l) {
+            this.later(() => {
+              sfx.chime(); a.el.classList.add('done'); b.classList.add('done'); busy = false;
+              if (++found === pairs) {
+                sfx.win(); store.addStars(2); this.bag.matchLevel = Math.min(3, level + 1); store.save();
+                const r = grid.getBoundingClientRect(); this.burst(r.left + r.width / 2, r.top + r.height / 2);
+                voice.say('great-job', 'you-did-it'); this.later(() => this.match(), 3600);
+              }
+            }, 450);
+          } else {
+            this.later(() => { a.el.classList.remove('up'); b.classList.remove('up'); sfx.oops(); busy = false; }, 1300);
+          }
+        });
+        grid.append(b);
+      });
+      this.root.append(this.backButton(), grid);
     }
 
     // Confetti as tiny DOM canvas over the whole game.

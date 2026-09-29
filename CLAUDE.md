@@ -12,10 +12,13 @@ Sunny Play Garden is a free, static, dependency-free browser games site for a yo
 - `sw.js`, `manifest.webmanifest`, `icons/`: installable, works offline. `_headers`: Cloudflare security headers (CSP, no framing).
 
 ## Games
-Letter Garden (trace / flash cards / find the letter / write her name), Fruit Splash (swipe or tap, no losing), Rain Bucket (catch drops, rainbow, flowers kept in a meadow), Grow a Garden (plant, tap to water, bloom, meet garden friends kept in a book). Progress and stars are saved per player in localStorage under `spg.v1`.
+Letter Garden (six activities: trace, flash cards, find the letter, write her name, sounds = pick the picture that starts with the sound, match = pair big and little letters), Fruit Splash (swipe or tap, no losing, rare golden star bonus), Rain Bucket (catch drops, rainbow, flowers kept in a meadow), Grow a Garden (plant, tap to water, bloom, meet garden friends kept in a book). Progress and stars are saved per player in localStorage under `spg.v1`.
 
 ## Safe mode (what it is and is not)
 A website cannot lock a device. Safe mode = fullscreen (or installed PWA), no external links anywhere, CSP that blocks any outside load, back button stays in the app, fullscreen-lost overlay, and every way out is behind the parent gate (spelled-out addition). The real lock is Android screen pinning, explained in the grown-ups panel.
+
+## Grown-ups panel features
+Voice/sound/soft-music toggles (music is generative WebAudio, off by default), a daily play-time limit (15/30/45/60 min or none) that shows a full-screen rest screen only a grown-up can dismiss (usage is tracked per day in `settings.playLog`), player management, and screen-pinning instructions.
 
 ## Voice
 Every spoken prompt is a key in `LINES` (`js/core.js`). If `audio/voice/<key with / as ->.mp3` exists it plays, otherwise the browser's speech is used. `RECORDING.md` lists every line; regenerate it with `node tools/make-recording-list.mjs` after editing `LINES`.

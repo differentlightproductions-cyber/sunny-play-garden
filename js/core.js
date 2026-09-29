@@ -5,11 +5,11 @@
 
   /* ---------------------------------------------------------------- store */
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true } });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, timer: 0, playLog: { day: '', sec: 0 } } });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) data = Object.assign(fresh(), JSON.parse(raw));
+      if (raw) { data = Object.assign(fresh(), JSON.parse(raw)); data.settings = Object.assign(fresh().settings, data.settings); }
     } catch (_) { /* private mode or blocked storage: play on without saving */ }
     let timer = 0;
     const flush = () => {
@@ -123,6 +123,25 @@
     squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); }
   };
 
+  // Soft, slow, generative background music (off by default; a grown-up turns it on).
+  const CHORDS = [[261.6, 329.6, 392], [220, 261.6, 329.6], [174.6, 220, 261.6], [196, 246.9, 293.7]];
+  let musicTimer = 0, beat = 0;
+  const musicStep = () => {
+    if (!A.ctx || document.hidden) return;
+    const ch = CHORDS[Math.floor(beat / 4) % CHORDS.length];
+    const n = ch[beat % 3] * (beat % 8 === 5 ? 2 : 1);
+    tone(n, 2.2, { type: 'sine', vol: .035 });
+    if (beat % 4 === 0) tone(ch[0] / 2, 3.4, { type: 'triangle', vol: .03 });
+    beat++;
+  };
+  SPG.music = {
+    sync() {
+      const want = SPG.store.settings.music && SPG.store.settings.sound && !document.hidden;
+      if (want && !musicTimer) { musicStep(); musicTimer = setInterval(musicStep, 950); }
+      else if (!want && musicTimer) { clearInterval(musicTimer); musicTimer = 0; }
+    }
+  };
+
   /* ---------------------------------------------------------------- voice */
   const PHONICS = { a: 'ah', b: 'buh', c: 'kuh', d: 'duh', e: 'eh', f: 'fuh', g: 'guh', h: 'huh', i: 'ih', j: 'juh', k: 'kuh', l: 'luh', m: 'muh', n: 'nuh', o: 'aw', p: 'puh', q: 'kwuh', r: 'ruh', s: 'sss', t: 'tuh', u: 'uh', v: 'vuh', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz' };
   const NAMES = { a: 'Ay', b: 'Bee', c: 'Cee', d: 'Dee', e: 'Ee', f: 'Eff', g: 'Gee', h: 'Aitch', i: 'Eye', j: 'Jay', k: 'Kay', l: 'El', m: 'Em', n: 'En', o: 'Oh', p: 'Pee', q: 'Cue', r: 'Ar', s: 'Ess', t: 'Tee', u: 'You', v: 'Vee', w: 'Double you', x: 'Ex', y: 'Why', z: 'Zee' };
@@ -134,6 +153,7 @@
     'great-job': 'Great job!', 'wow': 'Wow!', 'you-did-it': 'You did it!', 'amazing': 'Amazing!', 'yay': 'Yay!',
     'try-again': 'Try again!',
     'find': 'Can you find the letter', 'follow-bee': 'Follow the bee!', 'is-for': 'is for',
+    'starts-with': 'Which one starts with', 'break-time': 'Time for a little rest!',
     'catch-drops': 'Catch the raindrops!', 'rainbow': 'A rainbow!',
     'plant-seed': 'Tap the soil to plant a seed!', 'water-me': 'Tap the plant to water it!', 'new-friend': 'A new friend!',
     'write-name': "Let's write your name!", 'spell-name': 'Your name is spelled',
@@ -271,6 +291,7 @@
       });
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) SPG.voice.stop(); else safe.keepAwake();
+        SPG.music.sync();
       });
     }
   };

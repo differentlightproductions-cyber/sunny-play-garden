@@ -5,7 +5,7 @@
   const { store, voice, safe, art } = SPG;
   const $ = id => document.getElementById(id);
   const screens = { who: $('who'), setup: $('setup'), hub: $('hub'), stage: $('stage') };
-  const overlays = { gate: $('gate'), parent: $('parent'), fs: $('fs-resume') };
+  const overlays = { brk: $('break'), gate: $('gate'), parent: $('parent'), fs: $('fs-resume') };
   let current = 'who';
   let running = null;
 
@@ -63,7 +63,8 @@
     store.setActive(p.id);
     refreshHub();
     show('hub');
-    voice.say({ say: `Hi ${p.name}!` }, 'welcome');
+    SPG.music.sync();
+    if (!checkLimit()) voice.say({ say: `Hi ${p.name}!` }, 'welcome');
   }
 
   /* ------------------------------------------------------------ setup */
@@ -204,7 +205,7 @@
   function closeParent() {
     closeOverlay(overlays.parent);
     if (!store.active) { store.profiles.length ? renderWho() : openSetup(false); }
-    else refreshHub();
+    else { refreshHub(); checkLimit(); }
   }
   $('parent-close').addEventListener('click', closeParent);
 
@@ -213,7 +214,8 @@
     sw.addEventListener('click', () => {
       store.settings[key] = !store.settings[key]; store.save();
       sw.setAttribute('aria-checked', String(store.settings[key]));
-      if (store.settings[key]) { key === 'sound' ? SPG.sfx.chime() : voice.say({ say: 'Hello!' }); }
+      SPG.music.sync();
+      if (store.settings[key] && key !== 'music') { key === 'sound' ? SPG.sfx.chime() : voice.say({ say: 'Hello!' }); }
     });
     return h('div', { class: 'setting' }, h('span', {}, label), sw);
   }
@@ -256,7 +258,8 @@
     players.append(add);
 
     body.replaceChildren(
-      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound')),
+      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music')),
+      timerSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
         h('p', {}, 'A website cannot stop a child using the tablet’s own buttons. For a true lock, use Android screen pinning together with full screen:'),
@@ -269,11 +272,61 @@
         h('p', {}, 'Prompts are spoken by the tablet’s built-in voice until you add recordings. See RECORDING.md in the project for the list of lines and where the files go.')));
   }
 
+  /* ------------------------------------------------------------ daily play time */
+  const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  const playLog = () => {
+    const s = store.settings;
+    if (!s.playLog || s.playLog.day !== dayKey()) s.playLog = { day: dayKey(), sec: 0 };
+    return s.playLog;
+  };
+  const limitReached = () => { const m = store.settings.timer || 0; return m > 0 && playLog().sec >= m * 60; };
+
+  function drawBreakArt() {
+    const cv = $('break-art'), c = cv.getContext('2d'), w = cv.width;
+    c.clearRect(0, 0, w, w);
+    for (const [x, y, r] of [[.15, .2, 6], [.82, .16, 8], [.9, .55, 5], [.1, .7, 7], [.7, .9, 5]]) art.star(c, x * w, y * w, r * 1.6, '#fff3b0');
+    c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(w / 2, w / 2, w * .32, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(255,214,120,.5)'; for (const [x, y, r] of [[-.12, -.1, .06], [.14, .08, .045], [-.05, .17, .035]]) { c.beginPath(); c.arc(w / 2 + x * w, w / 2 + y * w, r * w, 0, Math.PI * 2); c.fill(); }
+    c.save(); c.translate(w / 2, w / 2 + w * .02); art.face(c, w * .26, { mood: 'sleep' }); c.restore();
+    c.fillStyle = '#fff'; c.font = '700 44px Fredoka, system-ui'; c.fillText('z', w * .72, w * .32); c.font = '700 32px Fredoka, system-ui'; c.fillText('z', w * .82, w * .22);
+  }
+  function showBreak() {
+    if (!overlays.brk.classList.contains('hidden')) return;
+    drawBreakArt(); voice.say('break-time'); openOverlay(overlays.brk);
+  }
+  // Returns true if the rest screen is now showing.
+  function checkLimit() {
+    if (!limitReached() || (current !== 'hub' && current !== 'stage')) return false;
+    showBreak(); return true;
+  }
+  $('break-adult').addEventListener('click', () => askGate(() => { closeOverlay(overlays.brk); openParent(); }));
+  setInterval(() => {
+    if (document.hidden || (current !== 'hub' && current !== 'stage') || anyOverlay()) return;
+    playLog().sec++; store.save();
+    if (limitReached()) showBreak();
+  }, 1000);
+
+  function timerSection() {
+    const cur = store.settings.timer || 0;
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Daily play time' });
+    for (const m of [0, 15, 30, 45, 60]) {
+      const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === m) }, m ? `${m} min` : 'No limit');
+      b.addEventListener('click', () => { store.settings.timer = m; store.save(); renderParent(); });
+      seg.append(b);
+    }
+    const used = Math.floor(playLog().sec / 60);
+    const reset = h('button', { class: 'btn small quiet', type: 'button' }, 'Give more time today');
+    reset.addEventListener('click', () => { playLog().sec = 0; store.save(); renderParent(); });
+    return h('section', {}, h('h3', {}, 'Play time'),
+      h('p', {}, 'When the daily limit is reached, a friendly rest screen appears. It can only be closed by a grown-up.'),
+      seg, h('p', { class: 'fine' }, `Played today: ${used} min`), reset);
+  }
+
   /* ------------------------------------------------------------ safe mode wiring */
   safe.onBack = () => {
     if (!overlays.gate.classList.contains('hidden')) { gateState = null; closeOverlay(overlays.gate); return; }
     if (!overlays.parent.classList.contains('hidden')) { closeParent(); return; }
-    if (!overlays.fs.classList.contains('hidden')) return;
+    if (!overlays.fs.classList.contains('hidden') || !overlays.brk.classList.contains('hidden')) return;
     if (current === 'stage') closeGame();
     else if (current === 'setup' && store.profiles.length) renderWho();
   };

@@ -14,7 +14,7 @@
       this.ctx = this.canvas.getContext('2d');
       this.fx = new art.Fx();
       this.fruits = []; this.halves = []; this.splats = [];
-      this.t = 0; this.sliced = 0; this.recent = []; this.lastSwoosh = 0; this.lastPraise = 0;
+      this.t = 0; this.starIn = 12 + Math.random() * 8; this.sliced = 0; this.recent = []; this.lastSwoosh = 0; this.lastPraise = 0;
       this.running = false; this.pointerId = null; this.lastPoint = null; this.trail = [];
       this.tick = this.tick.bind(this);
       const cv = this.canvas;
@@ -86,7 +86,22 @@
       }
     }
 
+    // A rare golden star: slicing it rains stars and gives a little bonus.
+    spawnStar() {
+      const g = this.h * 1.05, r = Math.max(44, Math.min(84, Math.min(this.w * .11, this.h * .1)));
+      const x = this.w * (.25 + Math.random() * .5);
+      this.fruits.push({ x, y: this.h + r + 6, vx: (this.w / 2 - x) * .25, vy: -Math.sqrt(2 * g * this.h * .62), r, special: true, type: 0, rotation: 0, vr: .8, wow: 0, blink: 9 });
+    }
+
+    cutStar(f) {
+      store.addStars(2); sfx.win(); voice.praise();
+      this.fx.burst(f.x, f.y, 30, { colors: ['#ffd54a', '#fff3b0', '#ffb347'], speed: 420, g: 500, life: 1.2, size: f.r * .22, shape: 'star', up: 160 });
+      for (let i = 0; i < 26; i++) this.fx.p.push({ x: Math.random() * this.w, y: -20 - Math.random() * this.h * .3, vx: (Math.random() - .5) * 60, vy: 120 + Math.random() * 180, g: 180, life: 2 + Math.random(), max: 2.5, size: 9 + Math.random() * 12, color: ['#ffd54a', '#fff3b0', '#ff9db8', '#a6e8c8'][i % 4], shape: 'star', rot: Math.random() * 6, vr: (Math.random() - .5) * 5 });
+      for (let i = 0; i < 6; i++) sfx.plink(i);
+    }
+
     cut(f) {
+      if (f.special) { this.cutStar(f); return; }
       this.sliced++;
       const kick = Math.max(this.h * .1, 70);
       for (const side of [-1, 1]) this.halves.push({ ...f, side, x: f.x + side * 4, vx: f.vx * .6 + side * kick, vy: f.vy * .4 - kick * .5, vr: side * 2.6, life: 1.1 });
@@ -133,6 +148,7 @@
       this.spawnIn -= dt;
       if (this.fruits.length === 0) this.spawnIn = Math.min(this.spawnIn, .35);
       if (this.spawnIn <= 0) this.spawn();
+      if ((this.starIn -= dt) <= 0) { this.spawnStar(); this.starIn = 22 + Math.random() * 16; }
       const g = this.h * 1.05;
       for (const f of this.fruits) {
         f.x += f.vx * dt; f.y += f.vy * dt; f.vy += g * dt; f.rotation += f.vr * dt; f.blink -= dt;
@@ -159,9 +175,14 @@
       }
       c.globalAlpha = 1;
       for (const f of this.fruits) {
-        c.save(); c.translate(f.x, f.y); c.rotate(f.rotation * .35);
+        c.save(); c.translate(f.x, f.y); c.rotate(f.special ? Math.sin(this.t * 2) * .12 : f.rotation * .35);
         c.shadowColor = 'rgba(90,63,94,.18)'; c.shadowBlur = f.r * .3; c.shadowOffsetY = f.r * .14;
-        art.fruit(c, f.type, f.r, { mood: f.wow > 0 ? 'wow' : 'happy', blink: f.blink < .12 && f.blink > 0 });
+        if (f.special) {
+          const pulse = 1 + Math.sin(this.t * 6) * .05;
+          c.shadowColor = 'rgba(255,213,74,.9)'; c.shadowBlur = f.r * .9; c.shadowOffsetY = 0;
+          art.star(c, 0, 0, f.r * pulse, '#ffd54a'); c.shadowBlur = 0;
+          c.save(); c.translate(0, f.r * .06); art.face(c, f.r * .62, { mood: f.wow > 0 ? 'wow' : 'happy' }); c.restore();
+        } else art.fruit(c, f.type, f.r, { mood: f.wow > 0 ? 'wow' : 'happy', blink: f.blink < .12 && f.blink > 0 });
         c.restore();
       }
       for (const hf of this.halves) {

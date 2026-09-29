@@ -23,6 +23,8 @@ To replace a line with a real voice, record it and save it in `audio/voice/` usi
 | `yay.mp3` | Yay! |
 | `try-again.mp3` | Try again! |
 | `follow-bee.mp3` | Follow the bee! |
+| `starts-with.mp3` | Which one starts with |
+| `break-time.mp3` | Time for a little rest! |
 | `catch-drops.mp3` | Catch the raindrops! |
 | `rainbow.mp3` | A rainbow! |
 | `plant-seed.mp3` | Tap the soil to plant a seed! |

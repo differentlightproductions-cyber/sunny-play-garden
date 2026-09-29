@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#fff3d4">
+  <title>Sunny Play Garden</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="games/fruit-slice.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main id="hub" class="screen hub">
+    <header class="hub-header">
+      <div class="sun" aria-hidden="true">☀</div>
+      <p class="eyebrow">A little place to play</p>
+      <h1>Sunny Play Garden</h1>
+      <p class="subtitle">Pick a game and have fun!</p>
+    </header>
+    <section id="game-list" class="game-list" aria-label="Games"></section>
+    <button class="fullscreen hub-fullscreen" data-fullscreen type="button">⛶ &nbsp;Full screen</button>
+  </main>
+
+  <main id="ready" class="screen ready hidden">
+    <button class="back-button" data-home type="button" aria-label="Back to games">← <span>Games</span></button>
+    <div class="ready-content">
+      <div class="fruit-badge" aria-hidden="true">🍉</div>
+      <p class="eyebrow">Ready to play?</p>
+      <h1>Fruit Splash!</h1>
+      <p class="ready-hint">Swipe through the flying fruit!</p>
+      <button id="play-button" class="primary-button" type="button">▶ &nbsp;PLAY</button>
+      <p class="gentle-note">Play as long as you like ✨</p>
+    </div>
+  </main>
+
+  <main id="play" class="screen play hidden">
+    <canvas id="game-canvas" aria-label="Fruit slicing play area"></canvas>
+    <div class="play-hud">
+      <div id="score" class="score" aria-live="off">⭐ 0</div>
+      <div class="hud-buttons">
+        <button class="hud-button" data-fullscreen type="button" aria-label="Full screen">⛶</button>
+        <button id="pause-button" class="hud-button" type="button" aria-label="Pause game">Ⅱ</button>
+      </div>
+    </div>
+    <div id="pause-menu" class="pause-menu hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="pause-card">
+        <div class="pause-fruit" aria-hidden="true">🍊</div>
+        <h2 id="pause-title">Taking a break?</h2>
+        <button id="resume-button" class="primary-button" type="button">▶ &nbsp;Keep playing</button>
+        <button id="restart-button" class="secondary-button" type="button">↻ &nbsp;Start again</button>
+        <button id="home-button" class="secondary-button" type="button">⌂ &nbsp;Games</button>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

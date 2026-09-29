@@ -1,46 +1,75 @@
-# Recording the voice lines
+# Recording your own voice
 
-Until a recording exists for a line, the tablet's built-in voice speaks it instead, so nothing is ever silent.
-To replace a line with a real voice, record it and save it in `audio/voice/` using the file name below.
+The games speak every line with the tablet's built-in voice until you record your own. You can record a
+**male** and a **female** voice; the games mix them (or use just one, your choice).
 
-**Tips**
-- Record in a quiet room, phone voice memo is fine. Speak warmly and a little slowly, like reading to her.
-- Keep each clip short with no long silence at the start or end.
-- Save or convert to **MP3** and use the exact file name in the table.
-- You can record just a few. Anything missing keeps using the built-in voice.
-- Letter *names* say "Bee"; letter *sounds* say the sound "buh" (not "bee").
-- Her name is always spoken by the built-in voice, since it is different for every player.
+## Easiest way: record on the tablet
+1. Open **Grown-ups** (lock icon), answer the sum, then **Voices > Record and choose voices**.
+2. Pick **Male voice** or **Female voice** (whoever is recording).
+3. Open a group, tap **Record**, say the line, tap **Stop**. Tap **Hear** to check it.
+4. Every line has its own switch: turn off any line you don't want the games to say.
+5. Set how often the games cheer ("Every time", "Sometimes", "Never").
 
-## Praise and prompts
+Recordings are saved on that tablet. Anything you skip keeps using the built-in voice.
+Quiet recordings are levelled and silence is trimmed automatically.
+
+## Or: drop in files
+Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3` using the names below, then run
+`node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
+
+## Suggested order (most useful first)
+1. **Cheering** and **Prompts**: about 30 short lines.
+2. **Letter sounds** and **Letter names**: the heart of the letter games.
+3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
+4. **Picture words**, **Garden friend announcements**, **Player names**.
+
+## Cheering
+
+Said after she does something well. Turn down how often in the "Praise" setting.
 
 | File | Say |
 |---|---|
-| `welcome.mp3` | Hi! Let's play! |
 | `great-job.mp3` | Great job! |
 | `wow.mp3` | Wow! |
 | `you-did-it.mp3` | You did it! |
 | `amazing.mp3` | Amazing! |
 | `yay.mp3` | Yay! |
-| `try-again.mp3` | Try again! |
-| `follow-bee.mp3` | Follow the bee! |
-| `starts-with.mp3` | Which one starts with |
-| `break-time.mp3` | Time for a little rest! |
-| `catch-drops.mp3` | Catch the raindrops! |
-| `rainbow.mp3` | A rainbow! |
-| `plant-seed.mp3` | Tap the soil to plant a seed! |
-| `water-me.mp3` | Tap the plant to water it! |
-| `new-friend.mp3` | A new friend! |
-| `write-name.mp3` | Let's write your name! |
 
-## Sentence pieces (spoken between other clips)
+## Prompts and instructions
+
+Short lines that tell her what to do.
 
 | File | Say |
 |---|---|
+| `welcome.mp3` | Hi! Let's play! |
+| `try-again.mp3` | Try again! |
 | `find.mp3` | Can you find the letter |
+| `follow-bee.mp3` | Follow the bee! |
 | `is-for.mp3` | is for |
+| `starts-with.mp3` | Which one starts with |
+| `write-name.mp3` | Let's write your name! |
 | `spell-name.mp3` | Your name is spelled |
+| `catch-drops.mp3` | Catch the raindrops! |
+| `rainbow.mp3` | A rainbow! |
+| `raining-pets.mp3` | It's raining cats and dogs! |
+| `pets-safe.mp3` | You saved them all! |
+| `dig-first.mp3` | First, dig a hole with the shovel! |
+| `dig-one.mp3` | Dig! One! |
+| `dig-two.mp3` | Two! |
+| `dig-three.mp3` | Three! A perfect hole! |
+| `pat-it.mp3` | Now pat the dirt down! |
+| `bye-bye.mp3` | Bye bye, friend! Have fun! |
+| `pour-water.mp3` | Hold the can over the plant to water it! |
+| `seed-in.mp3` | Now drop in a seed! |
+| `water-me.mp3` | Tap the plant to water it! |
+| `new-friend.mp3` | A new friend! |
+| `new-seeds.mp3` | New seeds to plant! |
+| `bigger-garden.mp3` | Your garden got bigger! |
+| `break-time.mp3` | Time for a little rest! |
 
-## Letter names
+## Letter names (A to Z)
+
+Say the name of the letter: "Bee", "Cee".
 
 | File | Say |
 |---|---|
@@ -71,7 +100,9 @@ To replace a line with a real voice, record it and save it in `audio/voice/` usi
 | `letter-y.mp3` | Why |
 | `letter-z.mp3` | Zee |
 
-## Letter sounds (the phonics sound, not the name)
+## Letter sounds (A to Z)
+
+Say the sound the letter makes: "buh", "kuh", "sss". Not the name.
 
 | File | Say |
 |---|---|
@@ -104,6 +135,8 @@ To replace a line with a real voice, record it and save it in `audio/voice/` usi
 
 ## Picture words
 
+The word for each letter picture: apple, bear, cat...
+
 | File | Say |
 |---|---|
 | `word-a.mp3` | apple |
@@ -133,7 +166,9 @@ To replace a line with a real voice, record it and save it in `audio/voice/` usi
 | `word-y.mp3` | yarn |
 | `word-z.mp3` | zebra |
 
-## Garden friends
+## Garden friend announcements
+
+Said when a new garden friend appears.
 
 | File | Say |
 |---|---|
@@ -143,4 +178,33 @@ To replace a line with a real voice, record it and save it in `audio/voice/` usi
 | `creature-bunny.mp3` | A bunny! |
 | `creature-bird.mp3` | A little bird! |
 | `creature-snail.mp3` | A snail! |
+| `creature-hedgehog.mp3` | A hedgehog! |
+| `creature-frog.mp3` | A frog! |
+| `creature-duckling.mp3` | A duckling! |
+| `creature-mouse.mp3` | A little mouse! |
+| `creature-turtle.mp3` | A turtle! |
+| `creature-dragonfly.mp3` | A dragonfly! |
+| `creature-cat.mp3` | A kitty! |
+| `creature-dog.mp3` | A puppy! |
+
+## Critter noises (make the sound!)
+
+Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.
+
+| File | Say |
+|---|---|
+| `critter-bee.mp3` | Bzzzz! |
+| `critter-butterfly.mp3` | a soft flutter noise |
+| `critter-ladybug.mp3` | a tiny squeak |
+| `critter-bunny.mp3` | a happy sniffle |
+| `critter-bird.mp3` | Tweet tweet! |
+| `critter-snail.mp3` | a slow, sleepy "sloooow" |
+| `critter-hedgehog.mp3` | a little snuffle |
+| `critter-frog.mp3` | Ribbit! |
+| `critter-duckling.mp3` | Quack quack! |
+| `critter-mouse.mp3` | Squeak squeak! |
+| `critter-turtle.mp3` | a slow "hellooo" |
+| `critter-dragonfly.mp3` | a quick buzzy zip |
+| `critter-cat.mp3` | Meow! |
+| `critter-dog.mp3` | Woof woof! |
 

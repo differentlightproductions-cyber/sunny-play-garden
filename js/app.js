@@ -5,7 +5,7 @@
   const { store, voice, safe, art } = SPG;
   const $ = id => document.getElementById(id);
   const screens = { who: $('who'), setup: $('setup'), hub: $('hub'), stage: $('stage') };
-  const overlays = { brk: $('break'), gate: $('gate'), parent: $('parent'), fs: $('fs-resume') };
+  const overlays = { brk: $('break'), gate: $('gate'), parent: $('parent'), studio: $('studio'), fs: $('fs-resume') };
   let current = 'who';
   let running = null;
 
@@ -64,7 +64,8 @@
     refreshHub();
     show('hub');
     SPG.music.sync();
-    if (!checkLimit()) voice.say({ say: `Hi ${p.name}!` }, 'welcome');
+    voice.custom['player/' + p.id] = `Hi ${p.name}!`;
+    if (!checkLimit()) voice.say('player/' + p.id, 'welcome');
   }
 
   /* ------------------------------------------------------------ setup */
@@ -103,8 +104,8 @@
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, av.width, av.height);
     c.translate(32, 38); art.avatar(c, p.avatar, 22);
   }
-  $('hub-who').addEventListener('click', () => { voice.stop(); renderWho(); });
-  $('hub-lock').addEventListener('click', () => askGate(openParent));
+  SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
+  SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
   const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], garden: ['#dff5d0', '#a9d98f'] };
   function renderCards() {
@@ -114,7 +115,7 @@
       const canvas = document.createElement('canvas');
       const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-i * 1.1}s` },
         canvas, h('span', { class: 'card-name' }, h('span', {}, g.name), h('span', { class: 'go' }, icon('play'))));
-      card.addEventListener('click', () => openGame(g));
+      SPG.ui.press(card, () => openGame(g));
       card._draw = () => {
         const r = canvas.getBoundingClientRect();
         if (!r.width) return;
@@ -136,6 +137,7 @@
     $('stage-stars').textContent = store.active.stars;
     const host = $('game-host');
     host.replaceChildren();
+    document.body.classList.toggle('in-canvas', g.id !== 'letters');
     running = { game: g, inst: null, paused: false };
     running.inst = g.create(host);
     running.inst.start?.();
@@ -144,14 +146,14 @@
   function closeGame() {
     if (!running) return;
     running.inst.destroy?.();
-    running = null;
+    running = null; document.body.classList.remove('in-canvas');
     voice.stop();
     $('game-host').replaceChildren();
     refreshHub();
     show('hub');
     requestAnimationFrame(drawCards);
   }
-  $('btn-home').addEventListener('click', () => { SPG.sfx.tap(); closeGame(); });
+  SPG.ui.press($('btn-home'), () => { SPG.sfx.tap(); closeGame(); });
 
   SPG.onStars = n => {
     for (const id of ['hub-stars', 'stage-stars']) {
@@ -176,7 +178,7 @@
   }
   (() => {
     const pad = $('numpad');
-    const key = (label, cls, fn) => { const b = h('button', { type: 'button', class: cls || '' }, label); b.addEventListener('click', () => { SPG.sfx.tap(); fn(); }); return b; };
+    const key = (label, cls, fn) => { const b = h('button', { type: 'button', class: cls || '' }, label); SPG.ui.press(b, () => { SPG.sfx.tap(); fn(); }); return b; };
     for (let n = 1; n <= 9; n++) pad.append(key(String(n), '', () => type(String(n))));
     pad.append(key(icon('back'), '', () => { gateState.entry = gateState.entry.slice(0, -1); paintAnswer(); }));
     pad.append(key('0', '', () => type('0')));
@@ -195,7 +197,7 @@
       }
     }
   })();
-  $('gate-cancel').addEventListener('click', () => { gateState = null; closeOverlay(overlays.gate); });
+  SPG.ui.press($('gate-cancel'), () => { gateState = null; closeOverlay(overlays.gate); });
 
   /* ------------------------------------------------------------ grown-ups panel */
   let installPrompt = null;
@@ -208,6 +210,10 @@
     else { refreshHub(); checkLimit(); }
   }
   $('parent-close').addEventListener('click', closeParent);
+
+  function openStudio() { SPG.studio.render($('studio-body')); openOverlay(overlays.studio); }
+  function closeStudio() { SPG.studio.abort(); voice.stop(); closeOverlay(overlays.studio); renderParent(); }
+  $('studio-close').addEventListener('click', closeStudio);
 
   function toggle(label, key) {
     const sw = h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': String(!!store.settings[key]), 'aria-label': label });
@@ -259,6 +265,7 @@
 
     body.replaceChildren(
       h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music')),
+      voicesSection(),
       timerSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
@@ -299,12 +306,22 @@
     if (!limitReached() || (current !== 'hub' && current !== 'stage')) return false;
     showBreak(); return true;
   }
-  $('break-adult').addEventListener('click', () => askGate(() => { closeOverlay(overlays.brk); openParent(); }));
+  SPG.ui.press($('break-adult'), () => askGate(() => { closeOverlay(overlays.brk); openParent(); }));
   setInterval(() => {
     if (document.hidden || (current !== 'hub' && current !== 'stage') || anyOverlay()) return;
     playLog().sec++; store.save();
     if (limitReached()) showBreak();
   }, 1000);
+
+  function voicesSection() {
+    const keys = voice.allKeys();
+    const n = set => keys.filter(k => voice.hasClip(set, k)).length;
+    const b = h('button', { class: 'btn small go', type: 'button' }, 'Record and choose voices');
+    b.addEventListener('click', openStudio);
+    return h('section', {}, h('h3', {}, 'Voices'),
+      h('p', {}, 'Record your own voice for the games (a male and a female voice can be mixed), switch off lines you don\u2019t want, and choose how often the games cheer.'),
+      h('p', { class: 'fine' }, `Recorded so far: male ${n('male')}, female ${n('female')} of ${keys.length} lines.`), b);
+  }
 
   function timerSection() {
     const cur = store.settings.timer || 0;
@@ -325,6 +342,7 @@
   /* ------------------------------------------------------------ safe mode wiring */
   safe.onBack = () => {
     if (!overlays.gate.classList.contains('hidden')) { gateState = null; closeOverlay(overlays.gate); return; }
+    if (!overlays.studio.classList.contains('hidden')) { closeStudio(); return; }
     if (!overlays.parent.classList.contains('hidden')) { closeParent(); return; }
     if (!overlays.fs.classList.contains('hidden') || !overlays.brk.classList.contains('hidden')) return;
     if (current === 'stage') closeGame();

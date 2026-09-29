@@ -117,6 +117,14 @@
     </div>
   </div>
 
+  <!-- Record and choose voices -->
+  <div id="studio" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="studio-title">
+    <div class="sheet wide" data-scroll>
+      <div class="sheet-head"><h2 id="studio-title">Voices</h2><button id="studio-close" class="btn go small" type="button"><svg><use href="#i-check"/></svg> Done</button></div>
+      <div id="studio-body"></div>
+    </div>
+  </div>
+
   <!-- Shown if fullscreen was left by accident -->
   <div id="fs-resume" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Keep playing">
     <button id="fs-play" class="btn-play" type="button" aria-label="Keep playing"><svg><use href="#i-play"/></svg></button>
@@ -124,11 +132,15 @@
 
   <script src="js/glyphs.js"></script>
   <script src="js/core.js"></script>
+  <script src="js/voice.js"></script>
   <script src="js/art.js"></script>
+  <script src="js/art-garden.js"></script>
+  <script src="js/art-pets.js"></script>
   <script src="games/letters.js"></script>
   <script src="games/fruit.js"></script>
   <script src="games/rain.js"></script>
   <script src="games/garden.js"></script>
+  <script src="js/studio.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

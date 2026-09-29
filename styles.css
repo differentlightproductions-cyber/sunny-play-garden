@@ -164,7 +164,7 @@ button.chip:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(90, 63
 .card {
   position: relative; border: 0; padding: 0; min-height: 0; border-radius: clamp(26px, 4vmin, 44px); overflow: hidden;
   background: var(--tint, #fff); box-shadow: 0 10px 0 var(--edge, rgba(90, 63, 94, .18)), 0 22px 30px rgba(90, 63, 94, .16);
-  display: flex; flex-direction: column; color: var(--ink); animation: float 5s ease-in-out infinite; animation-delay: var(--d, 0s);
+  display: flex; flex-direction: column; color: var(--ink);
 }
 .card:active { transform: translateY(8px) scale(.99); box-shadow: 0 2px 0 var(--edge); animation: none; }
 .card canvas { flex: 1; min-height: 0; width: 100%; display: block; }
@@ -284,7 +284,7 @@ button.chip:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(90, 63
 .gd-tool { border: 0; padding: 0; width: clamp(64px, 12vmin, 104px); height: clamp(64px, 12vmin, 104px); border-radius: 50%; background: transparent; transition: transform .12s; position: relative; }
 .gd-tool.on { transform: translateY(-8px) scale(1.1); }
 .gd-tool.on::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 6px solid var(--leaf); box-shadow: 0 0 0 3px #fff; }
-.gd-tool.shovel, .gd-tool.book { margin-left: 4px; }
+.gd-tool.book { margin-left: 4px; }
 .gd-thumb { width: 100%; height: 100%; display: block; }
 .gd-book { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(90, 63, 94, .5); }
 .gd-book-sheet { background: var(--cream); border-radius: 36px; padding: clamp(18px, 3vmin, 32px); width: min(92vw, 820px); text-align: center; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 18px; }
@@ -324,3 +324,60 @@ button.chip:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(90, 63
 #gate { z-index: 70; }
 #fs-resume { z-index: 65; }
 .lg-emoji, .lg-emoji-opt, .lg-reveal-emoji, .lg-reveal { font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
+
+/* ================= voices studio ================= */
+#studio { z-index: 55; }
+.notice { background: #fff0d6; border-radius: 16px; padding: .7em 1em; margin: 8px 0; font-weight: 600; }
+details.vgroup { border-top: 3px dashed #e8dcee; padding: 6px 0; }
+details.vgroup > summary { font-weight: 700; font-size: 1.25rem; padding: 10px 0; cursor: pointer; list-style: revert; }
+.vrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 2px dotted #efe3f3; flex-wrap: wrap; }
+.vrow-text { flex: 1 1 200px; min-width: 160px; font-size: 1.1rem; }
+.vrow.done .vrow-text b::after { content: ' \2713'; color: var(--leaf); }
+.vrec { background: #ffe1e4; color: #b13a4f; box-shadow: 0 6px 0 #f3bcc4; }
+.vrec.rec-on { background: #ff5a6a; color: #fff; box-shadow: 0 6px 0 #c93a4a; animation: recpulse 1s infinite; }
+.vrec[disabled], .btn[disabled] { opacity: .45; pointer-events: none; }
+@keyframes recpulse { 50% { transform: scale(1.04); } }
+
+/* ================= game counters ================= */
+.hud-count { position: absolute; z-index: 5; top: calc(var(--safe-t) + 14px); right: calc(var(--safe-r) + 168px); display: flex; align-items: center; gap: .3em; padding: .2em .9em .2em .35em; min-height: 60px; border-radius: 999px; background: rgba(255, 255, 255, .92); font-weight: 700; font-size: 1.6rem; box-shadow: 0 6px 0 rgba(90, 63, 94, .14); }
+.hud-count canvas { width: 44px; height: 44px; }
+
+/* ================= garden: tools, seed tray, friends book ================= */
+.gd-tool.hint::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 5px solid var(--sun); animation: hintring 1s ease-in-out infinite; }
+@keyframes hintring { 50% { transform: scale(1.12); opacity: .55; } }
+.gd-tray { position: absolute; z-index: 7; left: 50%; bottom: calc(var(--safe-b) + 150px); transform: translateX(-50%); display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 14px; border-radius: 34px; background: rgba(255, 255, 255, .9); box-shadow: 0 10px 0 rgba(90, 63, 94, .12), 0 20px 30px rgba(90, 63, 94, .18); max-width: 96vw; }
+.gd-packet { position: relative; border: 0; padding: 0; width: clamp(66px, 12vmin, 104px); height: clamp(76px, 14vmin, 118px); background: transparent; }
+.gd-packet.on::after { content: ''; position: absolute; inset: -3px; border-radius: 22px; border: 5px solid var(--leaf); }
+.gd-packet.locked .gd-thumb { filter: grayscale(1) brightness(1.1); opacity: .55; }
+.gd-lock { position: absolute; inset: 0; display: grid; place-items: center; color: #5a3f5e; }
+.gd-lock svg { width: 46%; height: 46%; grid-area: 1 / 1; margin-top: -14%; }
+.gd-lock b { grid-area: 1 / 1; margin-top: 46%; font-size: 1rem; background: #fff; border-radius: 999px; padding: 0 .55em; box-shadow: 0 2px 0 rgba(90, 63, 94, .2); }
+.gd-packet.nope { animation: nope .4s; }
+.gd-book-grid { grid-template-columns: repeat(4, 1fr); }
+.gd-book-tile { aspect-ratio: 1; }
+.gd-book-count { font-weight: 700; font-size: 1.4rem; color: var(--ink-soft); }
+@media (orientation: portrait) { .gd-book-grid { grid-template-columns: repeat(3, 1fr); } .gd-tray { grid-template-columns: repeat(4, 1fr); } }
+.gd-tool.seed { margin: 0 4px; }
+.hud-count.second { top: calc(var(--safe-t) + 84px); }
+.gd-badge { position: absolute; right: -6px; bottom: -6px; width: 34px; height: 34px; display: grid; place-items: center; font-size: 1.3rem; background: #fff; border-radius: 50%; box-shadow: 0 3px 0 rgba(90, 63, 94, .2); font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; pointer-events: none; }
+.gd-tool { position: relative; }
+.gd-book-sheet { max-height: 94vh; overflow-y: auto; }
+
+.in-canvas .backdrop { visibility: hidden; }
+
+/* ================= garden: step guide ================= */
+.gd-steps { position: absolute; z-index: 6; top: calc(var(--safe-t) + 14px); left: 50%; transform: translateX(-50%); display: flex; gap: 20px; align-items: center; padding: 8px 20px 12px; border-radius: 999px; background: rgba(255, 255, 255, .85); box-shadow: 0 6px 0 rgba(90, 63, 94, .12); pointer-events: none; }
+.gd-step { position: relative; width: 54px; height: 54px; opacity: .5; transition: transform .2s, opacity .2s; }
+.gd-step.now { opacity: 1; transform: scale(1.22); }
+.gd-step canvas { width: 100%; height: 100%; display: block; }
+.gd-step::after { content: '\203A'; position: absolute; right: -16px; top: 50%; transform: translateY(-58%); font-size: 1.7rem; font-weight: 700; color: var(--ink-soft); }
+.gd-step:last-child::after { display: none; }
+.gd-pips { position: absolute; left: 0; right: 0; bottom: -10px; display: flex; justify-content: center; gap: 4px; }
+.gd-pip { width: 11px; height: 11px; border-radius: 50%; background: #e0d3e6; border: 2px solid #fff; }
+.gd-pip.on { background: var(--leaf); }
+
+/* narrow screens: counters go under the stars so nothing overlaps the garden step guide */
+@media (max-width: 900px) {
+  .hud-count { top: calc(var(--safe-t) + 84px); right: calc(var(--safe-r) + 14px); }
+  .hud-count.second { top: calc(var(--safe-t) + 154px); }
+}

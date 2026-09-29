@@ -15,7 +15,9 @@
       this.fx = new art.Fx();
       this.fruits = []; this.halves = []; this.splats = [];
       this.t = 0; this.starIn = 12 + Math.random() * 8; this.sliced = 0; this.recent = []; this.lastSwoosh = 0; this.lastPraise = 0;
-      this.running = false; this.pointerId = null; this.lastPoint = null; this.trail = [];
+      this.running = false; this.ptrs = new Map(); this.faded = []; // up to 5 fingers at once
+      this.bag = store.bag('fruit', () => ({ total: 0 }));
+      this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s / 2 + 2); art.fruit(c, 2, s * .36, {}); }, this.bag.total);
       this.tick = this.tick.bind(this);
       const cv = this.canvas;
       cv.addEventListener('pointerdown', e => this.down(e));
@@ -28,7 +30,7 @@
       if (!r.width || !r.height) return;
       const ow = this.w || r.width, oh = this.h || r.height;
       this.w = r.width; this.h = r.height;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = SPG.ui.dpr();
       this.canvas.width = Math.round(this.w * dpr); this.canvas.height = Math.round(this.h * dpr);
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       for (const f of [...this.fruits, ...this.halves]) { f.x *= this.w / ow; f.y *= this.h / oh; f.vx *= this.w / ow; f.vy *= this.h / oh; }
@@ -37,8 +39,8 @@
 
     start() { this.resize(); this.spawnIn = .4; this.resume(); }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
-    pause() { this.running = false; cancelAnimationFrame(this.raf); this.pointerId = null; this.lastPoint = null; this.trail.length = 0; }
-    destroy() { this.pause(); this.canvas.remove(); }
+    pause() { this.running = false; cancelAnimationFrame(this.raf); this.ptrs.clear(); this.faded.length = 0; }
+    destroy() { this.pause(); this.canvas.remove(); this.counter.el.remove(); }
 
     point(e) {
       const r = this.canvas.getBoundingClientRect();
@@ -46,28 +48,35 @@
     }
 
     down(e) {
-      if (!this.running || this.pointerId !== null) return;
+      if (!this.running || (this.ptrs.size >= 5 && !this.ptrs.has(e.pointerId))) return;
       e.preventDefault();
-      this.pointerId = e.pointerId; try { this.canvas.setPointerCapture(e.pointerId); } catch (_) { /* capture is optional */ }
-      this.lastPoint = this.point(e); this.trail.push(this.lastPoint);
-      this.slice(this.lastPoint, this.lastPoint, 1.2); // a tap counts as a slice
+      try { this.canvas.setPointerCapture(e.pointerId); } catch (_) { /* capture is optional */ }
+      const p = this.point(e);
+      this.ptrs.set(e.pointerId, { last: p, trail: [p] });
+      this.slice(p, p, 1.2); // a tap counts as a slice
     }
 
     move(e) {
-      if (!this.running || e.pointerId !== this.pointerId) return;
+      const st = this.ptrs.get(e.pointerId);
+      if (!this.running || !st) return;
       e.preventDefault();
       for (const ev of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e])) {
         const next = this.point(ev);
-        const speed = Math.hypot(next.x - this.lastPoint.x, next.y - this.lastPoint.y);
+        const speed = Math.hypot(next.x - st.last.x, next.y - st.last.y);
         if (speed > 14 && next.time - this.lastSwoosh > 240) { sfx.whoosh(); this.lastSwoosh = next.time; }
-        this.slice(this.lastPoint, next, 1);
-        this.lastPoint = next; this.trail.push(next);
+        this.slice(st.last, next, 1);
+        st.last = next; st.trail.push(next);
         if (speed > 6) this.fx.burst(next.x, next.y, 1, { colors: ['#fff', '#ffd1e0', '#ffe98a'], speed: 40, g: 0, life: .4, size: 4 });
       }
-      if (this.trail.length > 26) this.trail.splice(0, this.trail.length - 26);
+      if (st.trail.length > 26) st.trail.splice(0, st.trail.length - 26);
     }
 
-    up(e) { if (e.pointerId !== this.pointerId) return; this.pointerId = null; this.lastPoint = null; }
+    up(e) {
+      const st = this.ptrs.get(e.pointerId);
+      if (!st) return;
+      this.ptrs.delete(e.pointerId);
+      this.faded.push(st.trail); // let the finished swipe fade out instead of vanishing
+    }
 
     // A whole segment catches fruit even when a fast swipe skips over it between events.
     static hits(a, b, c, mul) {
@@ -102,7 +111,7 @@
 
     cut(f) {
       if (f.special) { this.cutStar(f); return; }
-      this.sliced++;
+      this.sliced++; this.bag.total++; this.counter.set(this.bag.total); store.save();
       const kick = Math.max(this.h * .1, 70);
       for (const side of [-1, 1]) this.halves.push({ ...f, side, x: f.x + side * 4, vx: f.vx * .6 + side * kick, vy: f.vy * .4 - kick * .5, vr: side * 2.6, life: 1.1 });
       const juice = art.FRUIT_JUICE[f.type];
@@ -152,7 +161,8 @@
       const g = this.h * 1.05;
       for (const f of this.fruits) {
         f.x += f.vx * dt; f.y += f.vy * dt; f.vy += g * dt; f.rotation += f.vr * dt; f.blink -= dt;
-        f.wow = this.lastPoint && Math.hypot(f.x - this.lastPoint.x, f.y - this.lastPoint.y) < f.r * 2.4 ? .3 : Math.max(0, f.wow - dt);
+        let near = false; for (const st of this.ptrs.values()) if (Math.hypot(f.x - st.last.x, f.y - st.last.y) < f.r * 2.4) near = true;
+        f.wow = near ? .3 : Math.max(0, f.wow - dt);
       }
       this.fruits = this.fruits.filter(f => f.y < this.h + f.r * 2.5 && f.x > -f.r * 3 && f.x < this.w + f.r * 3);
       for (const h of this.halves) { h.x += h.vx * dt; h.y += h.vy * dt; h.vy += g * dt; h.rotation += h.vr * dt; h.life -= dt; }
@@ -160,7 +170,8 @@
       for (const s of this.splats) s.life -= dt;
       this.splats = this.splats.filter(s => s.life > 0);
       this.fx.update(dt);
-      this.trail = this.trail.filter(p => now - p.time < 170);
+      for (const st of this.ptrs.values()) st.trail = st.trail.filter(p => now - p.time < 170);
+      this.faded = this.faded.map(tr => tr.filter(p => now - p.time < 170)).filter(tr => tr.length > 1);
       this.draw();
       this.raf = requestAnimationFrame(this.tick);
     }
@@ -176,7 +187,7 @@
       c.globalAlpha = 1;
       for (const f of this.fruits) {
         c.save(); c.translate(f.x, f.y); c.rotate(f.special ? Math.sin(this.t * 2) * .12 : f.rotation * .35);
-        c.shadowColor = 'rgba(90,63,94,.18)'; c.shadowBlur = f.r * .3; c.shadowOffsetY = f.r * .14;
+        c.rotate(-(f.special ? Math.sin(this.t * 2) * .12 : f.rotation * .35)); c.fillStyle = 'rgba(90,63,94,.1)'; c.beginPath(); c.ellipse(0, f.r * .95, f.r * .75, f.r * .16, 0, 0, TAU); c.fill(); c.rotate(f.special ? Math.sin(this.t * 2) * .12 : f.rotation * .35);
         if (f.special) {
           const pulse = 1 + Math.sin(this.t * 6) * .05;
           c.shadowColor = 'rgba(255,213,74,.9)'; c.shadowBlur = f.r * .9; c.shadowOffsetY = 0;
@@ -193,10 +204,12 @@
         c.restore();
       }
       this.fx.draw(c);
-      if (this.trail.length > 1) {
-        c.lineCap = 'round'; c.lineJoin = 'round';
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      const trails = [...[...this.ptrs.values()].map(st => st.trail), ...this.faded];
+      for (const tr of trails) {
+        if (tr.length < 2) continue;
         for (const [col, wd] of [['rgba(255,122,154,.55)', 22], ['rgba(255,255,255,.95)', 7]]) {
-          c.beginPath(); this.trail.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.strokeStyle = col; c.lineWidth = wd; c.stroke();
+          c.beginPath(); tr.forEach((p, i) => i ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.strokeStyle = col; c.lineWidth = wd; c.stroke();
         }
       }
     }

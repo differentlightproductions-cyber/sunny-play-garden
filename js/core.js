@@ -5,7 +5,7 @@
 
   /* ---------------------------------------------------------------- store */
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, timer: 0, playLog: { day: '', sec: 0 } } });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] } });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
@@ -120,6 +120,7 @@
     boing() { tone(220, .32, { slide: 2.6, type: 'triangle', vol: .22 }); },
     oops() { tone(300, .22, { slide: .7, type: 'triangle', vol: .13 }); },
     water() { for (let i = 0; i < 5; i++) noise(.16, { freq: 2600 + i * 200, q: 2, vol: .06, at: i * .07 }); },
+    pat() { tone(110, .2, { slide: .55, type: 'sine', vol: .34 }); noise(.14, { freq: 500, vol: .12 }); },
     squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); }
   };
 
@@ -142,101 +143,25 @@
     }
   };
 
-  /* ---------------------------------------------------------------- voice */
-  const PHONICS = { a: 'ah', b: 'buh', c: 'kuh', d: 'duh', e: 'eh', f: 'fuh', g: 'guh', h: 'huh', i: 'ih', j: 'juh', k: 'kuh', l: 'luh', m: 'muh', n: 'nuh', o: 'aw', p: 'puh', q: 'kwuh', r: 'ruh', s: 'sss', t: 'tuh', u: 'uh', v: 'vuh', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz' };
-  const NAMES = { a: 'Ay', b: 'Bee', c: 'Cee', d: 'Dee', e: 'Ee', f: 'Eff', g: 'Gee', h: 'Aitch', i: 'Eye', j: 'Jay', k: 'Kay', l: 'El', m: 'Em', n: 'En', o: 'Oh', p: 'Pee', q: 'Cue', r: 'Ar', s: 'Ess', t: 'Tee', u: 'You', v: 'Vee', w: 'Double you', x: 'Ex', y: 'Why', z: 'Zee' };
-  // One picture word per letter (emoji renders on every Android tablet).
-  const WORDS = { a: ['apple', '🍎'], b: ['bear', '🐻'], c: ['cat', '🐱'], d: ['dog', '🐶'], e: ['elephant', '🐘'], f: ['fish', '🐟'], g: ['giraffe', '🦒'], h: ['horse', '🐴'], i: ['ice cream', '🍦'], j: ['juice', '🧃'], k: ['koala', '🐨'], l: ['lion', '🦁'], m: ['moon', '🌙'], n: ['nose', '👃'], o: ['octopus', '🐙'], p: ['pig', '🐷'], q: ['queen', '👸'], r: ['rainbow', '🌈'], s: ['sun', '☀️'], t: ['turtle', '🐢'], u: ['umbrella', '☂️'], v: ['violin', '🎻'], w: ['whale', '🐳'], x: ['box', '📦'], y: ['yarn', '🧶'], z: ['zebra', '🦓'] };
-
-  const LINES = {
-    'welcome': "Hi! Let's play!",
-    'great-job': 'Great job!', 'wow': 'Wow!', 'you-did-it': 'You did it!', 'amazing': 'Amazing!', 'yay': 'Yay!',
-    'try-again': 'Try again!',
-    'find': 'Can you find the letter', 'follow-bee': 'Follow the bee!', 'is-for': 'is for',
-    'starts-with': 'Which one starts with', 'break-time': 'Time for a little rest!',
-    'catch-drops': 'Catch the raindrops!', 'rainbow': 'A rainbow!',
-    'plant-seed': 'Tap the soil to plant a seed!', 'water-me': 'Tap the plant to water it!', 'new-friend': 'A new friend!',
-    'write-name': "Let's write your name!", 'spell-name': 'Your name is spelled',
-    'creature/bee': 'Bzzz! A bee!', 'creature/butterfly': 'A butterfly!', 'creature/ladybug': 'A ladybug!', 'creature/bunny': 'A bunny!', 'creature/bird': 'A little bird!', 'creature/snail': 'A snail!'
-  };
-  for (const [l, t] of Object.entries(NAMES)) LINES['letter/' + l] = t;
-  for (const [l, t] of Object.entries(PHONICS)) LINES['sound/' + l] = t;
-  for (const [l, [w]] of Object.entries(WORDS)) LINES['word/' + l] = w;
-
-  const fileFor = key => 'audio/voice/' + key.replace(/\//g, '-') + '.mp3';
-  const buffers = new Map(); // key -> AudioBuffer | null (null = no recording, use speech)
-  let token = 0, current = null, voiceObj;
-
-  async function loadBuffer(key) {
-    if (buffers.has(key)) return buffers.get(key);
-    let buf = null;
-    try {
-      const res = await fetch(fileFor(key));
-      if (res.ok && A.ctx) buf = await A.ctx.decodeAudioData(await res.arrayBuffer());
-    } catch (_) { /* no recording: fall back to speech */ }
-    buffers.set(key, buf);
-    return buf;
-  }
-
-  function pickVoice() {
-    if (voiceObj !== undefined) return voiceObj;
-    const list = speechSynthesis.getVoices();
-    if (!list.length) return null;
-    voiceObj = list.find(v => /en[-_]US/i.test(v.lang) && /female|google us|samantha|aria|jenny/i.test(v.name))
-      || list.find(v => /en[-_]US/i.test(v.lang)) || list.find(v => /^en/i.test(v.lang)) || null;
-    return voiceObj;
-  }
-  if ('speechSynthesis' in window) speechSynthesis.addEventListener?.('voiceschanged', () => { voiceObj = undefined; });
-
-  function speak(text) {
-    return new Promise(resolve => {
-      if (!('speechSynthesis' in window)) return resolve();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = .82; u.pitch = 1.2; u.lang = 'en-US';
-      const v = pickVoice(); if (v) u.voice = v;
-      let done = false;
-      const fin = () => { if (!done) { done = true; resolve(); } };
-      u.onend = fin; u.onerror = fin;
-      setTimeout(fin, 1200 + text.length * 130);
-      current = { stop: () => { speechSynthesis.cancel(); fin(); } };
-      speechSynthesis.speak(u);
-    });
-  }
-
-  async function playOne(item) {
-    if (!SPG.store.settings.voice) return;
-    const key = typeof item === 'string' ? item : null;
-    if (key) {
-      const buf = A.ctx ? await loadBuffer(key) : null;
-      if (buf) {
-        await new Promise(resolve => {
-          const src = A.ctx.createBufferSource(); src.buffer = buf;
-          src.connect(A.master); src.onended = resolve;
-          current = { stop: () => { try { src.stop(); } catch (_) { /* already ended */ } resolve(); } };
-          src.start();
-        });
-        return;
-      }
-      if (LINES[key]) return speak(LINES[key]);
-      return;
-    }
-    if (item && item.say) return speak(item.say);
-  }
-
-  // Say a line, or a list of lines one after another. Items are line keys or {say: 'free text'}.
-  SPG.voice = {
-    LINES, PHONICS, NAMES, WORDS, fileFor,
-    async say(...items) {
-      const list = items.flat();
-      const my = ++token;
-      current?.stop();
-      for (const it of list) {
-        if (my !== token) return;
-        await playOne(it);
-      }
+  // A small "icon + number" pill next to the stars, for counting things (fruits sliced, drops caught...).
+  SPG.ui = {
+    // Full-screen game canvases render at up to 1.5x: much cheaper per frame on tablets, still crisp.
+    dpr: () => Math.min(window.devicePixelRatio || 1, 1.5),
+    // Act the instant a finger touches a button (no need to lift on the exact spot). Keyboard and
+    // assistive-technology activation (click with no pointer) still works.
+    press(el, fn) {
+      el.addEventListener('pointerdown', e => { if (e.button > 0) return; fn(e); });
+      el.addEventListener('click', e => { if (e.detail === 0) fn(e); });
+      return el;
     },
-    stop() { token++; current?.stop(); },
-    praise() { const k = ['great-job', 'wow', 'you-did-it', 'amazing', 'yay']; return SPG.voice.say(k[Math.floor(Math.random() * k.length)]); }
+    counter(host, draw, value = 0) {
+      const el = document.createElement('div'); el.className = 'hud-count';
+      const cv = document.createElement('canvas'); cv.width = cv.height = 72;
+      const num = document.createElement('b'); num.textContent = value;
+      el.append(cv, num); host.append(el);
+      draw(cv.getContext('2d'), 72);
+      return { el, set(n) { num.textContent = n; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } };
+    }
   };
 
   /* ---------------------------------------------------------------- safe mode */
@@ -285,6 +210,7 @@
       // Any first touch unlocks sound (browsers require a gesture).
       const unlock = () => { A.unlock(); safe.keepAwake(); };
       addEventListener('pointerdown', unlock, { capture: true });
+      addEventListener('pointerup', unlock, { capture: true });
 
       document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement && safe.wantFullscreen && safe.on && safe.onFullscreenLost) safe.onFullscreenLost();

@@ -79,10 +79,25 @@
     });
   }
 
+  // The sky gradient and the hills never change, so they are painted once and reused every frame.
+  const layerCache = new Map();
+  function layers(w, h, dpr, sky, hill) {
+    const key = [w, h, dpr, sky.join(), (hill || []).join()].join('|');
+    let l = layerCache.get(key);
+    if (l) return l;
+    const mk = draw => { const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr)); const g = cv.getContext('2d'); g.scale(dpr, dpr); draw(g); return cv; };
+    l = {
+      sky: mk(g => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, sky[0]); gr.addColorStop(.62, sky[1]); gr.addColorStop(1, sky[2]); g.fillStyle = gr; g.fillRect(0, 0, w, h); }),
+      hills: mk(g => hills(g, w, h, hill))
+    };
+    if (layerCache.size > 4) layerCache.delete(layerCache.keys().next().value);
+    layerCache.set(key, l);
+    return l;
+  }
+
   function scene(c, w, h, t, { sky = ['#a9e1f3', '#e9f8ee', '#fdf6df'], showSun = true, clouds = true, hill = undefined } = {}) {
-    const g = c.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, sky[0]); g.addColorStop(.62, sky[1]); g.addColorStop(1, sky[2]);
-    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    const l = layers(w, h, c.getTransform().a || 1, sky, hill);
+    c.drawImage(l.sky, 0, 0, w, h);
     if (showSun) sun(c, w * .86, Math.max(70, h * .17), Math.min(w, h) * .06, t);
     if (clouds) {
       [[.12, .2, 1, 9], [.5, .11, .8, 6], [.72, .32, .65, 12], [.3, .42, .55, 8]].forEach(([fx, fy, s, sp], i) => {
@@ -91,7 +106,7 @@
         cloud(c, x, h * fy, s * Math.min(1.2, w / 700 + .4), .92);
       });
     }
-    hills(c, w, h, hill);
+    c.drawImage(l.hills, 0, 0, w, h);
   }
 
   /* ------------------------------------------------------------ small shapes */

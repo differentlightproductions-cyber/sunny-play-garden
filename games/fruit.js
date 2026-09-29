@@ -48,7 +48,7 @@
     down(e) {
       if (!this.running || this.pointerId !== null) return;
       e.preventDefault();
-      this.pointerId = e.pointerId; this.canvas.setPointerCapture?.(e.pointerId);
+      this.pointerId = e.pointerId; try { this.canvas.setPointerCapture(e.pointerId); } catch (_) { /* capture is optional */ }
       this.lastPoint = this.point(e); this.trail.push(this.lastPoint);
       this.slice(this.lastPoint, this.lastPoint, 1.2); // a tap counts as a slice
     }

@@ -97,7 +97,7 @@
 
     down(e) {
       if (!this.g || this.done || this.pid !== null) return;
-      e.preventDefault(); this.pid = e.pointerId; this.canvas.setPointerCapture?.(e.pointerId);
+      e.preventDefault(); this.pid = e.pointerId; try { this.canvas.setPointerCapture(e.pointerId); } catch (_) { /* capture is optional */ }
       const u = this.toUnits(e); this.finger = u; this.idle = 0;
       const st = this.g.strokes[this.si], p = st.pts[this.prog];
       if (dist(u, p) <= 36) {
@@ -372,7 +372,7 @@
         const ch = list[i];
         this.tracer.setLetter(ch, name ? { text: list.join(''), index: i } : null);
         const lc = ch.toLowerCase();
-        if (name) voice.say(i === 0 ? 'write-name' : { say: '' }, 'letter/' + lc);
+        if (name) voice.say(i === 0 ? 'write-name' : null, 'letter/' + lc);
         else voice.say('letter/' + lc, 'sound/' + lc, this.introCount++ < 2 ? 'follow-bee' : null);
       };
       prev.addEventListener('click', () => { sfx.tap(); go(i - 1); });
@@ -471,7 +471,7 @@
       const choose = (ch, b) => {
         if (locked) return;
         if (ch === target) {
-          locked = true; sfx.win(); store.addStars(wrong ? 0 : 1);
+          locked = true; sfx.win(); store.addStars(1);
           this.bag.correct++; store.save();
           [...area.children].forEach(o => o.classList.toggle('fade', o !== b));
           b.classList.add('right');

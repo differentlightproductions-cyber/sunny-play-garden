@@ -2,7 +2,7 @@
 // Network first (so a new deploy shows up right away), cache as the fallback.
 const CACHE = 'spg-v1';
 const SHELL = [
-  './', 'index.html', 'styles.css', 'manifest.webmanifest',
+  './', 'styles.css', 'manifest.webmanifest',
   'js/glyphs.js', 'js/core.js', 'js/art.js', 'js/app.js',
   'games/letters.js', 'games/fruit.js', 'games/rain.js', 'games/garden.js',
   'fonts/fredoka-latin-400-normal.woff2', 'fonts/fredoka-latin-600-normal.woff2', 'fonts/fredoka-latin-700-normal.woff2',
@@ -20,6 +20,6 @@ self.addEventListener('fetch', e => {
     fetch(req).then(res => {
       if (res.ok && res.status === 200) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
       return res;
-    }).catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit || caches.match('index.html')))
+    }).catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit || caches.match('./')))
   );
 });

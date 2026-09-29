@@ -19,7 +19,7 @@
       this.tick = this.tick.bind(this);
       const cv = this.canvas;
       const at = e => { const r = cv.getBoundingClientRect(); this.bucket.tx = (e.clientX - r.left) * this.w / r.width; };
-      cv.addEventListener('pointerdown', e => { e.preventDefault(); cv.setPointerCapture?.(e.pointerId); this.dragging = true; at(e); });
+      cv.addEventListener('pointerdown', e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* capture is optional */ } this.dragging = true; at(e); });
       cv.addEventListener('pointermove', e => { if (this.dragging) { e.preventDefault(); at(e); } });
       for (const t of ['pointerup', 'pointercancel']) cv.addEventListener(t, () => { this.dragging = false; });
       this.onKey = e => { this.keys[e.key] = e.type === 'keydown'; };

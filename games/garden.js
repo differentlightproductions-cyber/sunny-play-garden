@@ -80,7 +80,7 @@
     }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
     pause() { this.running = false; cancelAnimationFrame(this.raf); }
-    destroy() { this.pause(); this.canvas.remove(); this.bar.remove(); this.book?.remove(); }
+    destroy() { this.pause(); clearTimeout(this.later); this.canvas.remove(); this.bar.remove(); this.book?.remove(); }
 
     save() { this.bag.plots = this.plots.map(p => p ? { type: p.type, stage: p.stage } : null); store.save(); }
 

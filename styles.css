@@ -1,0 +1,50 @@
+:root { font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif; color: #3b3152; background: #fff3d4; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; min-height: 100%; overscroll-behavior: none; }
+body { min-height: 100dvh; }
+button { font: inherit; cursor: pointer; border: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+button:focus-visible { outline: 4px solid #3b3152; outline-offset: 4px; }
+.hidden { display: none !important; }
+.screen { min-height: 100dvh; width: 100%; }
+.hub, .ready { background: radial-gradient(circle at 82% 13%, #fff9e9 0 8%, transparent 30%), linear-gradient(160deg, #fff1c5, #ffe1ba 55%, #ffd6ca); }
+.hub { padding: max(28px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom)); display: flex; align-items: center; flex-direction: column; gap: 22px; }
+.hub-header { text-align: center; }
+.sun { color: #f9ae32; font-size: clamp(58px, 14vw, 90px); line-height: 1; filter: drop-shadow(0 5px 0 #f8d06c); }
+.eyebrow { margin: 10px 0 5px; color: #a75c69; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; }
+h1, h2, p { margin-top: 0; }
+h1 { font-size: clamp(36px, 8vw, 58px); line-height: 1.03; margin-bottom: 8px; letter-spacing: -.045em; }
+.subtitle { font-size: 18px; font-weight: 700; margin-bottom: 0; }
+.game-list { display: grid; gap: 14px; width: min(100%, 620px); }
+.game-card { border-radius: 28px; background: #fffdf5; box-shadow: 0 8px 0 #eabf9d, 0 14px 24px #ae68792a; display: flex; align-items: center; padding: 16px; gap: 16px; text-align: left; min-height: 116px; color: #3b3152; width: 100%; }
+.game-card.available:active, .primary-button:active, .secondary-button:active { transform: translateY(3px); box-shadow: 0 4px 0 #d89270; }
+.game-icon { display: grid; place-items: center; flex: 0 0 76px; height: 76px; border-radius: 22px; background: #ffe6bf; font-size: 44px; }
+.game-copy { display: grid; gap: 3px; min-width: 0; }
+.game-name { font-size: clamp(20px, 5vw, 26px); font-weight: 900; line-height: 1.05; }
+.game-description { font-size: 14px; font-weight: 700; color: #866a79; }
+.game-action { margin-left: auto; border-radius: 16px; background: #ff7189; color: white; padding: 10px 13px; font-weight: 900; box-shadow: 0 4px 0 #d94d69; }
+.game-card.soon { opacity: .67; min-height: 92px; box-shadow: 0 5px 0 #eabf9d; cursor: default; }
+.game-card.soon .game-icon { height: 59px; flex-basis: 59px; font-size: 30px; background: #eee4dc; }
+.game-card.soon .game-action { background: #e9dde2; color: #786d76; box-shadow: none; font-size: 12px; white-space: nowrap; }
+.fullscreen { min-height: 52px; padding: 10px 20px; border-radius: 17px; color: #574354; background: #fffaf1; font-weight: 900; box-shadow: 0 4px 0 #e5c8af; }
+.hub-fullscreen { margin-top: 2px; }
+.ready { position: relative; display: grid; place-items: center; padding: 72px 20px 28px; text-align: center; }
+.back-button { position: absolute; top: max(18px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left)); min-width: 108px; height: 54px; border-radius: 18px; background: #fffaf1; color: #4b3b55; box-shadow: 0 4px 0 #e8bfae; font-size: 20px; font-weight: 900; }
+.ready-content { width: min(100%, 480px); }
+.fruit-badge { font-size: clamp(110px, 30vw, 170px); line-height: 1; filter: drop-shadow(0 12px 0 #eea18c); margin-bottom: 22px; }
+.ready h1 { color: #db516c; font-size: clamp(48px, 12vw, 70px); }
+.ready-hint { font-size: clamp(19px, 5vw, 25px); font-weight: 800; }
+.primary-button, .secondary-button { display: block; width: min(100%, 340px); margin: 12px auto; min-height: 66px; border-radius: 22px; font-size: 23px; font-weight: 900; }
+.primary-button { background: #ff6481; color: #fff; box-shadow: 0 7px 0 #ce4764; }
+.secondary-button { background: #fff7e9; color: #574359; box-shadow: 0 5px 0 #dfbfae; }
+.gentle-note { margin-top: 25px; color: #9f6670; font-weight: 800; }
+.play { height: 100dvh; min-height: 0; position: relative; overflow: hidden; background: #dff4df; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+#game-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.play-hud { pointer-events: none; position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left)); }
+.score { background: #fffdf1ed; border: 3px solid #fff; border-radius: 20px; padding: 7px 15px; font-size: clamp(23px, 6vw, 32px); font-weight: 900; box-shadow: 0 5px 0 #a8d5b4; min-width: 98px; text-align: center; }
+.hud-buttons { display: flex; gap: 10px; pointer-events: auto; }
+.hud-button { width: 56px; height: 56px; border-radius: 18px; background: #fffdf1; color: #493652; box-shadow: 0 5px 0 #a8d5b4; font-size: 30px; font-weight: 900; }
+.pause-menu { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: #54436b93; padding: 20px; }
+.pause-card { width: min(100%, 400px); border-radius: 34px; background: #fff6df; padding: 24px 20px 28px; text-align: center; box-shadow: 0 12px 0 #e4b993; }
+.pause-fruit { font-size: 65px; }
+.pause-card h2 { font-size: clamp(27px, 7vw, 38px); margin: 8px 0 20px; }
+@media (max-height: 650px) and (orientation: landscape) { .hub { gap: 8px; padding-top: 10px; } .hub-header .sun { font-size: 38px; } .hub-header h1 { font-size: 32px; } .game-list { grid-template-columns: repeat(3, 1fr); max-width: 900px; } .game-card { min-height: 96px; padding: 9px; gap: 6px; } .game-icon { flex-basis: 50px; height: 50px; font-size: 28px; } .game-action { display: none; } .ready { padding-top: 30px; } .fruit-badge { font-size: 72px; margin-bottom: 3px; } .ready h1 { font-size: 43px; } .ready-hint { margin-bottom: 5px; } .gentle-note { margin-top: 7px; } .pause-card { padding: 12px; } .pause-card h2 { margin: 0 0 8px; } .pause-fruit { font-size: 40px; } .pause-card button { min-height: 47px; margin: 7px auto; font-size: 18px; } }

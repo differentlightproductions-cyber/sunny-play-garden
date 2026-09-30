@@ -246,8 +246,6 @@
       c.save(); const k = lis ? 1 + Math.sin(this.t * 10) * .05 : 1; c.translate(cp.x, cp.y); c.scale(k, k); c.translate(-cp.x, -cp.y);
       circle(cp, on ? '#59b96e' : '#7ed957', '#3c9a55');
       c.fillStyle = '#fff'; c.font = `700 ${bs * 1.05}px Fredoka, system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('♫', cp.x, cp.y + bs * .05);
-      c.strokeStyle = '#fff'; c.lineWidth = bs * .09; c.lineCap = 'round'; c.beginPath(); c.arc(cp.x, cp.y, bs * .55, Math.PI * .1, Math.PI * .85); c.stroke();
-      c.beginPath(); c.moveTo(cp.x - bs * .55, cp.y + bs * .12); c.lineTo(cp.x - bs * .52, cp.y + bs * .38); c.lineTo(cp.x - bs * .3, cp.y + bs * .3); c.stroke();
       c.restore();
       if (on) {   // how far along the tune she is
         const n = this.copy.seq.length || this.copy.len;

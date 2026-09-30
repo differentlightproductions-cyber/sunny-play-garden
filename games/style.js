@@ -26,14 +26,17 @@
   const baseLook = i => Object.assign(P.defaultLook(PRESETS[i].gender), PRESETS[i]);
 
   /* ---------------------------------------------------------------- places (backdrops) */
+  let NIGHT = false;   // set every frame: in night mode the ballroom's chandelier gives way to the lamp over her head
   const FLOOR = .9;   // where the feet stand, as a fraction of the stage height
   const PLACES = [
     (c, w, h, t) => {   // castle ballroom
       const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffeef5'); g.addColorStop(1, '#f8d7e6'); c.fillStyle = g; c.fillRect(0, 0, w, h);
       for (const x of [.2, .5, .8]) { const ww = w * .13, xx = w * x - ww / 2; c.fillStyle = '#cfe6ff'; c.beginPath(); c.moveTo(xx, h * .55); c.lineTo(xx, h * .22); c.arc(xx + ww / 2, h * .22, ww / 2, Math.PI, TAU); c.lineTo(xx + ww, h * .55); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 4; c.stroke(); c.beginPath(); c.moveTo(xx + ww / 2, h * .1); c.lineTo(xx + ww / 2, h * .55); c.stroke(); }
       c.fillStyle = '#e4506e'; for (const sd of [0, 1]) { c.beginPath(); c.moveTo(sd ? w : 0, 0); c.lineTo(sd ? w * .84 : w * .16, 0); c.quadraticCurveTo(sd ? w * .9 : w * .1, h * .4, sd ? w * .82 : w * .18, h * FLOOR); c.lineTo(sd ? w : 0, h * FLOOR); c.fill(); }
+      if (!NIGHT) {
       c.strokeStyle = '#d99a1a'; c.lineWidth = 3; c.beginPath(); c.moveTo(w / 2, 0); c.lineTo(w / 2, h * .07); c.stroke(); c.fillStyle = '#f0b429'; c.beginPath(); c.moveTo(w / 2 - w * .09, h * .11); c.quadraticCurveTo(w / 2, h * .16, w / 2 + w * .09, h * .11); c.lineTo(w / 2 + w * .05, h * .07); c.lineTo(w / 2 - w * .05, h * .07); c.closePath(); c.fill();
       for (let i = 0; i < 5; i++) { const x = w / 2 + (i - 2) * w * .04; c.fillStyle = 'rgba(220,240,255,.9)'; c.beginPath(); c.moveTo(x, h * .12); c.lineTo(x - 4, h * .17); c.lineTo(x, h * .2); c.lineTo(x + 4, h * .17); c.closePath(); c.fill(); c.globalAlpha = .5 + .5 * Math.sin(t * 3 + i); c.fillStyle = '#fff3b0'; c.beginPath(); c.arc(x, h * .065, 5, 0, TAU); c.fill(); c.globalAlpha = 1; }
+      }
       const fy = h * FLOOR, sq = w / 14; for (let y = 0; fy + y * sq * .5 < h; y++) for (let x = -1; x < 16; x++) { c.fillStyle = (x + y) % 2 ? '#fff' : '#e8b3cb'; c.fillRect(x * sq - (y % 2) * 0, fy + y * sq * .5, sq, sq * .5 + 1); }
     },
     (c, w, h, t) => {   // garden
@@ -118,6 +121,7 @@
       this.fx = new art.Fx(); this.t = 0; this.running = false; this.tab = 'dress'; this.tool = null; this.sway = 0; this.hop = 0; this.wave = 0; this.foam = 0; this.show = null;
       this.nailColor = 3; this.nailArt = 0; this.glitter = false; this.ptr = null; this.down = false; this.lastNail = -1; this.lastMove = null; this.travel = 0; this.blowT = 0;
       this.build(); this.loadKid(b.cur | 0); this.renderPanel();
+      document.body.classList.add('st-open');
       this.later(() => say('say-start'), 600);
     }
     later(fn, ms) { const id = setTimeout(() => { this.timers.delete(id); fn(); }, ms); (this.timers || (this.timers = new Set())).add(id); }
@@ -125,7 +129,7 @@
     pause() { this.running = false; cancelAnimationFrame(this.raf); }
     resume() { if (!this.running) this.start(); }
     resize() { this.fit(); this.renderPanel(); }
-    destroy() { this.pause(); this.ro && this.ro.disconnect(); (this.timers || []).forEach(clearTimeout); this.saveNow(); this.root.remove(); }
+    destroy() { this.pause(); this.ro && this.ro.disconnect(); (this.timers || []).forEach(clearTimeout); this.saveNow(); document.body.classList.remove('st-open'); this.root.remove(); }
 
     /* -------------------------------------------------------------- looks */
     loadKid(i) {
@@ -376,10 +380,12 @@
       if (!this.w) return;
       const c = this.cv.getContext('2d'), d = this.d; c.setTransform(d, 0, 0, d, 0, 0);
       const w = this.w, h = this.h, t = this.t, s = this.show;
-      if (this.tab === 'nails' && !s) this.drawSalonTable(c, w, h, t);
+      const night = NIGHT = !s && SPG.night.on();
+      if (this.tab === 'nails' && !s) this.drawSalonTable(c, w, h, t, night);
       else {
         (s ? RUNWAY : PLACES[this.bag.place | 0] || PLACES[0])(c, w, h, t);
-        const f = this.figure(); let x = f.x, sc = 1, wave = this.wave > 0, hop = Math.abs(Math.sin(Math.min(1, this.hop) * Math.PI)) * f.U * 4 * this.hop;
+        const f = this.figure();
+        if (night) this.lampLight(c, w, h, t, f.x, f.y, f.U * 66, f.U); let x = f.x, sc = 1, wave = this.wave > 0, hop = Math.abs(Math.sin(Math.min(1, this.hop) * Math.PI)) * f.U * 4 * this.hop;
         if (s) {
           const walk = Math.min(1, s.t / 2.6), e = 1 - Math.pow(1 - walk, 3);
           x = -f.U * 40 + (f.x + f.U * 40) * e; hop = walk < 1 ? Math.abs(Math.sin(s.t * 7)) * f.U * 2.2 : 0;
@@ -399,9 +405,30 @@
       for (let i = 0; i < n; i++) { const a = Math.PI * (1.02 + (i * 37 % 100) / 100 * .96), rr = R * (.55 + (i * 53 % 100) / 100 * .6); c.fillStyle = i % 3 ? 'rgba(255,255,255,.95)' : 'rgba(205,235,255,.95)'; c.beginPath(); c.arc(Math.cos(a) * rr, Math.sin(a) * rr * .8 + R * .3, R * (.22 + (i % 4) * .05), 0, TAU); c.fill(); }
       c.restore(); void f;
     }
-    drawSalonTable(c, w, h, t) {
+    // Night mode: the room goes dark and a little lamp hangs over her, lighting her (and a pool of floor) like a real lamp.
+    // The figure is drawn after this, at full brightness, so her outfit and hair stay bright while the background is moody.
+    lampLight(c, w, h, t, x, floorY, spread, U) {
+      const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(8,12,52,.62)'); g.addColorStop(1, 'rgba(12,16,58,.5)'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+      const sw = Math.sin(t * .9) * U * .6, lx = x + sw, top = h * .085, half = Math.max(U * 9, w * .03);
+      // soft cone of warm light (three nested layers make the edges gentle)
+      c.save(); c.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 3; i++) {
+        const k = 1 - i * .22, hw = spread * k, cg = c.createLinearGradient(0, top, 0, floorY); cg.addColorStop(0, 'rgba(255,236,170,.22)'); cg.addColorStop(1, 'rgba(255,224,150,.07)');
+        c.fillStyle = cg; c.beginPath(); c.moveTo(lx - half * .9, top + half * .5); c.lineTo(lx + half * .9, top + half * .5); c.lineTo(x + hw, floorY); c.lineTo(x - hw, floorY); c.closePath(); c.fill();
+      }
+      const pool = c.createRadialGradient(x, floorY, 0, x, floorY, spread * 1.05); pool.addColorStop(0, 'rgba(255,230,160,.34)'); pool.addColorStop(1, 'rgba(255,230,160,0)');
+      c.fillStyle = pool; c.beginPath(); c.ellipse(x, floorY, spread * 1.05, spread * .2, 0, 0, TAU); c.fill(); c.restore();
+      // the lamp: cord, shade and glowing bulb
+      c.strokeStyle = '#2a2244'; c.lineWidth = Math.max(2, U * .5); c.beginPath(); c.moveTo(lx - sw * .4, 0); c.lineTo(lx, top - half * .3); c.stroke();
+      c.fillStyle = '#ffe9a8'; c.beginPath(); c.ellipse(lx, top + half * .55, half * .42, half * .3, 0, 0, TAU); c.fill();
+      c.fillStyle = '#f0b429'; c.beginPath(); c.moveTo(lx - half * .28, top - half * .35); c.lineTo(lx + half * .28, top - half * .35); c.lineTo(lx + half, top + half * .5); c.lineTo(lx - half, top + half * .5); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.moveTo(lx - half * .2, top - half * .3); c.lineTo(lx - half * .05, top - half * .3); c.lineTo(lx - half * .45, top + half * .45); c.lineTo(lx - half * .7, top + half * .45); c.fill();
+      const gl = c.createRadialGradient(lx, top + half * .6, 0, lx, top + half * .6, half * 2.2); gl.addColorStop(0, 'rgba(255,240,180,.55)'); gl.addColorStop(1, 'rgba(255,240,180,0)'); c.fillStyle = gl; c.beginPath(); c.arc(lx, top + half * .6, half * 2.2, 0, TAU); c.fill();
+    }
+    drawSalonTable(c, w, h, t, night) {
       const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffe4ef'); g.addColorStop(1, '#ffc9de'); c.fillStyle = g; c.fillRect(0, 0, w, h);
       c.fillStyle = 'rgba(255,255,255,.5)'; for (let i = 0; i < 14; i++) { const x = (i * 131 % 100) / 100 * w, y = (i * 71 % 100) / 100 * h; art.star(c, x, y, 5 + (i % 3) * 2, '#fff', 0); }
+      if (night) { const g3 = this.handGeom(0), g4 = this.handGeom(1); this.lampLight(c, w, h, t, w / 2, h * .96, Math.max(w * .3, g3.s * 1.5), g3.s / 30); void g4; }
       for (const hand of [0, 1]) { const g2 = this.handGeom(hand); c.save(); c.translate(g2.x, g2.y); P.drawHand(c, this.look, hand, g2.s, t); c.restore(); }
       const k = this.nailColor < 0 ? '#e8e0f0' : P.NAIL[this.nailColor], bx = w / 2, by = h * .9, bs = Math.min(h * .14, w * .07);
       c.fillStyle = 'rgba(90,63,94,.18)'; c.beginPath(); c.ellipse(bx, by + bs * .9, bs * .9, bs * .22, 0, 0, TAU); c.fill();

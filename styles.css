@@ -808,3 +808,7 @@ body.night .backdrop::before, body.night .backdrop::after { opacity: 1; }
 body.night .cloud { opacity: .5; }
 #hub-night[aria-pressed="true"] { background: #2a3270; color: #ffe680; }
 @media (prefers-reduced-motion: reduce) { .backdrop::after { animation: none; } }
+
+/* Style Studio at night: the stage lights her with her own lamp, so the global veil steps aside and the panel is dimmed instead */
+body.night.st-open #night-veil { opacity: 0; }
+body.night.st-open .st-panel, body.night.st-open .hud-btn, body.night.st-open .chip { filter: brightness(.7) saturate(.8); transition: filter 1.2s; }

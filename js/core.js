@@ -346,6 +346,17 @@
         if (m) { tone(m, .55, { type: 'triangle', vol: .04 }); tone(m * 2, .4, { type: 'sine', vol: .009 }); }
       }
     },
+    // Dinosaurs: a stompy, jolly march with big low thumps and a bouncy marimba tune.
+    dino: {
+      ms: 340, per: 8,
+      bass: [98, 98, 130.81, 98, 110, 110, 146.83, 98], chords: [[196, 246.94, 293.66], [196, 246.94, 293.66], [261.63, 329.63, 392], [196, 246.94, 293.66], [220, 261.63, 329.63], [220, 261.63, 329.63], [293.66, 369.99, 440], [196, 246.94, 293.66]],
+      melody: [[392, 0, 440, 493.88, 0, 392, 0, 0], [523.25, 0, 493.88, 440, 0, 392, 0, 0], [440, 0, 493.88, 523.25, 0, 440, 0, 0], [587.33, 0, 523.25, 493.88, 0, 392, 0, 0], [392, 0, 440, 493.88, 0, 587.33, 0, 0], [523.25, 0, 493.88, 440, 0, 493.88, 0, 0], [440, 523.25, 587.33, 0, 523.25, 440, 0, 0], [392, 0, 0, 0, 392, 0, 0, 0]],
+      play(bar, i, m, ch, bass) {
+        if (i === 0 || i === 4) { tone(bass / 2, .3, { type: 'sine', vol: .07 }); tone(bass, .4, { type: 'triangle', vol: .05 }); }   // stomp!
+        if (i === 2 || i === 6) ch.forEach((f, k) => tone(f, .18, { type: 'triangle', vol: .015, at: k * .015 }));
+        if (m) { tone(m, .28, { type: 'triangle', vol: .045 }); tone(m * 2, .12, { type: 'sine', vol: .012 }); }
+      }
+    },
     // Christmas: sleigh bells, a glockenspiel tune and warm chords in C major.
     christmas: {
       ms: 300, per: 8,

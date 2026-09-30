@@ -127,16 +127,44 @@
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    $('hub-games').dataset.n = games.length;
-    $('hub-games').replaceChildren(...games.map((g, i) => {
+    // Games come four to a page. Swipe, or use the big arrows and dots underneath.
+    const PER_PAGE = 4, pages = [];
+    for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
+    const strip = h('div', { class: 'pages' }, ...pages.map((list, pi) => h('div', { class: 'cards page', 'aria-label': `Page ${pi + 1} of ${pages.length}` }, ...list.map((g, k) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
       const canvas = document.createElement('canvas');
-      const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-i * 1.1}s` },
+      const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-(pi * PER_PAGE + k) * 1.1}s` },
         canvas, h('span', { class: 'card-name' }, h('span', {}, g.name), h('span', { class: 'go' }, icon('play'))));
-      SPG.ui.press(card, () => openGame(g));
+      // A swipe must turn the page, not start a game, so a card opens on a short tap (the browser cancels the touch when it becomes a swipe).
+      let down = null;
+      card.addEventListener('pointerdown', e => { if (e.button > 0) return; down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+      card.addEventListener('pointerup', e => {
+        if (!down) return; const d = down; down = null;
+        if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && performance.now() - d.t < 900) openGame(g);
+      });
+      for (const n of ['pointercancel', 'pointerleave']) card.addEventListener(n, () => { down = null; });
+      card.addEventListener('click', e => { if (e.detail === 0) openGame(g); });   // keyboard / assistive tech
       card._draw = paint(canvas, g);
       return card;
-    }));
+    }))));
+    const prev = h('button', { class: 'pg-arrow', type: 'button', 'aria-label': 'Previous page' }, icon('left'));
+    const next = h('button', { class: 'pg-arrow', type: 'button', 'aria-label': 'Next page' }, icon('right'));
+    const dots = h('div', { class: 'pg-dots' }, ...pages.map((_, i) => h('button', { class: 'pg-dot', type: 'button', 'aria-label': `Page ${i + 1}` })));
+    const go = i => { const n = Math.max(0, Math.min(pages.length - 1, i)); strip.scrollTo({ left: n * strip.clientWidth, behavior: 'smooth' }); };
+    const where = () => Math.max(0, Math.min(pages.length - 1, Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth))));
+    const mark = () => {
+      const i = where(); hubPage = i;
+      prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
+      [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+    };
+    SPG.ui.press(prev, () => { SPG.sfx.tap(); go(where() - 1); });
+    SPG.ui.press(next, () => { SPG.sfx.tap(); go(where() + 1); });
+    [...dots.children].forEach((d, k) => SPG.ui.press(d, () => { SPG.sfx.tap(); go(k); }));
+    strip.addEventListener('scroll', () => { clearTimeout(strip._t); strip._t = setTimeout(mark, 60); }, { passive: true });
+    strip._restore = () => { if (!strip.clientWidth) return; strip.scrollLeft = hubPage * strip.clientWidth; mark(); };
+    $('hub-games').classList.toggle('single', pages.length < 2);
+    $('hub-games').replaceChildren(strip, h('div', { class: 'pg-nav' }, prev, dots, next));
+    mark();
     // Shops are not games: they get their own storefront under the games.
     $('hub-shop').replaceChildren(...shops.map(g => {
       const canvas = document.createElement('canvas');
@@ -147,7 +175,10 @@
     }));
     drawCards();
   }
-  function drawCards() { document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
+  let hubPage = 0;
+  function drawCards() {
+    const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
+    document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
 
   /* ------------------------------------------------------------ games */
   function openGame(g) {

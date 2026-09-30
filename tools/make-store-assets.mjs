@@ -37,7 +37,8 @@ async function freshApp(width, height) {
   return { ctx, p };
 }
 const shot = (p, name) => p.screenshot({ path: `store/screenshots/${name}.png` });
-const openGame = async (p, n) => { await p.click(`.card:nth-child(${n})`, F); await p.waitForTimeout(900); };
+const GAMES = ['Letter Garden', 'Fruit Splash', 'Rain Bucket', 'Fire Rescue', 'Grow a Garden', 'Coloring Book'];
+const openGame = async (p, n) => { await p.click(`.card[aria-label="${GAMES[n - 1]}"]`, F); await p.waitForTimeout(900); };
 const home = async p => { await p.click('#btn-home', F); await p.waitForTimeout(400); };
 
 for (const [kind, w, h] of [['phone', 540, 960], ['tablet', 960, 600]]) {

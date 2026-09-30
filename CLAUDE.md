@@ -9,7 +9,7 @@ Little Sprout Park is a free, static, dependency-free browser games site for a y
 - `js/studio.js`: the grown-ups "Voices" screen (record, hear, delete, mute, choose voice, cheering frequency).
 - `js/art.js`, `js/art-garden.js`, `js/art-pets.js`: all illustration (faces, scenery, fruit, plants, friends, avatars, bucket, shovel/can/hand, cats/dogs/parachutes, firefighters, safety net). Shared so the look stays consistent. Scene sky/hills are cached in offscreen canvases.
 - `js/glyphs.js`: handwriting-style letters as ordered SVG strokes. Draws cards and drives the tracing game.
-- `js/app.js`: players, hub, parent gate, grown-ups panel (voices, play-time limit, safe mode, players), game start/stop, pause on overlays/hidden tab.
+- `js/app.js`: players, hub (games come four to a page in a swipeable strip with big arrows and dots underneath; a card opens on a short tap so a swipe never starts a game; the Pet Shop storefront stays at the bottom; the page is remembered when returning from a game), parent gate, grown-ups panel (voices, play-time limit, safe mode, players), game start/stop, pause on overlays/hidden tab.
 - `games/color-pictures.js` + `games/color-seasons.js` (Coloring Book picture data: 20 everyday + 30 seasonal) and `games/color.js` (its engine, editor and gallery).
 - `js/pets.js` (pet and hat art, saved pets, the companion that sits beside the drawing) and `games/petshop.js` (the Pet Shop screen).
 - `js/sync.js` + `worker/index.js`: optional encrypted cloud backup (see Saving and backups).
@@ -52,7 +52,7 @@ Voice/sound/soft-music toggles (music is generative WebAudio, off by default), a
 Every spoken prompt is a key in `LINES` (`js/voice.js`); critter noises are sound-only keys in `SOUNDS`. Recordings made in the studio live on that tablet; file recordings go in `audio/voice/male|female/<key with / as ->.mp3` and then run `node tools/build-voice-manifest.mjs`. `RECORDING.md` lists every line; regenerate it with `node tools/make-recording-list.mjs` after editing `LINES` or `SOUNDS`.
 
 ## Testing notes
-Test scripts that need to type a player name must go through the gate first (click `#type-name`, solve the sum, then fill `#name-input`). Hub card order is now Letters, Fruit, Rain, Fire Rescue, Garden, Coloring (`.card:nth-child(n)`).
+Test scripts that need to type a player name must go through the gate first (click `#type-name`, solve the sum, then fill `#name-input`). Hub cards live on pages of four, so select them by name (`.card[aria-label="Fire Rescue"]`), never by `nth-child`.
 Verified with headless Chromium (Coloring Book: fill, clipped brush, eraser, undo, start over, Done and frame, persistence, per-player saves, palm and multi-touch, PNG saving, silence, music switch, phone and tablet layouts, 4x CPU throttle) (tablet landscape and portrait, fake microphone): tracing every letter with simulated fingers (careful/fast/wobbly must complete; 14.5+ units off the line must not), all games, guided planting, the cats-and-dogs event played through, five-finger slicing, touch-down presses without double firing, voice recording/playback/mute, gate, back-button trapping, fullscreen-lost overlay, offline reload. Not yet tested on the real Android tablet beyond the owner's play tests: real microphone, speech voice quality, install prompt, screen pinning.
 
 ## Deploying

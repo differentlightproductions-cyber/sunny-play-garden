@@ -65,12 +65,12 @@
     refreshHub();
     show('hub');
     SPG.music.sync();
-    voice.custom['player/' + p.id] = `Hi ${p.name}!`;
+    voice.custom['player/' + p.id] = `Hi ${p.name}!`; voice.custom['pname/' + p.id] = p.name;
     if (!checkLimit()) voice.say('player/' + p.id, 'welcome');
   }
 
   /* ------------------------------------------------------------ setup */
-  const NICKS = ['Sunny', 'Bunny', 'Sprout', 'Star', 'Peanut', 'Buttercup', 'Pumpkin', 'Ladybug', 'Honey', 'Dot', 'Bee', 'Twinkle'];
+  const NICKS = SPG.voice.PICK_NAMES.nicks;
   let pickedAvatar = art.AVATARS[0];
   let nickGrid = null;
   function openSetup(canCancel) {
@@ -325,7 +325,7 @@
       store.settings[key] = !store.settings[key]; store.save();
       sw.setAttribute('aria-checked', String(store.settings[key]));
       SPG.music.sync();
-      if (store.settings[key] && (key === 'sound' || key === 'voice')) { key === 'sound' ? SPG.sfx.chime() : voice.say({ say: 'Hello!' }); }
+      if (store.settings[key] && (key === 'sound' || key === 'voice')) { key === 'sound' ? SPG.sfx.chime() : voice.say('hello'); }
     });
     return h('div', { class: 'setting' }, h('span', {}, label), sw);
   }

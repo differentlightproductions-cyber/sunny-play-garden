@@ -421,7 +421,7 @@
       });
       el.pick = (name, speak) => {
         el.value = name; btns.forEach(x => x.setAttribute('aria-pressed', String(x.textContent === name)));
-        if (speak) { SPG.sfx.pop(); SPG.voice && SPG.voice.say({ say: name }); }
+        if (speak) { SPG.sfx.pop(); if (SPG.voice) SPG.voice.say(SPG.voice.LINES['name/' + name] ? 'name/' + name : { say: name }); }
         onPick && onPick(name);
       };
       el.clear = () => { el.value = ''; btns.forEach(x => x.setAttribute('aria-pressed', 'false')); };

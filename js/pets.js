@@ -26,7 +26,7 @@
     { id: 'witch', name: 'Witch hat', price: 10 }, { id: 'leaves', name: 'Fall leaves', price: 10 }, { id: 'santa', name: 'Santa hat', price: 10 },
     { id: 'antlers', name: 'Reindeer antlers', price: 10 }, { id: 'crown', name: 'Crown', price: 20 }
   ];
-  const NAMES = ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle'];
+  const NAMES = SPG.voice.PICK_NAMES.pets;
 
   /* ------------------------------------------------------------ saved state */
   const bag = () => store.bag('pets', () => ({ v: 1, owned: {}, hats: {}, active: null }));

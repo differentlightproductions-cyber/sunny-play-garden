@@ -73,6 +73,13 @@
     'say-start': "Let's get dressed up!", 'say-show': 'Ta-da! Look at you! You look amazing!', 'say-nails': 'Pick a color and touch the nails!', 'say-hair': 'Touch the hair!', 'say-lips': 'Lipstick!', 'say-shadow': 'Sparkly eyes!', 'say-blush': 'Rosy cheeks!', 'say-freckles': 'Freckles!', 'say-gems': 'Face jewels!', 'say-skin': 'Skin color', 'say-eyes': 'Eye color', 'say-glitter': 'Glitter!', 'say-all': 'All the nails!', 'say-clear': 'Clean nails.'
   };
   for (const [k, v] of Object.entries(STYLE_NAMES)) LINES['style/' + k] = v;
+  // The names in the name pickers (players and pets) are real lines too, so they can be recorded in the grown-ups' voice.
+  const PICK_NAMES = {
+    nicks: ['Sunny', 'Bunny', 'Sprout', 'Star', 'Peanut', 'Buttercup', 'Pumpkin', 'Ladybug', 'Honey', 'Dot', 'Bee', 'Twinkle'],
+    pets: ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle', 'Waddles', 'Nibbles', 'Whiskers', 'Snowball', 'Ginger', 'Bubbles', 'Oreo', 'Pepper', 'Fluffy', 'Sparkle', 'Bean', 'Noodle']
+  };
+  for (const n of new Set([...PICK_NAMES.nicks, ...PICK_NAMES.pets])) LINES['name/' + n] = n;
+  Object.assign(LINES, { 'hello': 'Hello!', 'welcome-home': 'Welcome home,' });
   for (const [l, t] of Object.entries(NAMES)) LINES['letter/' + l] = t;
   for (const [l, t] of Object.entries(PHONICS)) LINES['sound/' + l] = t;
   for (const [l, [w]] of Object.entries(WORDS)) LINES['word/' + l] = w;
@@ -85,11 +92,21 @@
   for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
   const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
 
-  const SETS = [{ id: 'male', name: 'Male voice' }, { id: 'female', name: 'Female voice' }];
+  // Two built-in voice slots plus any extra voices the grown-ups add and name (grandparents, cousins, the child herself...).
+  // Extra voices live in settings.voices = [{ id, name }]; their clips are stored like the others under "<id>/<line>".
+  const BASE_SETS = [{ id: 'male', name: 'Male voice' }, { id: 'female', name: 'Female voice' }];
+  const SETS = [...BASE_SETS];
+  function syncSets() {
+    const extra = (store.settings.voices || []).filter(v => v && v.id && v.name);
+    SETS.length = 0; SETS.push(...BASE_SETS, ...extra.map(v => ({ id: v.id, name: v.name, extra: true })));
+    for (const s of SETS) if (!deviceKeys[s.id]) deviceKeys[s.id] = new Set();
+    return SETS;
+  }
 
   const GROUPS = [
     { id: 'praise', title: 'Cheering', note: 'Said after she does something well. Turn down how often in the "Praise" setting.', test: k => PRAISE.has(k) },
-    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style)\//.test(k) },
+    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style|name)\//.test(k) },
+    { id: 'names', title: 'Names in the name pickers', note: 'Said when a name button is touched (player nicknames and pet names) and in "Welcome home, ...".', test: k => k.startsWith('name/') },
     { id: 'style', title: 'Style Studio names', note: 'Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
     { id: 'letters', title: 'Letter names (A to Z)', note: 'Say the name of the letter: "Bee", "Cee".', test: k => k.startsWith('letter/') },
     { id: 'sounds', title: 'Letter sounds (A to Z)', note: 'Say the sound the letter makes: "buh", "kuh", "sss". Not the name.', test: k => k.startsWith('sound/') },
@@ -97,16 +114,18 @@
     { id: 'friends', title: 'Garden friend announcements', note: 'Said when a new garden friend appears.', test: k => k.startsWith('creature/') },
     { id: 'critters', title: 'Critter noises (make the sound!)', note: 'Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.', test: k => k.startsWith('critter/') },
     { id: 'purrs', title: 'Purring and happy sounds', note: 'Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.', test: k => k.startsWith('purr/') },
-    { id: 'players', title: 'Player names', note: 'Say each player\'s greeting, like "Hi Charlotte!".', test: k => k.startsWith('player/') }
+    { id: 'players', title: 'Player names', note: 'Say each player\'s greeting, like "Hi Charlotte!".', test: k => k.startsWith('player/') || k.startsWith('pname/') }
   ];
 
   const base = key => key.replace(/\//g, '-');
   const fileFor = (set, key) => `audio/voice/${set}/${base(key)}.mp3`;
   const allKeys = () => [...Object.keys(LINES), ...Object.keys(SOUNDS), ...Object.keys(custom)];
-  const textFor = key => LINES[key] ?? SOUNDS[key] ?? custom[key] ?? key;
+  // The grown-ups can reword any line (settings.lineText); the reworded text is what the built-in voice says and what shows in the recorder.
+  const textFor = key => (store.settings.lineText && store.settings.lineText[key]) || LINES[key] || SOUNDS[key] || custom[key] || key;
+  const originalText = key => LINES[key] ?? SOUNDS[key] ?? custom[key] ?? key;
 
   /* ------------------------------------------------------------ stored clips */
-  const deviceKeys = { male: new Set(), female: new Set() };
+  const deviceKeys = { male: new Set(), female: new Set() };   // more sets appear as extra voices are added (see syncSets)
   let manifest = null;
   let db = null;
   const buffers = new Map(); // "set/key" -> AudioBuffer | null
@@ -129,13 +148,14 @@
   const ready = (async () => {
     db = typeof indexedDB !== 'undefined' ? await openDB() : null;
     const keys = (await idb('readonly', st => st.getAllKeys())) || [];
-    for (const id of keys) { const [set, ...rest] = String(id).split('/'); if (deviceKeys[set]) deviceKeys[set].add(rest.join('/')); }
+    for (const id of keys) { const [set, ...rest] = String(id).split('/'); (deviceKeys[set] || (deviceKeys[set] = new Set())).add(rest.join('/')); }
+    syncSets();
     try { const res = await fetch('audio/voice/manifest.json'); if (res.ok) manifest = await res.json(); } catch (_) { /* no file recordings */ }
   })();
 
   const fileAvail = (set, key) => !!(manifest && manifest[set] && manifest[set].includes(base(key)));
-  const hasClip = (set, key) => deviceKeys[set].has(key) || fileAvail(set, key);
-  const hasDeviceClip = (set, key) => deviceKeys[set].has(key);
+  const hasClip = (set, key) => !!(deviceKeys[set] && deviceKeys[set].has(key)) || fileAvail(set, key);
+  const hasDeviceClip = (set, key) => !!(deviceKeys[set] && deviceKeys[set].has(key));
 
   // Trim silence, and level the clip so quiet phone recordings are as loud as clear ones.
   function analyse(buf) {
@@ -156,7 +176,7 @@
     if (buffers.has(id)) return buffers.get(id);
     let buf = null;
     try {
-      if (deviceKeys[set].has(key)) { const blob = await idb('readonly', st => st.get(id)); if (blob) buf = await decode(await blob.arrayBuffer()); }
+      if (deviceKeys[set] && deviceKeys[set].has(key)) { const blob = await idb('readonly', st => st.get(id)); if (blob) buf = await decode(await blob.arrayBuffer()); }
       if (!buf && fileAvail(set, key)) { const res = await fetch(fileFor(set, key)); if (res.ok) buf = await decode(await res.arrayBuffer()); }
     } catch (_) { /* unreadable clip: fall back to speech */ }
     buffers.set(id, buf);
@@ -205,7 +225,8 @@
   function chooseSet(key) {
     const pref = settings().voicePref || 'mix';
     if (pref === 'builtin') return null;
-    const order = pref === 'mix' ? ['male', 'female'] : [pref];
+    const off = settings().voiceOff || [];
+    const order = pref === 'mix' ? syncSets().filter(s => !off.includes(s.id)).map(s => s.id) : [pref];
     const have = order.filter(s => hasClip(s, key));
     return have.length ? have[Math.floor(Math.random() * have.length)] : null;
   }
@@ -224,7 +245,7 @@
     const set = A.ctx ? chooseSet(item) : null;
     if (set) { const buf = await loadBuffer(set, item); if (buf) return playBuffer(buf); }
     if (item in SOUNDS) return; // sound-only: silent unless recorded
-    const text = LINES[item] ?? custom[item];
+    const text = textFor(item) === item ? (LINES[item] ?? custom[item]) : textFor(item);
     if (text) return speak(text);
   }
 
@@ -246,12 +267,12 @@
     if (!db) throw new Error('This browser cannot store recordings.');
     const ok = await idb('readwrite', st => st.put(blob, set + '/' + key));
     if (!ok) throw new Error('Could not save the recording.');
-    deviceKeys[set].add(key); buffers.set(set + '/' + key, buf);
+    (deviceKeys[set] || (deviceKeys[set] = new Set())).add(key); buffers.set(set + '/' + key, buf);
     return buf;
   }
   async function deleteClip(set, key) {
     await idb('readwrite', st => st.delete(set + '/' + key));
-    deviceKeys[set].delete(key); buffers.delete(set + '/' + key);
+    deviceKeys[set] && deviceKeys[set].delete(key); buffers.delete(set + '/' + key);
   }
   async function previewClip(set, key) {
     A.unlock(); await ready;
@@ -262,7 +283,30 @@
 
   SPG.voice = {
     hushed: false, // true inside the Coloring Book: no spoken voices at all
-    LINES, SOUNDS, PHONICS, NAMES, WORDS, PRAISE, GROUPS, SETS, custom, ready,
+    LINES, SOUNDS, PICK_NAMES, PHONICS, NAMES, WORDS, PRAISE, GROUPS, SETS, custom, ready,
+    syncSets,
+    addVoice(name) {
+      const list = store.settings.voices || (store.settings.voices = []);
+      const id = 'v' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+      list.push({ id, name: String(name).trim().slice(0, 24) || 'New voice' }); store.save(); syncSets(); return id;
+    },
+    renameVoice(id, name) { const v = (store.settings.voices || []).find(x => x.id === id); if (v) { v.name = String(name).trim().slice(0, 24) || v.name; store.save(); syncSets(); } },
+    // Removes the voice and every clip recorded for it.
+    async removeVoice(id) {
+      for (const key of [...(deviceKeys[id] || [])]) await idb('readwrite', st => st.delete(id + '/' + key));
+      deviceKeys[id] = new Set(); for (const k of [...buffers.keys()]) if (k.startsWith(id + '/')) buffers.delete(k);
+      store.settings.voices = (store.settings.voices || []).filter(x => x.id !== id);
+      store.settings.voiceOff = (store.settings.voiceOff || []).filter(x => x !== id);
+      if (store.settings.voicePref === id) store.settings.voicePref = 'mix';
+      store.save(); syncSets();
+    },
+    originalText,
+    setText(key, text) {
+      const t = String(text || '').trim().slice(0, 120), map = store.settings.lineText || (store.settings.lineText = {});
+      if (!t || t === originalText(key)) delete map[key]; else map[key] = t;
+      store.save();
+    },
+    isReworded: key => !!(store.settings.lineText && store.settings.lineText[key]),
     fileFor, allKeys, textFor, hasClip, hasDeviceClip,
     groupOf: key => GROUPS.find(g => g.test(key)),
     // Say a line, or a list of lines one after another. Items are keys, {say: 'free text'}, or null.

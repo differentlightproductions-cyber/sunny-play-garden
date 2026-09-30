@@ -253,7 +253,7 @@
       none.addEventListener('click', () => { sfx.whoosh(); this.change({ [cat]: null }, true); });
       g.append(none);
       for (const it of P.CATS[cat]) {
-        g.append(this.tile(cv => drawThumb(cv, this.thumbLook(cat, it.id), FOCUS[cat]), this.look[cat] === it.id, cat + '-' + it.id, () => { this.change({ [cat]: it.id }); this.itemSfx(cat); }));
+        g.append(this.tile(cv => drawThumb(cv, this.thumbLook(cat, it.id), FOCUS[cat]), this.look[cat] === it.id, cat + '-' + it.id, () => { this.change(cat === 'top' || cat === 'bottom' ? { [cat]: it.id, dress: null } : { [cat]: it.id }); this.itemSfx(cat); }));
       }
       return g;
     }

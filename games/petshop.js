@@ -178,7 +178,7 @@
       tap(ok, () => {
         const name = input.value.trim() || grid.value || cur || P.randomName();
         P.rename(id, name); this.closeSheet(); this.render();
-        if (first) { this.celebrate(); voice.say({ say: `Welcome home, ${name}!` }); }
+        if (first) { this.celebrate(); voice.say('welcome-home', voice.LINES['name/' + name] ? 'name/' + name : { say: name }); }
       }, guard);
       this.openSheet(this.preview({ id }, 'pet'), el('h2', '', first ? 'What is your friend called?' : 'New name'), grid, el('div', 'row', dice, kb), field, el('div', 'row', ok));
       input.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });

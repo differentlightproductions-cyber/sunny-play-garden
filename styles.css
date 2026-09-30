@@ -806,7 +806,6 @@ body.night .backdrop svg circle[fill="#ffe27a"] { display: none; }
 body.night .backdrop::before, body.night .backdrop::after { opacity: 1; }
 @keyframes twinkle { from { filter: brightness(.7); } to { filter: brightness(1.25); } }
 body.night .cloud { opacity: .5; }
-#hub-night[aria-pressed="true"] { background: #2a3270; color: #ffe680; }
 @media (prefers-reduced-motion: reduce) { .backdrop::after { animation: none; } }
 
 /* Style Studio at night: the stage lights her with her own lamp, so the global veil steps aside and the panel is dimmed instead */
@@ -857,3 +856,54 @@ body.night.st-open .st-panel, body.night.st-open .hud-btn, body.night.st-open .c
 .guide-count, .guide-say { margin: 2px 0; }
 .guide-who { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 6px 0; }
 .guide-who .seg { flex-wrap: wrap; }
+
+/* Style Studio: bigger, clearer controls on tablets and computers */
+.st-tab { width: clamp(50px, 8.6vmin, 92px); height: auto; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 2px 2px; }
+.st-tab canvas { width: 100%; aspect-ratio: 1; height: auto; }
+.st-tab-l { font-size: clamp(.62rem, 1.5vmin, .95rem); font-weight: 700; line-height: 1.1; color: var(--ink); }
+.st-grid { grid-template-columns: repeat(auto-fill, minmax(clamp(78px, 14vmin, 150px), 1fr)); gap: clamp(8px, 1.6vmin, 16px); }
+.st-sw { width: clamp(38px, 6.6vmin, 68px); height: clamp(38px, 6.6vmin, 68px); }
+.st-sw-row.big .st-sw { width: clamp(52px, 9vmin, 92px); height: clamp(52px, 9vmin, 92px); border-width: 3px; }
+.st-sw.pic { background: #fff; padding: 2px; } .st-sw.pic canvas { width: 100%; height: 100%; display: block; }
+.st-sec { display: grid; gap: 6px; padding: 8px; background: rgba(255, 255, 255, .6); border-radius: 20px; }
+.st-sec-head { display: flex; align-items: center; gap: 10px; font-size: clamp(1rem, 2.6vmin, 1.5rem); font-weight: 700; }
+.st-sec-ico { width: clamp(38px, 7vmin, 60px); height: clamp(38px, 7vmin, 60px); }
+@media (orientation: landscape) and (min-width: 900px) { .st { grid-template-columns: minmax(0, 1fr) minmax(400px, 52%); } }
+@media (max-height: 520px) { .st-tab-l { display: none; } .st-tab { width: 40px; } .st-sw-row.big .st-sw { width: 40px; height: 40px; } }
+.st-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.st-tab { width: auto; max-width: 96px; justify-self: center; }
+@media (max-height: 520px) { .st-tabs { display: flex; } .st-tab { width: 40px; } }
+
+/* ---- grown-ups gate: a big, obvious way back to the games ---- */
+.gate .gate-back { width: 100%; min-height: 76px; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; gap: .5em; margin-bottom: 12px; }
+.gate .gate-back svg { width: 1.4em; height: 1.4em; }
+
+/* ---- hub icons: readable name pills, and a little lamp over each icon at night ---- */
+#hub-games .card-name { background: rgba(255, 255, 255, .86); color: var(--ink); border-radius: 999px; padding: .12em .8em .16em; font-size: clamp(1rem, 2.9vmin, 1.7rem); text-shadow: none; box-shadow: 0 3px 0 rgba(90, 63, 94, .14); width: auto; max-width: 100%; }
+#hub-games .card { font-size: clamp(1rem, 2.9vmin, 1.7rem); }
+#hub-games .card canvas { width: min(100cqw, calc(100cqh - 3.5em)); }
+#hub-games .lamp { display: none; }
+body.night #hub-games .lamp { display: block; position: relative; z-index: 3; flex: none; height: 1.15em; width: calc(min(100cqw, calc(100cqh - 3.5em)) * .34); margin-bottom: -.05em;
+  background: linear-gradient(#2a2244, #2a2244) 50% 0 / 2px .4em no-repeat; pointer-events: none; }
+body.night #hub-games .lamp::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: .78em; background: linear-gradient(#ffd46a, #e0a020); clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%); filter: drop-shadow(0 0 6px rgba(255, 220, 130, .8)); }
+body.night #hub-games .lamp::after { content: ''; position: absolute; top: 1em; left: 50%; transform: translateX(-50%); width: min(100cqw, calc(100cqh - 3.5em)); height: min(100cqw, calc(100cqh - 3.5em));
+  background: radial-gradient(ellipse at 50% 0, rgba(255, 236, 170, .55), rgba(255, 236, 170, .16) 55%, rgba(255, 236, 170, 0) 80%); clip-path: polygon(36% 0, 64% 0, 100% 100%, 0 100%); pointer-events: none; }
+/* at night the hub is lit by its lamps instead of one dim veil over everything */
+body.night[data-screen="hub"] #night-veil { opacity: 0; }
+body.night[data-screen="hub"] .hub-top .chip, body.night[data-screen="hub"] .pg-nav, body.night[data-screen="hub"] .hub-shop { filter: brightness(.72) saturate(.85); }
+body.night[data-screen="hub"] #hub-games .card canvas { filter: brightness(.74) saturate(.9); }
+body.night[data-screen="hub"] #hub-games .card-name { background: rgba(255, 240, 200, .16); color: #ffeeb8; box-shadow: none; }
+body.night[data-screen="hub"] .hub-title { color: #ffeeb8; text-shadow: none; }
+#hub-games .card { font-size: clamp(.95rem, 2.5vmin, 1.5rem); }
+#hub-games .card-name { font-size: 1em; }
+#hub-games .card canvas { width: min(100cqw, calc(100cqh - 3.2em)); }
+body.night #hub-games .lamp { width: calc(min(100cqw, calc(100cqh - 3.2em)) * .34); }
+body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); height: min(100cqw, calc(100cqh - 3.2em)); }
+@media (max-width: 520px) {
+  #hub-games .card { font-size: clamp(.78rem, 3.4vw, 1rem); }
+  #hub-games .card-name { white-space: normal; line-height: 1.1; border-radius: 14px; padding: .18em .5em .22em; min-height: 2.5em; display: flex; align-items: center; }
+  #hub-games .card canvas { width: min(100cqw, calc(100cqh - 4.6em)); }
+  body.night #hub-games .lamp { width: calc(min(100cqw, calc(100cqh - 4.6em)) * .34); }
+  body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 4.6em)); height: min(100cqw, calc(100cqh - 4.6em)); }
+}
+@media (max-height: 520px) and (orientation: landscape) { #hub-games .card { font-size: .8rem; } #hub-games .card-name { padding: .08em .6em .1em; } #hub-games .card canvas { width: min(100cqw, calc(100cqh - 2.6em)); } body.night #hub-games .lamp { display: none; } }

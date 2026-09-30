@@ -488,7 +488,7 @@
       ['contextmenu', 'selectstart', 'dragstart', 'gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, block));
       document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
       document.addEventListener('touchmove', e => {
-        if (e.touches.length > 1 || !e.target.closest?.('[data-scroll]')) e.preventDefault();
+        if (e.touches.length > 1 || !e.target.closest?.('[data-scroll], #hub-games .pages')) e.preventDefault();   // the games strip swipes natively
       }, { passive: false });
       document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 

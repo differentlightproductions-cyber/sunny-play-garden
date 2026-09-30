@@ -30,7 +30,7 @@
   }
 
   function show(name) {
-    current = name;
+    current = name; document.body.dataset.screen = name;
     for (const [id, el] of Object.entries(screens)) el.classList.toggle('hidden', id !== name);
     if (name === 'hub') requestAnimationFrame(drawCards);
   }
@@ -134,13 +134,13 @@
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
       const canvas = document.createElement('canvas');
       const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-(pi * PER_PAGE + k) * 1.1}s` },
-        canvas, h('span', { class: 'card-name' }, g.name));
+        h('span', { class: 'lamp', 'aria-hidden': 'true' }), canvas, h('span', { class: 'card-name' }, g.name));
       // A swipe must turn the page, not start a game, so a card opens on a short tap (the browser cancels the touch when it becomes a swipe).
       let down = null;
       card.addEventListener('pointerdown', e => { if (e.button > 0) return; down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
       card.addEventListener('pointerup', e => {
         if (!down) return; const d = down; down = null;
-        if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && performance.now() - d.t < 900) openGame(g);
+        if (!strip._dragged && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && performance.now() - d.t < 900) openGame(g);
       });
       for (const n of ['pointercancel', 'pointerleave']) card.addEventListener(n, () => { down = null; });
       card.addEventListener('click', e => { if (e.detail === 0) openGame(g); });   // keyboard / assistive tech
@@ -161,6 +161,16 @@
     SPG.ui.press(next, () => { SPG.sfx.tap(); go(where() + 1); });
     [...dots.children].forEach((d, k) => SPG.ui.press(d, () => { SPG.sfx.tap(); go(k); }));
     strip.addEventListener('scroll', () => { clearTimeout(strip._t); strip._t = setTimeout(mark, 60); }, { passive: true });
+    // Touch swipes scroll natively; with a mouse (computer versions) dragging turns the page too.
+    let md = null;
+    strip.addEventListener('pointerdown', e => { strip._dragged = false; if (e.pointerType === 'mouse' && e.button === 0) md = { x: e.clientX, left: strip.scrollLeft, page: where(), moved: false }; });
+    strip.addEventListener('pointermove', e => {
+      if (!md) return; const dx = e.clientX - md.x;
+      if (!md.moved && Math.abs(dx) > 8) { md.moved = true; strip._dragged = true; strip.style.scrollSnapType = 'none'; try { strip.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ } }
+      if (md.moved) strip.scrollLeft = md.left - dx;
+    });
+    const endDrag = e => { if (!md) return; const d = md; md = null; if (!d.moved) return; const dx = e.clientX - d.x; strip.style.scrollSnapType = ''; go(Math.abs(dx) > strip.clientWidth * .12 ? d.page + (dx < 0 ? 1 : -1) : d.page); };
+    strip.addEventListener('pointerup', endDrag); strip.addEventListener('pointercancel', endDrag);
     strip._restore = () => { if (!strip.clientWidth) return; strip.scrollLeft = hubPage * strip.clientWidth; mark(); };
     $('hub-games').classList.toggle('single', pages.length < 2);
     $('hub-games').replaceChildren(strip, h('div', { class: 'pg-nav' }, prev, dots, next));
@@ -300,7 +310,7 @@
     }
   })();
   SPG.ui.press($('gate-forgot'), forgotPin);
-  SPG.ui.press($('gate-cancel'), () => { gateState = null; closeOverlay(overlays.gate); });
+  SPG.ui.press($('gate-back'), () => { gateState = null; closeOverlay(overlays.gate); });
 
   /* ------------------------------------------------------------ grown-ups panel */
   let installPrompt = null;
@@ -666,10 +676,6 @@
   /* ------------------------------------------------------------ boot */
   safe.init();
   SPG.night.apply(); setInterval(() => SPG.night.apply(), 60000);
-  const nightBtn = $('hub-night');
-  const syncNight = () => nightBtn.setAttribute('aria-pressed', String(SPG.night.on()));
-  SPG.night.listeners.push(syncNight); syncNight();
-  nightBtn.addEventListener('click', () => { if (SPG.night.mode() === 'auto') { SPG.night.override = !SPG.night.on(); SPG.night.apply(); } else SPG.night.set(SPG.night.on() ? 'off' : 'on'); SPG.sfx.tap(); });
   renderCards();
   if (store.profiles.length) { store.setActive(store.active?.id ?? store.profiles[0].id); renderWho(); } else openSetup(false);
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

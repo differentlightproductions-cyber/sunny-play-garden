@@ -204,20 +204,23 @@
     draw() {
       const c = this.ctx, w = this.w, h = this.h; if (!w) return;
       // backdrop: a warm stage with curtains
-      const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffe3f0'); g.addColorStop(.6, '#fff1dc'); g.addColorStop(1, '#ffd9c2');
-      c.fillStyle = g; c.fillRect(0, 0, w, h);
-      for (let i = 0; i < 3; i++) { const x = w * (.2 + i * .3); const sp = c.createRadialGradient(x, 0, 0, x, 0, h * .75); sp.addColorStop(0, 'rgba(255,255,255,.55)'); sp.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = sp; c.beginPath(); c.moveTo(x - 20, 0); c.lineTo(x + 20, 0); c.lineTo(x + h * .35, h * .8); c.lineTo(x - h * .35, h * .8); c.fill(); }
+      // every few tunes the band plays somewhere new: the theatre, then a beach, a meadow, the snow, the night sky
+      const STAGES = [{ floor: '#d99a6c', curtain: '#ff8aa3' }, { scene: 'beach', floor: '#e6c98e', curtain: '#3fb4d8' }, { scene: 'meadow', floor: '#a4d68f', curtain: '#59b96e' }, { scene: 'snow', floor: '#e8f1fa', curtain: '#7fa8d8' }, { scene: 'night', floor: '#5a5aa0', curtain: '#8a6ad9' }];
+      const st = STAGES[Math.floor((this.bag.tunes || 0) / 3) % STAGES.length];
+      if (st.scene) SPG.scenery.draw(c, w, h, this.t, st.scene, { clouds: false });
+      else { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffe3f0'); g.addColorStop(.6, '#fff1dc'); g.addColorStop(1, '#ffd9c2'); c.fillStyle = g; c.fillRect(0, 0, w, h); }
+      if (!st.scene) for (let i = 0; i < 3; i++) { const x = w * (.2 + i * .3); const sp = c.createRadialGradient(x, 0, 0, x, 0, h * .75); sp.addColorStop(0, 'rgba(255,255,255,.55)'); sp.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = sp; c.beginPath(); c.moveTo(x - 20, 0); c.lineTo(x + 20, 0); c.lineTo(x + h * .35, h * .8); c.lineTo(x - h * .35, h * .8); c.fill(); }
       const floorTop = this.wide ? h * .68 : h * .44;
-      c.fillStyle = '#d99a6c'; c.fillRect(0, floorTop, w, h - floorTop);
+      c.fillStyle = st.floor; c.fillRect(0, floorTop, w, h - floorTop);
       c.fillStyle = 'rgba(255,255,255,.12)'; for (let y = floorTop + 18; y < h; y += 34) c.fillRect(0, y, w, 4);
       c.fillStyle = 'rgba(90,63,94,.14)'; c.fillRect(0, floorTop, w, 8);
       for (const side of [0, 1]) {   // curtains
         c.save(); if (side) { c.translate(w, 0); c.scale(-1, 1); }
-        const cw = w * .07; c.fillStyle = '#ff8aa3'; c.beginPath(); c.moveTo(0, 0); c.lineTo(cw, 0); c.quadraticCurveTo(cw * .4, h * .3, cw * 1.05, floorTop); c.lineTo(0, floorTop); c.fill();
+        const cw = w * .07; c.fillStyle = st.curtain; c.beginPath(); c.moveTo(0, 0); c.lineTo(cw, 0); c.quadraticCurveTo(cw * .4, h * .3, cw * 1.05, floorTop); c.lineTo(0, floorTop); c.fill();
         c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(cw * .3, 0, cw * .12, floorTop * .9);
         c.restore();
       }
-      c.fillStyle = '#ff8aa3'; c.fillRect(0, 0, w, h * .045); c.fillStyle = '#ffd54a'; for (let x = w * .03; x < w; x += w * .06) { c.beginPath(); c.arc(x, h * .045, h * .012, 0, TAU); c.fill(); }
+      c.fillStyle = st.curtain; c.fillRect(0, 0, w, h * .045); c.fillStyle = '#ffd54a'; for (let x = w * .03; x < w; x += w * .06) { c.beginPath(); c.arc(x, h * .045, h * .012, 0, TAU); c.fill(); }
       const act = SPG.pets.active();
       // friends, back row first
       const order = BAND.map((_, i) => i).sort((a, b) => this.pos[a].y - this.pos[b].y);

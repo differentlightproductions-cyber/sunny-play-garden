@@ -1,5 +1,7 @@
 // Pet Care: a cozy room for her Pet Shop friend (or a visiting bunny if she has none yet). Feed it fruit, give it a
-// bubbly bath, tuck it into bed. A little thought bubble shows what it would like. Nothing is ever wrong or sad.
+// bubbly bath, tuck it into bed, and decorate the room. A little thought bubble shows what it would like. Nothing is
+// ever wrong or sad. Once the pet is asleep it stays asleep until she wakes it: the room goes dark, a night light
+// glows and stars shine on the wall, and in the morning the room fills with sunshine and stars.
 (() => {
   const SPG = window.SPG;
   const { art, sfx, voice, store } = SPG;
@@ -7,6 +9,46 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, u) => a + (b - a) * u;
   const FOODS = [0, 1, 3, 4, 5];   // art.fruit types: apple, orange, strawberry, banana, peach
+
+  // Wallpapers, floors and rug colors. She unlocks one more wallpaper for every few cares (so the room has levels too).
+  const WALLS = [
+    { top: '#ffe9df', bot: '#ffd9cc', pat: 'stripes' }, { top: '#d8f0ff', bot: '#e9f7ff', pat: 'clouds' }, { top: '#dff5e3', bot: '#c8ecd2', pat: 'dots' },
+    { top: '#fff3c4', bot: '#ffe8a0', pat: 'rays' }, { top: '#e6dcff', bot: '#d3c6f7', pat: 'stars' }, { top: '#c8f0ee', bot: '#a8e2e4', pat: 'waves' }
+  ];
+  const FLOORS = [['#e2b98d', '#c99a6a'], ['#f1d9b5', '#ddbb8a'], ['#d9cdf0', '#c2b3e6']];
+  const RUGS = ['#ffb3c6', '#a8e2c4', '#a9d8f5', '#ffe08a', '#cdb8f2'];
+  const LAMPS = ['#ffd58a', '#ffb3d1', '#9fd0ff'];   // night light colors: warm, pink, blue
+  const UNLOCK_EVERY = 5;
+  // Things to decorate with. 'wall' ones hang on the wall, 'floor' ones stand on the floor.
+  const DECO = [
+    { id: 'star', z: 'wall' }, { id: 'heart', z: 'wall' }, { id: 'rainbow', z: 'wall' }, { id: 'moon', z: 'wall' }, { id: 'flowers', z: 'wall' }, { id: 'frame', z: 'wall' }, { id: 'balloons', z: 'wall' },
+    { id: 'plant', z: 'floor' }, { id: 'chest', z: 'floor' }, { id: 'teddy', z: 'floor' }, { id: 'beanbag', z: 'floor' }, { id: 'ball', z: 'floor' }, { id: 'lamp', z: 'floor' }, { id: 'shelf', z: 'floor' }
+  ];
+  const MAX_DECO = 26;
+
+  // One decoration, drawn with its base on (0, 0) for floor things and centered for wall things. u = a unit of size.
+  function drawDeco(c, id, u, t, who) {
+    c.save(); c.lineJoin = c.lineCap = 'round';
+    switch (id) {
+      case 'star': art.star(c, 0, 0, u * .95, '#ffd54a', Math.sin(t) * .1); c.save(); art.face(c, u * .34, {}); c.restore(); break;
+      case 'heart': art.heart(c, 0, 0, u * 1.0, '#ff7a93'); c.save(); c.translate(0, u * .05); art.face(c, u * .32, {}); c.restore(); break;
+      case 'moon': c.fillStyle = '#ffe58a'; c.beginPath(); c.arc(0, 0, u * .9, 0, TAU); c.fill(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(u * .45, -u * .15, u * .75, 0, TAU); c.fill(); c.globalCompositeOperation = 'source-over'; c.fillStyle = '#c98b15'; c.beginPath(); c.arc(-u * .45, u * .05, u * .06, 0, TAU); c.fill(); c.lineWidth = u * .05; c.strokeStyle = '#c98b15'; c.beginPath(); c.arc(-u * .5, u * .18, u * .12, .2, Math.PI - .2); c.stroke(); break;
+      case 'rainbow': ['#ff6b81', '#ffa64d', '#ffe066', '#7ed957', '#5cc8f2', '#8a7cf0'].forEach((col, i) => { c.strokeStyle = col; c.lineWidth = u * .16; c.beginPath(); c.arc(0, u * .5, u * (1.05 - i * .15), Math.PI, TAU); c.stroke(); }); c.fillStyle = '#fff'; c.beginPath(); c.arc(-u * 1.0, u * .5, u * .22, 0, TAU); c.arc(u * 1.0, u * .5, u * .22, 0, TAU); c.fill(); break;
+      case 'flowers': for (const [x, y, col] of [[-.6, .2, '#ff8aa3'], [0, -.1, '#ffd54a'], [.6, .25, '#b58cf0']]) { c.strokeStyle = '#59b96e'; c.lineWidth = u * .1; c.beginPath(); c.moveTo(x * u, y * u); c.lineTo(x * u, u * .95); c.stroke(); c.fillStyle = col; for (let k = 0; k < 5; k++) { c.beginPath(); c.ellipse(x * u + Math.cos(k * TAU / 5) * u * .26, y * u + Math.sin(k * TAU / 5) * u * .26, u * .17, u * .17, 0, 0, TAU); c.fill(); } c.fillStyle = '#fff3b0'; c.beginPath(); c.arc(x * u, y * u, u * .15, 0, TAU); c.fill(); } break;
+      case 'frame': c.fillStyle = '#b9805a'; art.rr(c, -u * .85, -u * .85, u * 1.7, u * 1.7, u * .15); c.fill(); c.fillStyle = '#d7f0ff'; art.rr(c, -u * .68, -u * .68, u * 1.36, u * 1.36, u * .1); c.fill(); c.save(); c.translate(0, u * .1); art.avatar(c, (who && who.id) || 'bunny', u * .55); c.restore(); break;
+      case 'balloons': for (const [x, y, col] of [[-.55, -.3, '#ff7a93'], [0, -.55, '#ffd54a'], [.55, -.25, '#7fd4f5']]) { c.strokeStyle = 'rgba(90,63,94,.5)'; c.lineWidth = 2; c.beginPath(); c.moveTo(x * u, y * u + u * .5); c.quadraticCurveTo(x * u * .3, u * .8, 0, u * 1.1); c.stroke(); c.fillStyle = col; c.beginPath(); c.ellipse(x * u, y * u, u * .42, u * .52, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(255,255,255,.45)'; c.beginPath(); c.ellipse(x * u - u * .14, y * u - u * .18, u * .09, u * .16, -.4, 0, TAU); c.fill(); } break;
+      case 'plant': c.fillStyle = '#e8735a'; c.beginPath(); c.moveTo(-u * .5, -u * .8); c.lineTo(u * .5, -u * .8); c.lineTo(u * .38, 0); c.lineTo(-u * .38, 0); c.closePath(); c.fill(); c.fillStyle = '#5fbf6a'; for (const [x, a] of [[-.3, -.5], [0, 0], [.3, .5]]) { c.save(); c.translate(x * u, -u * .8); c.rotate(a); c.beginPath(); c.ellipse(0, -u * .55, u * .22, u * .6, 0, 0, TAU); c.fill(); c.restore(); } break;
+      case 'chest': c.fillStyle = '#e0574a'; art.rr(c, -u * .85, -u * .8, u * 1.7, u * .8, u * .1); c.fill(); c.fillStyle = '#ff8a7a'; c.beginPath(); c.ellipse(0, -u * .8, u * .85, u * .28, 0, Math.PI, TAU); c.fill(); c.fillStyle = '#ffd54a'; art.star(c, 0, -u * .42, u * .26, '#ffd54a', 0); break;
+      case 'teddy': c.fillStyle = '#c98b5b'; c.beginPath(); c.ellipse(0, -u * .4, u * .5, u * .42, 0, 0, TAU); c.fill(); c.fillStyle = '#f3c9a0'; c.beginPath(); c.ellipse(0, -u * .35, u * .3, u * .28, 0, 0, TAU); c.fill(); c.save(); c.translate(0, -u * 1.05); art.avatar(c, 'bear', u * .45); c.restore(); break;
+      case 'beanbag': c.fillStyle = '#b58cf0'; c.beginPath(); c.moveTo(-u * .9, 0); c.bezierCurveTo(-u * 1.0, -u * .9, u * 1.0, -u * .9, u * .9, 0); c.closePath(); c.fill(); c.fillStyle = 'rgba(255,255,255,.3)'; c.beginPath(); c.ellipse(-u * .3, -u * .5, u * .3, u * .12, -.4, 0, TAU); c.fill(); break;
+      case 'ball': c.save(); c.translate(0, -u * .55); c.rotate(t * .0); c.fillStyle = '#fff'; c.beginPath(); c.arc(0, 0, u * .55, 0, TAU); c.fill(); c.save(); c.beginPath(); c.arc(0, 0, u * .55, 0, TAU); c.clip(); ['#ff6b81', '#5cc8f2', '#ffd54a'].forEach((col, i) => { c.fillStyle = col; c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, u, i * TAU / 3, i * TAU / 3 + TAU / 6); c.closePath(); c.fill(); }); c.restore(); c.restore(); break;
+      case 'lamp': c.fillStyle = '#8a7a9a'; c.fillRect(-u * .05, -u * 1.5, u * .1, u * 1.5); c.fillStyle = '#8a7a9a'; c.beginPath(); c.ellipse(0, 0, u * .4, u * .1, 0, 0, TAU); c.fill(); c.fillStyle = '#ffe3a0'; c.beginPath(); c.moveTo(-u * .5, -u * 1.15); c.lineTo(u * .5, -u * 1.15); c.lineTo(u * .32, -u * 1.75); c.lineTo(-u * .32, -u * 1.75); c.closePath(); c.fill(); break;
+      case 'shelf': c.fillStyle = '#b9805a'; art.rr(c, -u * .7, -u * 2.0, u * 1.4, u * 2.0, u * .08); c.fill(); c.fillStyle = '#e8d3b0'; for (let r = 0; r < 3; r++) c.fillRect(-u * .6, -u * 1.9 + r * u * .62, u * 1.2, u * .55);
+        ['#ff7a93', '#5cc8f2', '#ffd54a', '#7ed957', '#b58cf0'].forEach((col, i) => { const r = Math.floor(i / 2); c.fillStyle = col; c.fillRect(-u * .55 + (i % 2) * u * .6 + (i > 3 ? 0 : 0), -u * 1.85 + r * u * .62 + u * .12, u * .18, u * .4); c.fillRect(-u * .3 + (i % 2) * u * .6, -u * 1.85 + r * u * .62 + u * .05, u * .16, u * .47); }); break;
+      default: break;
+    }
+    c.restore();
+  }
 
   class CareGame {
     constructor(host) {
@@ -18,11 +60,15 @@
       const mins = clamp((Date.now() - (b.t || Date.now())) / 60000, 0, 60);
       b.hunger = Math.min(.85, Math.max(b.hunger || 0, .35) + mins * .03); b.dirt = Math.min(.85, Math.max(b.dirt || 0, .3) + mins * .02); b.tired = Math.min(.85, Math.max(b.tired || 0, .3) + mins * .02);
       b.flags = b.flags || {}; b.cares = b.cares || 0; b.t = Date.now();
+      b.wall = b.wall || 0; b.floor = b.floor || 0; b.rug = b.rug || 0; b.lamp = b.lamp || 0; b.deco = b.deco || [];
       this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s * .54); art.heart(c, 0, 0, s * .32, '#ff6b81'); }, b.cares);
       this.fx = new art.Fx(); this.t = 0; this.running = false;
-      this.tool = null; this.hold = null; this.sleeping = false; this.wake = 0;
+      this.tool = null; this.hold = null; this.sleeping = false; this.sleepT = 0; this.night = 0; this.morning = 0;
       this.foods = []; this.foam = []; this.zz = [];
       this.pet = { x: 0, y: 0, dir: 1, hop: 0, cheer: 0, eat: 0, moving: false };
+      // close-up petting: the pet zooms up, and she can stroke it, brush it or spritz it
+      this.zoom = 0; this.zoomOn = false; this.ztool = 'hand'; this.trail = []; this.mist = []; this.love = 0; this.shine = 0; this.wet = 0;
+      this.purrLevel = 0; this.purrCtl = null; this.purrMode = null; this.clipEnd = 0; this.brushT = 0; this.sprayT = 0; this.lean = { x: 0, y: 0 };
       this.idle = 0; this.tick = this.tick.bind(this);
       const cv = this.canvas, at = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * this.w / r.width, y: (e.clientY - r.top) * this.h / r.height }; };
       cv.addEventListener('pointerdown', e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* optional */ } SPG.audio.unlock(); const p = at(e); this.press(p.x, p.y, e.pointerId); });
@@ -30,6 +76,7 @@
       for (const n of ['pointerup', 'pointercancel']) cv.addEventListener(n, e => { if (this.hold && this.hold.id === e.pointerId) this.letGo(); });
     }
     who() { const a = SPG.pets.active(); return a ? { id: a.id, name: a.name, hat: a.hat } : { id: 'bunny', name: 'Pip', hat: null }; }
+    wallsOpen() { return clamp(3 + Math.floor(this.bag.cares / UNLOCK_EVERY), 3, WALLS.length); }
 
     /* ---------------------------------------------------------------- layout */
     resize() {
@@ -44,15 +91,38 @@
       this.floorY = this.h * (wide ? .6 : .5);
       this.feetY = this.h * (wide ? .82 : .72);
       this.s = Math.min(this.h * (wide ? .5 : .32), this.w * .42);
-      this.homeX = this.w * (wide ? .56 : .55);
+      this.homeX = this.w * (wide ? .52 : .55);
       this.bedX = this.w * (wide ? .2 : .24);
       this.bs = 38 * this.ui + 20;
-      const by = this.h - this.bs * .95;
-      this.tools = ['food', 'bath', 'bed'].map((id, i) => ({ id, x: this.w / 2 + (i - 1) * this.bs * 2.1, y: by }));
+      const by = this.h - this.bs * .95, gap = wide ? 2.1 : 1.9;
+      this.tools = ['food', 'bath', 'bed', 'deco'].map((id, i) => ({ id, x: this.w / 2 + (i - 1.5) * this.bs * gap, y: by }));
+      this.u = this.s * .3;   // one unit of decoration size
+      // the decoration tray: a column on the right (wide) or two rows above the toolbar (tall)
+      const cell = wide ? Math.min(this.h * .1, this.w * .07) : this.w / 8.8; this.cell = cell;
+      const slot = i => wide ? { x: this.w - cell * (i % 2 ? .75 : 1.95), y: this.h * .1 + cell * (Math.floor(i / 2) + .6) * 1.12 } : { x: this.w / 2 + ((i % 8) - 3.5) * cell * 1.07, y: by - this.bs * 1.35 - cell * (1.15 * (1 - Math.floor(i / 8)) + .5) };
+      this.trayPos = DECO.map((d, i) => slot(i)); this.bin = slot(DECO.length);
       if (!this.pet.x) { this.pet.x = this.homeX; this.pet.y = this.feetY; }
+      // close-up: the pet's feet near the bottom, big; a row of little tools along the bottom edge
+      this.S2 = Math.min(this.h * .92, this.w * 1.3); this.zx = this.w / 2; this.zy = this.h * .97;
+      this.ztools = ['hand', 'brush', 'spray', 'back'].map((id, i) => ({ id, x: this.w - this.bs * 1.0 - (3 - i) * this.bs * 1.8 + (wide ? 0 : 0), y: this.h - this.bs * .95 }));
+      if (!wide) this.ztools.forEach((t, i) => { t.x = this.w / 2 + (i - 1.5) * this.bs * 1.9; });
       this.fillFoods();
       this.draw();
     }
+    /* ---- close-up petting */
+    enterZoom() { if (this.sleeping || this.pet.moving || this.zoomOn) return; this.zoomOn = true; this.ztool = 'hand'; this.tool = null; this.hold = null; sfx.pop(); }
+    leaveZoom() { this.zoomOn = false; this.hold = null; this.stopPurr(); sfx.tap(); }
+    petBox() {   // the part of the zoomed pet that counts as fur
+      const S = this.S2, cx = this.zx + this.lean.x, cy = this.zy - S * .42;
+      return { cx, cy, rx: S * .3, ry: S * .5 };
+    }
+    startPurr() {
+      if (this.purrCtl || this.purrMode) return;
+      const sp = this.who().id; this.purrMode = 'synth'; this.purrCtl = sfx.purr(sp);
+      // a recorded purr, if a grown-up has added one, is played instead of the synthesized one
+      voice.ambient('purr/' + sp, .7).then(d => { if (d && this.purrMode) { this.purrMode = 'clip'; this.clipEnd = this.t + d; this.purrCtl && this.purrCtl.set(0); } }).catch(() => {});
+    }
+    stopPurr() { if (this.purrCtl) { this.purrCtl.off(); this.purrCtl = null; } this.purrMode = null; this.purrLevel = 0; }
     fillFoods() {
       const left = this.foods.filter(f => !f.gone);
       while (left.length < 3) { const k = FOODS[Math.floor(Math.random() * FOODS.length)]; left.push({ type: k, gone: false, x: 0, y: 0, home: true }); }
@@ -64,7 +134,7 @@
     }
     start() { this.resize(); this.resume(); voice.say('care-start'); }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
-    pause() { this.running = false; cancelAnimationFrame(this.raf); this.hold = null; this.save(); }
+    pause() { this.running = false; cancelAnimationFrame(this.raf); this.hold = null; this.stopPurr(); this.save(); }
     destroy() { this.pause(); this.canvas.remove(); this.counter.el.remove(); }
     save() { this.bag.t = Date.now(); store.save(); }
 
@@ -72,17 +142,28 @@
     press(x, y, id) {
       this.idle = 0;
       const near = (b, r) => Math.hypot(x - b.x, y - b.y) < r;
+      if (this.zoomOn) { this.pressZoom(x, y, id, near); return; }
       for (const t of this.tools) if (near(t, this.bs * .85)) { this.chooseTool(t.id); return; }
-      if (this.sleeping) { this.wakeUp(); return; }
+      if (this.sleeping) {
+        const l = this.lampPos(); if (near(l, this.s * .3)) { this.bag.lamp = (this.bag.lamp + 1) % LAMPS.length; sfx.tap(); this.save(); return; }   // change the night light's color
+        this.wakeUp(); return;
+      }
+      if (this.tool === 'deco') { this.pressDeco(x, y, id); return; }
       if (this.tool === 'food') {
         for (const f of this.foods) if (!f.gone && Math.hypot(x - f.x, y - f.y) < this.s * .2) { this.hold = { kind: 'food', f, id, x, y }; f.home = false; sfx.pop(); return; }
       } else if (this.tool === 'bath') {
         this.hold = { kind: 'sponge', id, x, y, last: { x, y } }; sfx.pop(); return;
       }
-      if (Math.abs(x - this.pet.x) < this.s * .4 && y > this.pet.y - this.s * 1.05 && y < this.pet.y + 10) {   // pat the pet
+      if (Math.abs(x - this.pet.x) < this.s * .4 && y > this.pet.y - this.s * 1.05 && y < this.pet.y + 10) {   // touch the pet: it says hello, then zooms up so she can stroke it
         this.pet.hop = 1; this.pet.cheer = 1.4; SPG.pets.noise(this.who().id);
         this.fx.burst(this.pet.x, this.pet.y - this.s * .95, 4, { colors: ['#ff8aa3', '#ff6b81'], speed: 90, g: -50, life: .9, size: 7 * this.ui, shape: 'heart' });
+        this.enterZoom();
       }
+    }
+    pressZoom(x, y, id, near) {
+      for (const t of this.ztools) if (near(t, this.bs * .85)) { if (t.id === 'back') this.leaveZoom(); else { this.ztool = t.id; sfx.tap(); this.stopPurrSoon = 0; } return; }
+      this.hold = { kind: 'stroke', id, x, y, last: { x, y }, down: this.t };
+      if (this.ztool === 'spray') sfx.spray();
     }
     chooseTool(id) {
       sfx.tap();
@@ -97,7 +178,7 @@
         const mouth = { x: this.pet.x, y: this.pet.y - this.s * .55 };
         if (Math.hypot(h.x - mouth.x, h.y - mouth.y) < this.s * .4) this.feed(h.f);
         else { h.f.home = true; }
-      }
+      } else if (h.kind === 'deco') this.dropDeco(h);
     }
     feed(f) {
       f.gone = true; this.pet.eat = 1.2; this.pet.cheer = 1.6; this.pet.hop = 1;
@@ -107,15 +188,55 @@
       if (this.bag.hunger <= 0) { voice.say('care-food'); }
       setTimeout(() => { if (this.tool === 'food') this.fillFoods(); }, 400);
     }
-    goSleep() { this.sleeping = true; this.wake = 0; this.pet.target = this.bedX; sfx.lullaby(); this.lull = 0; voice.say('care-sleep'); }
-    wakeUp() { this.sleeping = false; this.pet.target = this.homeX; this.pet.hop = 1; this.save(); }
+
+    /* ---------------------------------------------------------------- sleeping (it sleeps until she wakes it) */
+    goSleep() { this.sleeping = true; this.sleepT = 0; this.pet.target = this.bedX; sfx.lullaby(); this.lull = 0; voice.say('care-sleep'); }
+    wakeUp() {
+      const slept = this.sleepT >= 5;
+      this.sleeping = false; this.pet.target = this.homeX; this.pet.hop = 1; this.pet.cheer = 2.4;
+      if (this.night > .3) {   // good morning: sunshine floods in and stars sparkle everywhere
+        this.morning = 1; sfx.chime(); voice.say('care-morning');
+        for (let k = 0; k < 3; k++) setTimeout(() => this.fx.burst(this.w * (.25 + k * .25), this.h * .3, 12, { colors: ['#ffd54a', '#fff3b0', '#fff'], speed: 220, g: 60, life: 1.3, size: 7 * this.ui, shape: 'star', up: 100 }), k * 220);
+      }
+      if (slept) this.cared('slept');
+      this.save();
+    }
+    lampPos() { return { x: this.bedX + this.s * .62, y: this.feetY - this.s * .32 }; }
     cared(flag) {
       this.bag.flags[flag] = true; this.bag.cares++; this.counter.set(this.bag.cares);
+      if (this.bag.cares % UNLOCK_EVERY === 0 && this.wallsOpen() > 3) { this.fx.burst(this.w / 2, this.h * .2, 10, { colors: ['#ffd54a', '#fff'], speed: 200, g: 100, life: 1, size: 6 * this.ui, shape: 'star', up: 100 }); }
       if (this.bag.flags.fed && this.bag.flags.washed && this.bag.flags.slept) {
         this.bag.flags = {}; store.addStars(1); sfx.win(); this.pet.cheer = 2.4; this.pet.hop = 1;
         this.fx.burst(this.w / 2, this.h * .3, 24, { colors: ['#ff8aa3', '#ffd54a', '#7fd4f5', '#a6e05a'], speed: 300, g: 380, life: 1.2, size: 7 * this.ui, shape: 'star', up: 180 });
         voice.praise();
       }
+      this.save();
+    }
+
+    /* ---------------------------------------------------------------- decorating */
+    sizeOf(d) { return this.u * (d.z === 'wall' ? .62 : .85); }
+    zoneY(d, y, u) { return d.z === 'wall' ? clamp(y, u * 1.05, this.floorY - u * 1.0) : clamp(y, this.floorY + u * .5, this.h - this.bs * 2.2); }
+    pressDeco(x, y, id) {
+      // from the tray: a fresh one
+      for (let i = 0; i < DECO.length; i++) { const p = this.trayPos[i]; if (Math.hypot(x - p.x, y - p.y) < this.cell * .55) { if (this.bag.deco.length >= MAX_DECO) { sfx.oops(); return; } this.hold = { kind: 'deco', d: DECO[i], fresh: true, id, x, y }; sfx.pop(); return; } }
+      // a placed one: pick it up (topmost first)
+      for (let i = this.bag.deco.length - 1; i >= 0; i--) {
+        const it = this.bag.deco[i], d = DECO.find(q => q.id === it.id), ix = it.x * this.w, iy = it.y * this.h, u = this.sizeOf(d), r = u * (d.z === 'wall' ? 1.15 : 1.0);
+        if (Math.abs(x - ix) < r && y > iy - r * (d.z === 'wall' ? 1 : 2.1) && y < iy + r * (d.z === 'wall' ? 1 : .35)) { this.bag.deco.splice(i, 1); this.hold = { kind: 'deco', d, fresh: false, id, x, y }; sfx.pop(); return; }
+      }
+      // otherwise the wall, the floor and the rug change when touched
+      const rug = { x: this.homeX, y: this.feetY + 6, rx: this.s * .95, ry: this.s * .16 };
+      if (Math.abs(x - rug.x) < rug.rx && Math.abs(y - rug.y) < rug.ry * 1.5) { this.bag.rug = (this.bag.rug + 1) % RUGS.length; sfx.plink(this.bag.rug); this.save(); return; }
+      if (y < this.floorY) { this.bag.wall = (this.bag.wall + 1) % this.wallsOpen(); sfx.plink(this.bag.wall); this.fx.burst(x, y, 6, { colors: ['#fff', '#ffd54a'], speed: 120, g: 0, life: .6, size: 5 * this.ui, shape: 'star' }); this.save(); return; }
+      if (y < this.h - this.bs * 2.2) { this.bag.floor = (this.bag.floor + 1) % FLOORS.length; sfx.plink(this.bag.floor + 2); this.save(); }
+    }
+    dropDeco(h) {
+      const overBin = Math.hypot(h.x - this.bin.x, h.y - this.bin.y) < this.cell * .7;
+      const inTray = this.wide ? h.x > this.w - this.cell * 2.75 : h.y > this.trayPos[0].y - this.cell * .75;
+      if (overBin || inTray || !h.d) { if (!h.fresh && (overBin || inTray)) { sfx.whoosh(); this.save(); } return; }   // dropped back in the tray or the bin: gone
+      const us = this.sizeOf(h.d), y = this.zoneY(h.d, h.y, us);
+      this.bag.deco.push({ id: h.d.id, x: clamp(h.x, us, this.w - us) / this.w, y: y / this.h });
+      sfx.snap(); this.fx.burst(h.x, y - us * .5, 6, { colors: ['#fff', '#ffd54a'], speed: 110, g: 40, life: .6, size: 5 * this.ui, shape: 'star' });
       this.save();
     }
 
@@ -128,6 +249,10 @@
       const tx = p.target != null ? p.target : this.homeX, dx = tx - p.x; p.moving = Math.abs(dx) > 4;
       if (p.moving) { p.x += Math.sign(dx) * Math.min(Math.abs(dx), this.w * .25 * dt); p.dir = dx > 0 ? 1 : -1; }
       p.hop = Math.max(0, p.hop - dt * 2.4); p.cheer = Math.max(0, p.cheer - dt); p.eat = Math.max(0, p.eat - dt);
+      this.updateZoom(dt);
+      // night falls slowly and lifts in the morning
+      this.night = clamp(this.night + (this.sleeping ? dt * .7 : -dt * 1.1), 0, 1);
+      this.morning = Math.max(0, this.morning - dt * .45);
       // bath
       const h = this.hold;
       if (h && h.kind === 'sponge') {
@@ -141,12 +266,12 @@
       }
       for (const f of this.foam) { f.life -= dt; f.y -= dt * 8; }
       this.foam = this.foam.filter(f => f.life > 0);
-      // sleep
+      // sleep: it keeps sleeping (deeper and deeper) until she wakes it
       if (this.sleeping && !p.moving) {
+        this.sleepT += dt;
         this.bag.tired = Math.max(0, this.bag.tired - dt * .1);
         this.lull = (this.lull || 0) - dt; if (this.lull <= 0) { this.lull = 6.5; sfx.lullaby(); }
         if ((this.zzT = (this.zzT || 0) - dt) <= 0) { this.zzT = 1.1; this.zz.push({ x: p.x + this.s * .25, y: p.y - this.s * .55, life: 1 }); }
-        if (this.bag.tired <= 0) { this.wake += dt; if (this.wake > 2.5) { this.cared('slept'); this.wakeUp(); } }
       }
       for (const z of this.zz) { z.life -= dt * .6; z.y -= dt * 24; z.x += dt * 10; }
       this.zz = this.zz.filter(z => z.life > 0);
@@ -156,35 +281,116 @@
       this.draw(); this.raf = requestAnimationFrame(this.tick);
     }
 
+    // Stroking, brushing and spritzing in the close-up view. The pet leans into her finger and purrs more the more she strokes.
+    updateZoom(dt) {
+      this.zoom = clamp(this.zoom + (this.zoomOn ? dt / .45 : -dt / .4), 0, 1);
+      this.wet = Math.max(0, this.wet - dt * .12); this.shine = Math.max(0, this.shine - dt * .015);
+      const hs = this.hold && this.hold.kind === 'stroke' ? this.hold : null, id = this.who().id, body = (SPG.pets.SPECIES[id] || {}).body || '#fff';
+      let target = 0;
+      if (this.zoomOn && hs) {
+        const B = this.petBox(), nx = (hs.x - B.cx) / B.rx, ny = (hs.y - B.cy) / B.ry, inside = nx * nx + ny * ny < 1;
+        const moved = Math.hypot(hs.x - hs.last.x, hs.y - hs.last.y);
+        this.lean.x += ((hs.x - this.zx) * .05 - this.lean.x) * Math.min(1, dt * 6);
+        if (this.ztool === 'spray') {
+          const dx = B.cx - hs.x, dy = B.cy - hs.y, d = Math.hypot(dx, dy) || 1;
+          for (let k = 0; k < 4; k++) this.mist.push({ x: hs.x, y: hs.y, vx: dx / d * (300 + Math.random() * 260) + (Math.random() - .5) * 170, vy: dy / d * (300 + Math.random() * 260) + (Math.random() - .5) * 170, life: .7 + Math.random() * .4, r: 5 + Math.random() * 6 });
+          if (inside) { this.wet = 1; this.shine = Math.min(1, this.shine + dt * .25); }
+          if ((this.sprayT -= dt) <= 0) { this.sprayT = .32; sfx.spray(); }
+          target = inside ? .5 : 0;
+        } else if (inside) {
+          const speed = moved / Math.max(dt, .001), brush = this.ztool === 'brush';
+          target = clamp((brush ? .55 : .4) + speed / 600, 0, 1);
+          if (moved > 2) {
+            this.trail.push({ x1: hs.last.x, y1: hs.last.y, x2: hs.x, y2: hs.y, life: 1, brush });
+            this.love += moved * .0012;
+            if (brush) { this.shine = Math.min(1, this.shine + moved * .0012); if (Math.random() < .5) this.fx.burst(hs.x, hs.y, 1, { colors: [body, '#fff'], speed: 60, g: 30, life: .9, size: 3 * this.ui + 2 }); }
+            if ((this.brushT -= dt) <= 0) { this.brushT = brush ? .1 : .5; if (brush) sfx.brush(); }
+            if (Math.random() < dt * 3.2) this.fx.burst(hs.x, hs.y - 20, 1, { colors: ['#ff8aa3', '#ff6b81'], speed: 60, g: -70, life: 1.1, size: 9 * this.ui, shape: 'heart' });
+          }
+        }
+        hs.last = { x: hs.x, y: hs.y };
+        if (this.love >= 1) { this.love = 0; this.cared('loved'); sfx.chime(); this.pet.cheer = 2; this.fx.burst(this.zx, this.zy - this.S2 * .6, 14, { colors: ['#ff8aa3', '#ffd54a', '#fff'], speed: 260, g: 120, life: 1.2, size: 9 * this.ui, shape: 'heart', up: 140 }); }
+      } else this.lean.x *= 1 - Math.min(1, dt * 5);
+      this.purrLevel += ((this.zoomOn ? target : 0) - this.purrLevel) * Math.min(1, dt * (target > this.purrLevel ? 3 : 1.1));
+      if (this.zoomOn && this.purrLevel > .06) this.startPurr();
+      if (this.purrCtl && this.purrMode === 'synth') this.purrCtl.set(this.purrLevel);
+      else if (this.purrMode === 'clip' && this.purrLevel > .15 && this.t > this.clipEnd - .05) { this.clipEnd = this.t + 1.5; voice.ambient('purr/' + id, .7 * this.purrLevel).then(d => { this.clipEnd = this.t + (d || 1.5); }).catch(() => {}); }
+      for (const m of this.mist) { m.x += m.vx * dt; m.y += m.vy * dt; m.vx *= 1 - dt * 1.5; m.vy *= 1 - dt * 1.5; m.r += dt * 26; m.life -= dt * 1.5; }
+      this.mist = this.mist.filter(m => m.life > 0);
+      for (const tr of this.trail) tr.life -= dt * 1.5;
+      this.trail = this.trail.filter(tr => tr.life > 0);
+    }
+
     /* ---------------------------------------------------------------- drawing */
     need() {
       const b = this.bag, list = [['food', b.hunger], ['bath', b.dirt], ['bed', b.tired]].filter(x => x[1] > .5).sort((a, c) => c[1] - a[1]);
       return list.length ? list[0][0] : null;
     }
     drawRoom(c) {
-      const w = this.w, h = this.h, fy = this.floorY, night = this.sleeping;
-      const wall = c.createLinearGradient(0, 0, 0, fy); wall.addColorStop(0, '#ffe9df'); wall.addColorStop(1, '#ffd9cc'); c.fillStyle = wall; c.fillRect(0, 0, w, fy);
-      c.fillStyle = 'rgba(255,255,255,.35)'; for (let x = 0; x < w; x += 70) c.fillRect(x, 0, 24, fy);
-      c.fillStyle = '#fff3ea'; c.fillRect(0, fy - 16, w, 16);
-      const fl = c.createLinearGradient(0, fy, 0, h); fl.addColorStop(0, '#e2b98d'); fl.addColorStop(1, '#c99a6a'); c.fillStyle = fl; c.fillRect(0, fy, w, h - fy);
+      const w = this.w, h = this.h, fy = this.floorY, n = this.night, W = WALLS[this.bag.wall % WALLS.length], F = FLOORS[this.bag.floor % FLOORS.length];
+      const wall = c.createLinearGradient(0, 0, 0, fy); wall.addColorStop(0, W.top); wall.addColorStop(1, W.bot); c.fillStyle = wall; c.fillRect(0, 0, w, fy);
+      // the wallpaper pattern
+      c.save(); c.beginPath(); c.rect(0, 0, w, fy); c.clip();
+      const pw = 70;
+      if (W.pat === 'stripes') { c.fillStyle = 'rgba(255,255,255,.35)'; for (let x = 0; x < w; x += pw) c.fillRect(x, 0, 24, fy); }
+      else if (W.pat === 'dots') { c.fillStyle = 'rgba(255,255,255,.55)'; for (let y = 22; y < fy; y += 46) for (let x = (y / 46 % 2 ? 22 : 0); x < w; x += 46) { c.beginPath(); c.arc(x, y, 8, 0, TAU); c.fill(); } }
+      else if (W.pat === 'clouds') { for (let y = 40; y < fy; y += 90) for (let x = (y / 90 % 2 ? 60 : 10); x < w; x += 130) art.cloud(c, x, y, .32, .7); }
+      else if (W.pat === 'rays') { c.fillStyle = 'rgba(255,255,255,.4)'; for (let i = 0; i < 14; i++) { c.beginPath(); c.moveTo(w / 2, fy * 1.2); c.arc(w / 2, fy * 1.2, w, Math.PI + i * .22, Math.PI + i * .22 + .11); c.closePath(); c.fill(); } }
+      else if (W.pat === 'stars') { for (let y = 34; y < fy; y += 68) for (let x = (y / 68 % 2 ? 50 : 15); x < w; x += 100) art.star(c, x, y, 9, 'rgba(255,255,255,.75)', 0); }
+      else { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 4; for (let y = 30; y < fy; y += 44) { c.beginPath(); for (let x = 0; x <= w; x += 14) c.lineTo(x, y + Math.sin(x / 22) * 6); c.stroke(); } }
+      c.restore();
+      c.fillStyle = 'rgba(255,255,255,.7)'; c.fillRect(0, fy - 16, w, 16);
+      const fl = c.createLinearGradient(0, fy, 0, h); fl.addColorStop(0, F[0]); fl.addColorStop(1, F[1]); c.fillStyle = fl; c.fillRect(0, fy, w, h - fy);
       c.fillStyle = 'rgba(90,63,94,.1)'; for (let y = fy + 30; y < h; y += 46) c.fillRect(0, y, w, 3);
-      // window
+      // window: the sky turns to night
       const wx = this.wide ? w * .42 : w * .5, wy = h * .06, ww = Math.min(w * .3, 300), wh = ww * .75;
       c.fillStyle = '#fff'; art.rr(c, wx - ww / 2 - 12, wy - 12, ww + 24, wh + 24, 18); c.fill();
-      const sky = c.createLinearGradient(0, wy, 0, wy + wh); if (night) { sky.addColorStop(0, '#2c3566'); sky.addColorStop(1, '#5d55a0'); } else { sky.addColorStop(0, '#a9e1f3'); sky.addColorStop(1, '#fdf6df'); }
-      c.fillStyle = sky; c.fillRect(wx - ww / 2, wy, ww, wh);
-      if (night) { for (let i = 0; i < 6; i++) art.star(c, wx - ww / 2 + ww * (.12 + (i * .17) % .8), wy + wh * (.15 + (i * .29) % .6), 5 + (i % 3) * 2, '#fff3b0'); c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(wx + ww * .25, wy + wh * .3, wh * .14, 0, TAU); c.fill(); c.fillStyle = '#4b4a92'; c.beginPath(); c.arc(wx + ww * .25 + wh * .06, wy + wh * .27, wh * .12, 0, TAU); c.fill(); }
-      else art.cloud(c, wx - ww * .15 + Math.sin(this.t * .3) * 14, wy + wh * .4, ww / 620, .95);
+      const sky = c.createLinearGradient(0, wy, 0, wy + wh); sky.addColorStop(0, '#a9e1f3'); sky.addColorStop(1, '#fdf6df'); c.fillStyle = sky; c.fillRect(wx - ww / 2, wy, ww, wh);
+      art.cloud(c, wx - ww * .15 + Math.sin(this.t * .3) * 14, wy + wh * .4, ww / 620, .95);
+      if (n > 0) {
+        c.globalAlpha = n; const ns = c.createLinearGradient(0, wy, 0, wy + wh); ns.addColorStop(0, '#2c3566'); ns.addColorStop(1, '#5d55a0'); c.fillStyle = ns; c.fillRect(wx - ww / 2, wy, ww, wh);
+        for (let i = 0; i < 8; i++) art.star(c, wx - ww / 2 + ww * (.1 + (i * .13) % .82), wy + wh * (.12 + (i * .29) % .6), 4 + (i % 3) * 2 + Math.sin(this.t * 2 + i) * 1.5, '#fff3b0');
+        c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(wx + ww * .25, wy + wh * .3, wh * .14, 0, TAU); c.fill(); c.fillStyle = '#4b4a92'; c.beginPath(); c.arc(wx + ww * .25 + wh * .06, wy + wh * .27, wh * .12, 0, TAU); c.fill(); c.globalAlpha = 1;
+      }
       c.fillStyle = '#fff'; c.fillRect(wx - 4, wy, 8, wh); c.fillRect(wx - ww / 2, wy + wh / 2 - 4, ww, 8);
       // rug
-      c.fillStyle = '#ffb3c6'; c.beginPath(); c.ellipse(this.homeX, this.feetY + 6, this.s * .95, this.s * .16, 0, 0, TAU); c.fill();
+      c.fillStyle = RUGS[this.bag.rug % RUGS.length]; c.beginPath(); c.ellipse(this.homeX, this.feetY + 6, this.s * .95, this.s * .16, 0, 0, TAU); c.fill();
       c.strokeStyle = '#fff'; c.lineWidth = 5; c.setLineDash([12, 10]); c.beginPath(); c.ellipse(this.homeX, this.feetY + 6, this.s * .84, this.s * .12, 0, 0, TAU); c.stroke(); c.setLineDash([]);
-      // bed
+      // bed and the little table with its night light
       const bx = this.bedX, by = this.feetY, bw = this.s * .95;
       c.fillStyle = '#b9805a'; art.rr(c, bx - bw / 2, by - this.s * .32, bw, this.s * .34, 14); c.fill();
       c.fillStyle = '#fff'; art.rr(c, bx - bw / 2 + 8, by - this.s * .42, bw - 16, this.s * .24, 16); c.fill();
       c.fillStyle = '#ffd1dc'; art.rr(c, bx - bw / 2 + 12, by - this.s * .48, bw * .3, this.s * .16, 14); c.fill();
       c.fillStyle = '#b9805a'; art.rr(c, bx - bw / 2 - 8, by - this.s * .55, 16, this.s * .6, 8); c.fill();
+      const lp = this.lampPos(); c.fillStyle = '#b9805a'; art.rr(c, lp.x - this.s * .14, lp.y, this.s * .28, this.s * .32, 8); c.fill();
+      c.fillStyle = '#d9a06c'; c.fillRect(lp.x - this.s * .14, lp.y + this.s * .12, this.s * .28, 4);
+    }
+    // the night light and the stars it shines on the wall: drawn after the dark so they glow
+    drawNightLight(c) {
+      const n = this.night; if (n <= 0.02) return;
+      const col = LAMPS[this.bag.lamp % LAMPS.length], lp = this.lampPos(), r = this.s * .075, pulse = 1 + Math.sin(this.t * 1.6) * .05;
+      c.save(); c.globalAlpha = n;
+      const g = c.createRadialGradient(lp.x, lp.y - r, r * .3, lp.x, lp.y - r, this.s * 1.3 * pulse); g.addColorStop(0, col + '99'); g.addColorStop(.45, col + '2a'); g.addColorStop(1, col + '00');
+      c.fillStyle = g; c.beginPath(); c.arc(lp.x, lp.y - r, this.s * 1.3, 0, TAU); c.fill();
+      c.fillStyle = col; c.beginPath(); c.arc(lp.x, lp.y - r, r, Math.PI, 0); c.lineTo(lp.x + r * .8, lp.y); c.lineTo(lp.x - r * .8, lp.y); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.ellipse(lp.x - r * .35, lp.y - r * 1.35, r * .25, r * .12, -.6, 0, TAU); c.fill();
+      // the light throws slowly turning stars on the wall
+      c.translate(this.bedX + this.s * .3, this.floorY * .5);
+      const R = Math.min(this.w, this.floorY) * .34;
+      for (let i = 0; i < 18; i++) {
+        const a = i * 2.399 + this.t * .07, rr = R * Math.sqrt((i + .5) / 18), tw = .55 + Math.sin(this.t * 1.8 + i * 1.7) * .4;
+        c.globalAlpha = n * tw * .95; art.star(c, Math.cos(a) * rr * 1.4, Math.sin(a) * rr * .8, (5 + (i % 4) * 2.4) * (this.w > 700 ? 1.3 : 1), col, a);
+      }
+      c.restore();
+    }
+    drawDecos(c, before) {
+      const who = this.who();
+      for (const it of this.bag.deco) {
+        const d = DECO.find(q => q.id === it.id); if (!d) continue;
+        const y = it.y * this.h; if (before !== undefined && (y < this.pet.y) !== before && d.z === 'floor') continue;
+        if (before === false && d.z === 'wall') continue;
+        c.save(); c.translate(it.x * this.w, y); if (d.z === 'floor') { c.fillStyle = 'rgba(90,63,94,.13)'; c.beginPath(); c.ellipse(0, 2, this.sizeOf(d) * .7, this.sizeOf(d) * .1, 0, 0, TAU); c.fill(); } drawDeco(c, d.id, this.sizeOf(d), this.t, who); c.restore();
+      }
     }
     icon(c, id, r) {
       c.save(); c.lineCap = c.lineJoin = 'round';
@@ -193,32 +399,47 @@
         c.fillStyle = '#ffd54a'; art.rr(c, -r * .7, -r * .35, r * 1.4, r * .8, r * .2); c.fill();
         c.fillStyle = 'rgba(255,255,255,.5)'; for (const [x, y, q] of [[-.3, -.05, .12], [.2, .1, .1], [0, -.2, .08]]) { c.beginPath(); c.arc(x * r, y * r, q * r, 0, TAU); c.fill(); }
         c.fillStyle = '#fff'; c.strokeStyle = '#8fd0ff'; c.lineWidth = r * .06; for (const [x, y, q] of [[.5, -.65, .22], [.05, -.85, .16], [.75, -.3, .12]]) { c.beginPath(); c.arc(x * r, y * r, q * r, 0, TAU); c.fill(); c.stroke(); }
+      } else if (id === 'deco') {   // a palette with a star
+        c.fillStyle = '#e8c9a0'; c.beginPath(); c.ellipse(0, r * .05, r * .85, r * .68, -.2, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(r * .35, r * .25, r * .16, 0, TAU); c.fill();
+        [['#ff6b81', -.45, -.15], ['#ffd54a', -.1, -.4], ['#5cc8f2', .3, -.3], ['#7ed957', -.5, .3]].forEach(([col, x, y]) => { c.fillStyle = col; c.beginPath(); c.arc(x * r, y * r, r * .17, 0, TAU); c.fill(); });
+        art.star(c, r * .55, -r * .55, r * .3, '#ffd54a', 0);
       } else { c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(0, 0, r * .75, 0, TAU); c.fill(); c.fillStyle = '#5d55a0'; c.beginPath(); c.arc(r * .35, -r * .2, r * .62, 0, TAU); c.fill(); art.star(c, r * .3, r * .3, r * .22, '#ffd54a', 0); }
       c.restore();
     }
     draw() {
       const c = this.ctx, w = this.w, h = this.h; if (!w) return;
       this.drawRoom(c);
-      const p = this.pet, who = this.who(), s = this.s, sleepAtBed = this.sleeping && !p.moving;
+      const p = this.pet, who = this.who(), sleepAtBed = this.sleeping && !p.moving;
+      const e = this.zoom * this.zoom * (3 - 2 * this.zoom);   // 0 = in the room, 1 = zoomed up for petting
+      const s = lerp(this.s, this.S2, e), px = lerp(p.x, this.zx + this.lean.x, e), py = lerp(p.y, this.zy, e);
+      this.drawDecos(c, true);   // wall things, and floor things behind the pet
+      if (e > 0) { c.fillStyle = `rgba(255,240,228,${(e * .66).toFixed(3)})`; c.fillRect(0, 0, w, h); }
       // the pet
-      c.save(); c.translate(p.x, p.y - (p.moving ? Math.abs(Math.sin(this.t * 9)) * s * .03 : 0));
+      c.save(); c.translate(px, py - (p.moving ? Math.abs(Math.sin(this.t * 9)) * s * .03 : 0));
       if (sleepAtBed) { c.translate(0, -s * .12); c.scale(.85, .85); }
+      c.rotate(this.lean.x * .0012 * e);
       c.fillStyle = 'rgba(90,63,94,.14)'; c.beginPath(); c.ellipse(0, 3, s * .32, s * .05, 0, 0, TAU); c.fill();
-      const mood = sleepAtBed ? 'sleep' : p.cheer > 0 || p.eat > 0 ? 'cheer' : 'happy';
-      SPG.pets.draw(c, who.id, s, this.t, { mood, hop: p.hop > 0 ? 1 - p.hop : 0, hat: who.hat });
+      const mood = sleepAtBed ? 'sleep' : p.cheer > 0 || p.eat > 0 || this.purrLevel > .18 ? 'cheer' : 'happy';
+      SPG.pets.draw(c, who.id, s, this.t, { mood, hop: p.hop > 0 ? 1 - p.hop : 0, hat: who.hat, detail: 1 + e * 1.3 });
       // mud on a dirty pet, foam while it is being washed
-      if (this.bag.dirt > 0.02) { c.fillStyle = 'rgba(120,84,56,.55)'; const n = Math.ceil(this.bag.dirt * 6); for (let i = 0; i < n; i++) { const a = i * 2.4, rr = s * (.1 + (i % 3) * .05); c.beginPath(); c.ellipse(Math.cos(a) * s * .14, -s * (.25 + (i % 4) * .09), rr * .8, rr * .55, a, 0, TAU); c.fill(); } }
+      if (this.bag.dirt > 0.02) { c.fillStyle = 'rgba(120,84,56,.55)'; const n = Math.ceil(this.bag.dirt * 6); for (let i = 0; i < n; i++) { const a = i * 2.4, rr = s * (.04 + (i % 3) * .02); c.beginPath(); c.ellipse(Math.cos(a) * s * .17, -s * (.16 + (i % 4) * .08), rr * .8, rr * .55, a, 0, TAU); c.fill(); } }
       c.restore();
+      if (e > .02) this.drawZoomFx(c, e);
+      if (e < .5) this.drawDecos(c, false);   // floor things in front of the pet
       if (sleepAtBed) { c.fillStyle = '#7fd4f5'; art.rr(c, this.bedX - s * .42, p.y - s * .42, s * .84, s * .22, 12); c.fill(); c.fillStyle = 'rgba(255,255,255,.4)'; for (let i = 0; i < 4; i++) c.fillRect(this.bedX - s * .36 + i * s * .2, p.y - s * .4, s * .05, s * .18); }
       for (const f of this.foam) { c.globalAlpha = Math.min(1, f.life); c.fillStyle = '#fff'; c.strokeStyle = '#a8dcff'; c.lineWidth = 2; c.beginPath(); c.arc(f.x, f.y, f.r, 0, TAU); c.fill(); c.stroke(); }
       c.globalAlpha = 1;
-      // night
-      if (this.sleeping) { c.fillStyle = 'rgba(25,25,70,.4)'; c.fillRect(0, 0, w, h); }
+      // night: the room goes dark, then the night light and its stars glow; lamps in the room light up too
+      if (this.night > 0) { c.fillStyle = `rgba(14,16,54,${(this.night * .7).toFixed(3)})`; c.fillRect(0, 0, w, h); }
+      if (this.night > .05) for (const it of this.bag.deco) if (it.id === 'lamp') { const us = this.sizeOf({ z: 'floor' }), lx = it.x * w, ly = it.y * h - us * 1.4, g = c.createRadialGradient(lx, ly, 0, lx, ly, us * 3); g.addColorStop(0, `rgba(255,222,150,${(this.night * .55).toFixed(3)})`); g.addColorStop(1, 'rgba(255,222,150,0)'); c.fillStyle = g; c.beginPath(); c.arc(lx, ly, us * 3, 0, TAU); c.fill(); }
+      this.drawNightLight(c);
+      // morning: warm sunshine sweeps across the room and fades
+      if (this.morning > 0) { const k = this.morning, g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, `rgba(255,236,160,${(k * .55).toFixed(3)})`); g.addColorStop(1, `rgba(255,214,150,${(k * .15).toFixed(3)})`); c.fillStyle = g; c.fillRect(0, 0, w, h); }
       c.font = `700 ${s * .16}px Fredoka, system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff';
       for (const z of this.zz) { c.globalAlpha = Math.max(0, z.life); c.fillText('z', z.x, z.y); }
       c.globalAlpha = 1;
       // what would it like? a thought bubble
-      const want = !this.sleeping && !this.hold && this.need();
+      const want = !this.sleeping && !this.hold && this.tool !== 'deco' && !this.zoomOn && this.zoom < .05 && this.need();
       if (want) {
         const bx = p.x + s * .38, by = p.y - s * 1.12 + Math.sin(this.t * 3) * 4, br = s * .17;
         c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.arc(bx, by, br, 0, TAU); c.fill(); c.beginPath(); c.arc(bx - br * .9, by + br * 1.1, br * .22, 0, TAU); c.fill(); c.beginPath(); c.arc(bx - br * .6, by + br * .8, br * .14, 0, TAU); c.fill();
@@ -230,15 +451,101 @@
       }
       if (this.tool === 'bath' && !this.hold) { c.save(); c.translate(this.wide ? w * .86 : w * .82, this.wide ? h * .5 : h * .87 - this.bs * 1.5); c.scale(1 + Math.sin(this.t * 4) * .05, 1 + Math.sin(this.t * 4) * .05); this.icon(c, 'bath', s * .2); c.restore(); }
       if (this.hold && this.hold.kind === 'sponge') { c.save(); c.translate(this.hold.x, this.hold.y); this.icon(c, 'bath', s * .2); c.restore(); }
+      if (this.tool === 'deco') this.drawTray(c);
       this.fx.draw(c);
       // toolbar
-      for (const t of this.tools) {
+      if (this.zoom > .3) this.drawZoomBar(c);
+      else for (const t of this.tools) {
         const on = this.tool === t.id || (t.id === 'bed' && this.sleeping), hint = this.need() === t.id && !this.sleeping && !this.tool;
         c.fillStyle = 'rgba(90,63,94,.18)'; c.beginPath(); c.arc(t.x, t.y + 6, this.bs * .72, 0, TAU); c.fill();
         c.fillStyle = on ? '#fff3c4' : '#fff'; c.beginPath(); c.arc(t.x, t.y, this.bs * (hint ? .72 + Math.sin(this.t * 6) * .03 : .72), 0, TAU); c.fill();
         if (on) { c.strokeStyle = '#59b96e'; c.lineWidth = 6; c.stroke(); }
         c.save(); c.translate(t.x, t.y); this.icon(c, t.id, this.bs * .55); c.restore();
       }
+    }
+    // little tools for the close-up: a hand, a brush and a spray bottle
+    brushSprite(c, r) {   // the tip of the bristles is at (0, 0)
+      c.save(); c.lineCap = c.lineJoin = 'round'; c.rotate(-.5);
+      c.fillStyle = '#b9805a'; art.rr(c, -r * .15, -r * 2.2, r * .3, r * 1.7, r * .1); c.fill();
+      c.fillStyle = '#ff8aa3'; art.rr(c, -r * .58, -r * .62, r * 1.16, r * .6, r * .14); c.fill();
+      c.strokeStyle = '#fff'; c.lineWidth = Math.max(1.5, r * .08); for (let k = -4; k <= 4; k++) { c.beginPath(); c.moveTo(k * r * .12, -r * .06); c.lineTo(k * r * .12, r * .1); c.stroke(); }
+      c.restore();
+    }
+    sprayBottle(c, r, press) {   // the nozzle is at (0, 0) and points left
+      c.save(); c.lineCap = c.lineJoin = 'round';
+      c.fillStyle = '#9fdcff'; art.rr(c, r * .35, -r * .05, r * 1.0, r * 1.7, r * .24); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.5)'; art.rr(c, r * .5, r * .1, r * .18, r * 1.4, r * .08); c.fill();
+      c.fillStyle = '#fff'; art.rr(c, r * .55, r * .5, r * .6, r * .5, r * .1); c.fill(); art.heart(c, r * .85, r * .78, r * .16, '#ff6b81');
+      c.fillStyle = '#ffffff'; art.rr(c, r * .55, -r * .35, r * .4, r * .35, r * .06); c.fill();
+      c.fillStyle = '#ff8aa3'; art.rr(c, -r * .05, -r * .62, r * 1.35, r * .42, r * .14); c.fill();
+      c.fillStyle = '#ff6b81'; art.rr(c, -r * .28, -r * .56, r * .38, r * .28, r * .07); c.fill();
+      c.fillStyle = '#e8433f'; c.save(); c.translate(r * .4, -r * .18); c.rotate(press ? .35 : 0); art.rr(c, -r * .05, 0, r * .16, r * .55, r * .06); c.fill(); c.restore();
+      c.restore();
+    }
+    drawZoomBar(c) {
+      const k = clamp((this.zoom - .3) / .7, 0, 1);
+      for (const t of this.ztools) {
+        const on = this.ztool === t.id && t.id !== 'back';
+        c.save(); c.globalAlpha = k;
+        c.fillStyle = 'rgba(90,63,94,.18)'; c.beginPath(); c.arc(t.x, t.y + 6, this.bs * .72, 0, TAU); c.fill();
+        c.fillStyle = on ? '#fff3c4' : '#fff'; c.beginPath(); c.arc(t.x, t.y, this.bs * .72, 0, TAU); c.fill();
+        if (on) { c.strokeStyle = '#59b96e'; c.lineWidth = 6; c.stroke(); }
+        c.translate(t.x, t.y); const r = this.bs * .42;
+        if (t.id === 'hand') art.hand(c, 0, 0, r * 1.5, 0);
+        else if (t.id === 'brush') { c.translate(-r * .3, r * .6); this.brushSprite(c, r * .9); }
+        else if (t.id === 'spray') { c.translate(-r * .5, r * .05); this.sprayBottle(c, r * .8, false); }
+        else { c.strokeStyle = '#59b96e'; c.lineWidth = r * .32; c.lineCap = c.lineJoin = 'round'; c.beginPath(); c.moveTo(r * .35, -r * .6); c.lineTo(-r * .45, 0); c.lineTo(r * .35, r * .6); c.stroke(); }
+        c.restore();
+      }
+    }
+    // hair swishes, damp droplets, a glossy shine, mist, and the tool in her hand
+    drawZoomFx(c, e) {
+      const hs = this.hold && this.hold.kind === 'stroke' ? this.hold : null, B = this.petBox(), ui = this.ui;
+      c.save(); c.globalAlpha = e;
+      if (this.wet > .02) {   // droplets on the fur
+        c.fillStyle = `rgba(190,228,255,${(this.wet * .22).toFixed(3)})`; c.beginPath(); c.ellipse(B.cx, B.cy, B.rx * 1.05, B.ry * 1.05, 0, 0, TAU); c.fill();
+        for (let i = 0; i < 34; i++) { const a = i * 2.4, x = B.cx + Math.cos(a) * B.rx * .95 * Math.sqrt(((i * 37) % 100) / 100), y = B.cy + Math.sin(a) * B.ry * .95 * Math.sqrt(((i * 53) % 100) / 100), r = (2.5 + (i % 4)) * ui; c.globalAlpha = e * this.wet * .85; c.fillStyle = 'rgba(255,255,255,.75)'; c.strokeStyle = 'rgba(120,180,235,.8)'; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(x - r * .3, y - r * .3, r * .3, 0, TAU); c.fill(); }
+        c.globalAlpha = e;
+      }
+      if (this.shine > .03) {   // brushed fur glows
+        const g = c.createRadialGradient(B.cx - B.rx * .3, B.cy - B.ry * .4, 0, B.cx - B.rx * .3, B.cy - B.ry * .4, B.rx * 1.3); g.addColorStop(0, `rgba(255,255,255,${(this.shine * .35).toFixed(3)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = g; c.beginPath(); c.ellipse(B.cx, B.cy, B.rx * 1.1, B.ry * 1.1, 0, 0, TAU); c.fill();
+        for (let i = 0; i < 6; i++) { const a = i * 1.7 + this.t * .4, tw = .5 + Math.sin(this.t * 3 + i * 2) * .5; c.globalAlpha = e * this.shine * tw; art.star(c, B.cx + Math.cos(a) * B.rx * .8, B.cy + Math.sin(a * 1.3) * B.ry * .7, (6 + (i % 3) * 3) * ui, '#fff7c2', a); }
+        c.globalAlpha = e;
+      }
+      for (const tr of this.trail) {   // the path of her finger or brush through the fur
+        c.globalAlpha = e * clamp(tr.life, 0, 1) * (tr.brush ? .7 : .35); c.lineCap = 'round';
+        const dx = tr.x2 - tr.x1, dy = tr.y2 - tr.y1, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d;
+        if (tr.brush) { c.strokeStyle = '#fff'; c.lineWidth = 2 * ui + 1; for (const o of [-9, -3, 3, 9]) { c.beginPath(); c.moveTo(tr.x1 + nx * o * ui, tr.y1 + ny * o * ui); c.lineTo(tr.x2 + nx * o * ui, tr.y2 + ny * o * ui); c.stroke(); } }
+        else { c.strokeStyle = '#fff'; c.lineWidth = 14 * ui; c.beginPath(); c.moveTo(tr.x1, tr.y1); c.lineTo(tr.x2, tr.y2); c.stroke(); }
+      }
+      c.globalAlpha = e;
+      for (const m of this.mist) { c.globalAlpha = e * clamp(m.life, 0, 1) * .5; c.fillStyle = '#d8f1ff'; c.beginPath(); c.arc(m.x, m.y, m.r, 0, TAU); c.fill(); }
+      c.globalAlpha = e;
+      // the tool: follows her finger, or waits at the side
+      const rest = { x: this.w * .84, y: this.h * .42 + Math.sin(this.t * 2.5) * 6 }, pos = hs ? { x: hs.x, y: hs.y } : rest, r = this.S2 * .07;
+      if (this.ztool === 'brush') { c.save(); c.translate(pos.x, pos.y); this.brushSprite(c, r); c.restore(); }
+      else if (this.ztool === 'spray') { c.save(); c.translate(pos.x + r * .75, pos.y + r * .5); c.translate(-r * .75, -r * .5); this.sprayBottle(c, r, !!hs); c.restore(); }
+      else if (!hs) { c.save(); c.globalAlpha = e * .9; art.hand(c, this.zx + Math.sin(this.t * 2) * this.S2 * .12, this.zy - this.S2 * .5 + Math.cos(this.t * 2) * 6, r * 2.2, 0); c.restore(); }
+      c.restore();
+    }
+    drawTray(c) {
+      const cell = this.cell, u = this.u * .5;
+      // panel behind the tray
+      c.fillStyle = 'rgba(255,255,255,.78)';
+      if (this.wide) art.rr(c, this.w - cell * 2.75, this.h * .06, cell * 2.6, this.h * .8, 20), c.fill();
+      else art.rr(c, this.w / 2 - cell * 4.4, this.trayPos[0].y - cell * .75, cell * 8.8, cell * 3.0, 20), c.fill();
+      DECO.forEach((d, i) => {
+        const p = this.trayPos[i]; c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.arc(p.x, p.y, cell * .5, 0, TAU); c.fill();
+        c.save(); c.translate(p.x, p.y + (d.z === 'floor' ? cell * .28 : 0)); drawDeco(c, d.id, cell * (d.z === 'wall' ? .32 : .25), this.t, this.who()); c.restore();
+      });
+      // a little bin: drop a decoration here to take it away
+      const b = this.bin; c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.arc(b.x, b.y, cell * .5, 0, TAU); c.fill();
+      c.fillStyle = '#9aa6bd'; art.rr(c, b.x - cell * .2, b.y - cell * .16, cell * .4, cell * .4, cell * .06); c.fill(); c.fillRect(b.x - cell * .26, b.y - cell * .24, cell * .52, cell * .07); c.fillRect(b.x - cell * .08, b.y - cell * .3, cell * .16, cell * .07);
+      // hints that the wall, floor and rug change when touched
+      const sp = .5 + Math.sin(this.t * 4) * .5;
+      c.globalAlpha = .4 + sp * .5; art.star(c, this.w * .12, this.floorY * .3, 9 * this.ui + sp * 2, '#ffd54a', this.t); art.star(c, this.w * .08, this.feetY + this.s * .3, 8 * this.ui + sp * 2, '#ffd54a', this.t); art.star(c, this.homeX + this.s * .8, this.feetY + 6, 8 * this.ui + sp * 2, '#ffd54a', this.t); c.globalAlpha = 1;
+      if (this.hold && this.hold.kind === 'deco') { c.save(); c.translate(this.hold.x, this.hold.y + (this.hold.d.z === 'floor' ? this.sizeOf(this.hold.d) * .5 : 0)); drawDeco(c, this.hold.d.id, this.sizeOf(this.hold.d) * 1.1, this.t, this.who()); c.restore(); }
     }
   }
 
@@ -250,7 +557,8 @@
       c.fillStyle = '#ffb3c6'; c.beginPath(); c.ellipse(w * .5, h * .9, s * .8, s * .12, 0, 0, TAU); c.fill();
       c.save(); c.translate(w * .5, h * .93); SPG.pets.draw(c, 'cat', s, 1, { mood: 'cheer' }); c.restore();
       c.save(); c.translate(w * .78, h * .5); art.fruit(c, 3, s * .16, {}); c.restore();
-      c.fillStyle = '#fff'; c.strokeStyle = '#8fd0ff'; c.lineWidth = 2; for (const [x, y, r] of [[.24, .45, .07], [.3, .3, .05], [.2, .25, .04]]) { c.beginPath(); c.arc(w * x, h * y, s * r, 0, TAU); c.fill(); c.stroke(); }
+      c.save(); c.translate(w * .2, h * .32); drawDeco(c, 'balloons', s * .16, 0, null); c.restore();
+      art.star(c, w * .32, h * .22, s * .1, '#ffd54a', .2);
       art.heart(c, w * .66, h * .3, s * .1, '#ff6b81');
     },
     create: host => new CareGame(host)

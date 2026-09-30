@@ -95,7 +95,7 @@
     return l;
   }
 
-  function scene(c, w, h, t, { sky = ['#a9e1f3', '#e9f8ee', '#fdf6df'], showSun = true, clouds = true, hill = undefined } = {}) {
+  function scene(c, w, h, t, { sky = ['#a9e1f3', '#e9f8ee', '#fdf6df'], showSun = true, clouds = true, hill = undefined, behind = null } = {}) {
     const l = layers(w, h, c.getTransform().a || 1, sky, hill);
     c.drawImage(l.sky, 0, 0, w, h);
     if (showSun) sun(c, w * .86, Math.max(70, h * .17), Math.min(w, h) * .06, t);
@@ -106,6 +106,7 @@
         cloud(c, x, h * fy, s * Math.min(1.2, w / 700 + .4), .92);
       });
     }
+    if (behind) behind(c, w, h, t);   // things that sit behind the hills (sea, skyline, barns...)
     c.drawImage(l.hills, 0, 0, w, h);
   }
 

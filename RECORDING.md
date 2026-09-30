@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 67 short lines.
+1. **Cheering** and **Prompts**: about 69 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -69,7 +69,7 @@ Short lines that tell her what to do.
 | `care-hungry.mp3` | Your friend is hungry! |
 | `care-dirty.mp3` | Your friend needs a bath! |
 | `care-tired.mp3` | Your friend is sleepy! |
-| `hide-start.mp3` | Who is hiding? Touch a bush! |
+| `hide-start.mp3` | Who is hiding? Walk around and look! |
 | `hide-found.mp3` | Found you! |
 | `hide-done.mp3` | You found everybody! |
 | `num-1.mp3` | One! |
@@ -85,6 +85,8 @@ Short lines that tell her what to do.
 | `shape-square.mp3` | Square! |
 | `shape-triangle.mp3` | Triangle! |
 | `shape-star.mp3` | Star! |
+| `care-morning.mp3` | Good morning! |
+| `fire-level.mp3` | A new place to help! |
 | `storm-coming.mp3` | Here comes a big rainy storm! |
 | `storm-over.mp3` | The storm is over. Look, the sun! |
 | `raining-pets.mp3` | It's raining cats and dogs! |
@@ -244,4 +246,18 @@ Played when she taps a garden friend. Just make the noise, like a bee buzz or a 
 | `critter-dragonfly.mp3` | a quick buzzy zip |
 | `critter-cat.mp3` | Meow! |
 | `critter-dog.mp3` | Woof woof! |
+
+## Purring and happy sounds
+
+Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.
+
+| File | Say |
+|---|---|
+| `purr-cat.mp3` | a long, happy purr (a real cat purring is best) |
+| `purr-dog.mp3` | a happy, sleepy dog groan or soft pant |
+| `purr-bunny.mp3` | a bunny "tooth purr", soft chattering teeth |
+| `purr-bear.mp3` | a low, contented hum |
+| `purr-fox.mp3` | a soft, chirpy fox chatter |
+| `purr-panda.mp3` | a gentle panda bleat or hum |
+| `purr-frog.mp3` | a soft, slow ribbit |
 

@@ -249,7 +249,31 @@
     warm(k = 0) { tone(300 + k * 700, .2, { type: 'triangle', vol: .13 }); if (k > .6) tone(300 + k * 1000, .18, { vol: .08, at: .12 }); },
     bubble() { tone(520 + Math.random() * 500, .1, { slide: 1.8, vol: .07 }); },
     lullaby() { [4, 2, 0].forEach((n, k) => tone(NOTES[n] * .75, .6, { at: k * .5, vol: .09 })); },
-    munch() { noise(.06, { freq: 1500, q: 1.2, vol: .13 }); noise(.05, { freq: 900, q: 1, vol: .1, at: .08 }); }
+    munch() { noise(.06, { freq: 1500, q: 1.2, vol: .13 }); noise(.05, { freq: 900, q: 1, vol: .1, at: .08 }); },
+    spray() { noise(.32, { freq: 5200, q: .5, vol: .07 }); noise(.28, { freq: 3400, q: .7, vol: .05, at: .02 }); },
+    // A steady, gentle purr that gets louder the more she strokes. Returns { set(level 0..1), off() }.
+    // Synthesized: a soft noise band switched on and off about 25 times a second, with a low hum under it.
+    // (Recorded purrs, if a grown-up adds them as "purr/<animal>" sounds, are played instead by the game.)
+    purr(kind = 'cat') {
+      const c = A.ctx;
+      if (!c || !SPG.store.settings.sound) return { set() {}, off() {} };
+      const P = { cat: { rate: 25, f: 230, q: .8, v: .16, hum: 55 }, dog: { rate: 9, f: 160, q: .7, v: .14, hum: 70 }, bunny: { rate: 38, f: 950, q: 1.4, v: .07, hum: 0 }, bear: { rate: 16, f: 140, q: .6, v: .17, hum: 50 }, fox: { rate: 21, f: 340, q: 1, v: .13, hum: 60 }, panda: { rate: 13, f: 190, q: .7, v: .15, hum: 52 }, frog: { rate: 11, f: 280, q: 2, v: .09, hum: 80 } }[kind] || { rate: 25, f: 230, q: .8, v: .15, hum: 55 };
+      const buf = c.createBuffer(1, c.sampleRate, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = P.f; bp.Q.value = P.q;
+      const am = c.createGain(); am.gain.value = .5;
+      const lfo = c.createOscillator(); lfo.frequency.value = P.rate; const lg = c.createGain(); lg.gain.value = .5; lfo.connect(lg); lg.connect(am.gain);
+      const out = c.createGain(); out.gain.value = 0;
+      src.connect(bp); bp.connect(am); am.connect(out); out.connect(A.master);
+      const hum = c.createOscillator(); hum.type = 'sine'; hum.frequency.value = P.hum || 60; const hg = c.createGain(); hg.gain.value = 0; hum.connect(hg); hg.connect(out);
+      src.start(); lfo.start(); hum.start();
+      let dead = false;
+      return {
+        set(level) { if (dead) return; const t = c.currentTime; out.gain.setTargetAtTime(level * P.v, t, .12); hg.gain.setTargetAtTime(P.hum ? level * .6 : 0, t, .2); },
+        off() { if (dead) return; dead = true; out.gain.setTargetAtTime(0, c.currentTime, .12); setTimeout(() => { try { src.stop(); lfo.stop(); hum.stop(); } catch (_) { /* already stopped */ } }, 700); }
+      };
+    }
   };
 
   // Soft, slow, generative background music. The main loop is off until a grown-up turns it on; the

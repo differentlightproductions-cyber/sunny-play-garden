@@ -16,8 +16,40 @@
     { body: '#b8e2a0', roof: '#5f9a5a', trim: '#f6fff0' },
     { body: '#d9c2f2', roof: '#8b6cc0', trim: '#fbf5ff' }
   ];
-  const PETS = [['cat', 0], ['dog', 0], ['cat', 1], ['dog', 1], ['cat', 3], ['dog', 2], ['cat', 2], ['dog', 3]];
   const HEIGHTS = [1, .86, .94];
+  // A pet is either a cat or dog drawn by art.pet ({ kind, v }) or a Pet Shop friend ({ sp }).
+  const cat = v => ({ kind: 'cat', v }), dog = v => ({ kind: 'dog', v }), sp = id => ({ sp: id });
+  // Every level is a new place: its own scenery, kinds of building, colors and pets. After the last one it starts over.
+  const LEVELS = [
+    { scene: 'meadow', styles: ['gable', 'shop', 'gable'], pals: PALETTES, pets: [cat(0), dog(0), cat(1), dog(1), cat(3), dog(2)] },
+    { scene: 'farm', styles: ['barn', 'gable', 'barn'], pals: [
+      { body: '#e0574a', roof: '#7a2f2a', trim: '#fff5ea' }, { body: '#f2d27a', roof: '#a9652e', trim: '#fff' }, { body: '#d98a5a', roof: '#6e3d2a', trim: '#fff5ea' }, { body: '#f7e9c8', roof: '#c25b3f', trim: '#fff' }],
+      pets: [sp('bunny'), dog(1), sp('frog'), cat(0), dog(3), sp('panda')] },
+    { scene: 'snow', snow: true, styles: ['gable', 'gable', 'shop'], pals: [
+      { body: '#f3c4c4', roof: '#a83f4a', trim: '#fff' }, { body: '#bcd9f2', roof: '#3f6f9a', trim: '#fff' }, { body: '#f7e3a8', roof: '#8a4a3a', trim: '#fff' }, { body: '#cfe8d8', roof: '#3f7a6a', trim: '#fff' }],
+      pets: [sp('panda'), sp('bear'), sp('fox'), cat(1), sp('bunny'), dog(2)] },
+    { scene: 'beach', styles: ['shop', 'gable', 'shop'], pals: [
+      { body: '#7fd8d0', roof: '#e8735a', trim: '#fff' }, { body: '#ffd27a', roof: '#3fa6c9', trim: '#fff' }, { body: '#ff9db8', roof: '#8a6ad9', trim: '#fff' }, { body: '#b8f0a8', roof: '#e8735a', trim: '#fff' }],
+      pets: [sp('frog'), cat(0), dog(1), sp('bunny'), sp('fox'), sp('panda')] },
+    { scene: 'city', styles: ['tower', 'shop', 'tower'], pals: [
+      { body: '#b9c5de', roof: '#5a6fa0', trim: '#f4f8ff' }, { body: '#f2b6a8', roof: '#8a5a70', trim: '#fff' }, { body: '#a8d8c8', roof: '#4f7a70', trim: '#fff' }, { body: '#e6d4a8', roof: '#7a6a4a', trim: '#fff' }],
+      pets: [cat(2), dog(2), sp('panda'), sp('fox'), cat(3), sp('bear')] },
+    { scene: 'night', styles: ['castle', 'tower', 'castle'], pals: [
+      { body: '#b8b4d0', roof: '#6a4ea0', trim: '#f0eaff' }, { body: '#a8bcd8', roof: '#3f5a9a', trim: '#eef4ff' }, { body: '#d0b8d8', roof: '#8a4a8a', trim: '#fbf0ff' }],
+      pets: [sp('bunny'), sp('fox'), cat(3), sp('bear'), sp('frog'), dog(0)] }
+  ];
+  const STYLE = { gable: { rows: 2, hk: 1 }, shop: { rows: 2, hk: .95 }, barn: { rows: 2, hk: .95 }, tower: { rows: 3, hk: 1.28 }, castle: { rows: 2, hk: 1.08 } };
+  const WIN_Y = { 2: [.24, .56], 3: [.17, .4, .63] };
+
+  // Draw a pet of either kind. Origin = the middle of the body (like art.pet); size is art.pet's size.
+  function drawPet(c, spec, size, pose, t) {
+    if (!spec.sp) { art.pet(c, spec.kind, spec.v, size, t, pose); return; }
+    c.save(); c.translate(0, size * 1.05);
+    if (pose === 'walk') c.translate(0, -Math.abs(Math.sin(t * 9)) * size * .08);
+    const ph = (t * 1.4) % 1;
+    SPG.pets.draw(c, spec.sp, size * 2.3, t, { mood: pose === 'bounce' ? 'cheer' : 'happy', hop: pose === 'bounce' ? ph : 0 });
+    c.restore();
+  }
   const IDLE_FAST = 7;       // seconds without a touch before the flames start fading much faster
   const WET_RATE = .5;       // heat lost per second while the water is on a flame
   const DRY_RATE = .012;     // heat lost per second by itself
@@ -44,22 +76,54 @@
     c.restore();
   }
 
-  function building(c, x, groundY, w, bodyH, pal, roofStyle, opts = {}) {
-    const top = groundY - bodyH, rh = bodyH * .22;
+  // Kinds of building: gable (house), shop (flat roof and a striped awning), barn (curved roof and big doors),
+  // tower (tall, three floors), castle (battlements and flags). opts.snow puts a white cap on the roof.
+  function building(c, x, groundY, w, bodyH, pal, style, opts = {}) {
+    const top = groundY - bodyH, rh = bodyH * .22, snow = !!opts.snow;
     c.save(); c.lineJoin = 'round';
     c.fillStyle = 'rgba(90,63,94,.14)'; c.beginPath(); c.ellipse(x + w / 2, groundY + 2, w * .62, w * .06, 0, 0, TAU); c.fill();
-    // roof
+    const dark = art.shade(pal.roof, -.14);
+    // roof (behind the body)
     c.fillStyle = pal.roof;
-    if (roofStyle === 'gable') { c.beginPath(); c.moveTo(x - w * .06, top + 2); c.lineTo(x + w / 2, top - rh); c.lineTo(x + w * 1.06, top + 2); c.closePath(); c.fill(); }
-    else { art.rr(c, x - w * .04, top - rh * .3, w * 1.08, rh * .42, rh * .12); c.fill(); c.fillStyle = art.shade ? art.shade(pal.roof, -.12) : pal.roof; art.rr(c, x + w * .7, top - rh * 1.15, w * .14, rh * .9, w * .02); c.fill(); }
+    if (style === 'gable') {
+      c.beginPath(); c.moveTo(x - w * .06, top + 2); c.lineTo(x + w / 2, top - rh); c.lineTo(x + w * 1.06, top + 2); c.closePath(); c.fill();
+      if (snow) { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(x - w * .06, top + 2); c.lineTo(x + w / 2, top - rh); c.lineTo(x + w * 1.06, top + 2); c.quadraticCurveTo(x + w * .8, top - rh * .28, x + w * .5, top - rh * .34); c.quadraticCurveTo(x + w * .2, top - rh * .28, x - w * .06, top + 2); c.fill(); }
+    } else if (style === 'barn') {
+      c.beginPath(); c.moveTo(x - w * .06, top + 2); c.lineTo(x + w * .1, top - rh * .62); c.lineTo(x + w * .5, top - rh * 1.05); c.lineTo(x + w * .9, top - rh * .62); c.lineTo(x + w * 1.06, top + 2); c.closePath(); c.fill();
+      if (snow) { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(x + w * .1, top - rh * .62); c.lineTo(x + w * .5, top - rh * 1.05); c.lineTo(x + w * .9, top - rh * .62); c.quadraticCurveTo(x + w * .5, top - rh * .7, x + w * .1, top - rh * .62); c.fill(); }
+    } else if (style === 'castle') {
+      const n = 5, mw = w / (n * 2 - 1);
+      c.fillStyle = art.shade(pal.body, -.05); for (let i = 0; i < n; i++) c.fillRect(x + i * mw * 2, top - rh * .4, mw, rh * .5);
+      for (const sx of [x - w * .05, x + w * .83]) { c.fillStyle = art.shade(pal.body, -.08); c.fillRect(sx, top - rh * .9, w * .22, rh * 1.1); c.fillStyle = pal.roof; c.beginPath(); c.moveTo(sx - w * .03, top - rh * .9); c.lineTo(sx + w * .11, top - rh * 1.9); c.lineTo(sx + w * .25, top - rh * .9); c.closePath(); c.fill(); c.strokeStyle = '#5a3f5e'; c.lineWidth = 2; c.beginPath(); c.moveTo(sx + w * .11, top - rh * 1.9); c.lineTo(sx + w * .11, top - rh * 2.3); c.stroke(); c.fillStyle = '#ff6b81'; c.beginPath(); c.moveTo(sx + w * .11, top - rh * 2.3); c.lineTo(sx + w * .2, top - rh * 2.15); c.lineTo(sx + w * .11, top - rh * 2.0); c.fill(); }
+    } else {   // shop and tower: a flat roof with a chimney or an aerial
+      art.rr(c, x - w * .04, top - rh * .3, w * 1.08, rh * .42, rh * .12); c.fill();
+      if (snow) { c.fillStyle = '#fff'; art.rr(c, x - w * .04, top - rh * .42, w * 1.08, rh * .22, rh * .1); c.fill(); }
+      if (style === 'tower') { c.strokeStyle = '#5a3f5e'; c.lineWidth = Math.max(2, w * .02); c.beginPath(); c.moveTo(x + w * .7, top - rh * .3); c.lineTo(x + w * .7, top - rh * 1.6); c.stroke(); c.fillStyle = '#ff6b81'; c.beginPath(); c.arc(x + w * .7, top - rh * 1.65, w * .035, 0, TAU); c.fill(); c.fillStyle = dark; art.rr(c, x + w * .12, top - rh * .95, w * .22, rh * .7, w * .02); c.fill(); }
+      else { c.fillStyle = dark; art.rr(c, x + w * .7, top - rh * 1.15, w * .14, rh * .9, w * .02); c.fill(); }
+    }
     // body
-    const bg = c.createLinearGradient(0, top, 0, groundY); bg.addColorStop(0, pal.body); bg.addColorStop(1, art.shade ? art.shade(pal.body, -.08) : pal.body);
+    const bg = c.createLinearGradient(0, top, 0, groundY); bg.addColorStop(0, pal.body); bg.addColorStop(1, art.shade(pal.body, -.08));
     c.fillStyle = bg; art.rr(c, x, top, w, bodyH, w * .05); c.fill();
     c.fillStyle = 'rgba(255,255,255,.25)'; art.rr(c, x + w * .04, top + w * .03, w * .1, bodyH - w * .1, w * .04); c.fill();
+    if (style === 'castle') { c.strokeStyle = 'rgba(90,63,94,.16)'; c.lineWidth = 2; for (let r = 1; r < 9; r++) { const y = top + r * bodyH / 9; c.beginPath(); c.moveTo(x, y); c.lineTo(x + w, y); c.stroke(); for (let q = 0; q < 4; q++) { c.beginPath(); c.moveTo(x + (q + (r % 2 ? .5 : 0)) * w / 3.5, y); c.lineTo(x + (q + (r % 2 ? .5 : 0)) * w / 3.5, y + bodyH / 9); c.stroke(); } } }
     // door
-    const dw = w * .2, dh = bodyH * .22;
-    c.fillStyle = pal.roof; art.rr(c, x + w / 2 - dw / 2, groundY - dh, dw, dh, dw * .4); c.fill();
-    c.fillStyle = '#ffe07a'; c.beginPath(); c.arc(x + w / 2 + dw * .22, groundY - dh * .45, dw * .07, 0, TAU); c.fill();
+    if (style === 'barn') {
+      const dw = w * .38, dh = bodyH * .3, dx = x + w / 2 - dw / 2, dy = groundY - dh;
+      c.fillStyle = art.shade(pal.body, -.18); art.rr(c, dx, dy, dw, dh, w * .02); c.fill();
+      c.strokeStyle = pal.trim; c.lineWidth = Math.max(3, w * .025); c.strokeRect(dx, dy, dw, dh); c.beginPath(); c.moveTo(dx, dy); c.lineTo(dx + dw, groundY); c.moveTo(dx + dw, dy); c.lineTo(dx, groundY); c.moveTo(x + w / 2, dy); c.lineTo(x + w / 2, groundY); c.stroke();
+    } else if (style === 'shop') {
+      const dw = w * .26, dh = bodyH * .22, dx = x + w / 2 - dw / 2;
+      c.fillStyle = pal.roof; art.rr(c, dx, groundY - dh, dw, dh, dw * .2); c.fill();
+      c.fillStyle = '#cdeefc'; art.rr(c, dx + dw * .15, groundY - dh * .85, dw * .7, dh * .5, dw * .1); c.fill();
+      const aw = w * .5, ay = groundY - dh - w * .06;
+      for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? '#fff' : pal.roof; c.beginPath(); c.moveTo(x + w / 2 - aw / 2 + i * aw / 6, ay); c.lineTo(x + w / 2 - aw / 2 + (i + 1) * aw / 6, ay); c.lineTo(x + w / 2 - aw / 2 + (i + 1) * aw / 6 + (i < 3 ? 2 : -2), ay + w * .07); c.lineTo(x + w / 2 - aw / 2 + i * aw / 6 - (i < 3 ? -2 : 2), ay + w * .07); c.closePath(); c.fill(); }
+    } else {
+      const dw = w * (style === 'castle' ? .24 : .2), dh = bodyH * .22;
+      c.fillStyle = pal.roof;
+      if (style === 'castle') { c.beginPath(); c.moveTo(x + w / 2 - dw / 2, groundY); c.lineTo(x + w / 2 - dw / 2, groundY - dh * .7); c.arc(x + w / 2, groundY - dh * .7, dw / 2, Math.PI, 0); c.lineTo(x + w / 2 + dw / 2, groundY); c.closePath(); c.fill(); }
+      else { art.rr(c, x + w / 2 - dw / 2, groundY - dh, dw, dh, dw * .4); c.fill(); }
+      c.fillStyle = '#ffe07a'; c.beginPath(); c.arc(x + w / 2 + dw * .22, groundY - dh * .45, dw * .07, 0, TAU); c.fill();
+    }
     c.restore();
   }
 
@@ -77,8 +141,9 @@
       this.host = host;
       this.canvas = document.createElement('canvas'); this.canvas.className = 'game-canvas';
       host.append(this.canvas); this.ctx = this.canvas.getContext('2d');
-      this.bag = store.bag('fire', () => ({ saved: 0, rounds: 0 }));
-      this.bag.saved = this.bag.saved || 0; this.bag.rounds = this.bag.rounds || 0;
+      this.bag = store.bag('fire', () => ({ saved: 0, rounds: 0, level: 0 }));
+      this.bag.saved = this.bag.saved || 0; this.bag.rounds = this.bag.rounds || 0; this.bag.level = this.bag.level || 0;
+      this.scenic = SPG.scenery.fader(LEVELS[this.bag.level % LEVELS.length].scene);
       this.counter = SPG.ui.counter(host, (c, s) => {
         c.fillStyle = '#ff8aa3'; c.beginPath(); c.ellipse(s / 2, s * .64, s * .22, s * .18, 0, 0, TAU); c.fill();
         for (const [x, y] of [[.24, .4], [.4, .26], [.6, .26], [.76, .4]]) { c.beginPath(); c.ellipse(s * x, s * y, s * .09, s * .11, 0, 0, TAU); c.fill(); }
@@ -132,12 +197,13 @@
       this.bldW = bw;
       this.bodyBase = Math.min(bw * (wide ? 1.3 : 1.7), avail * .8);
       this.blds.forEach((b, i) => {
-        const g = b.geo = {};
-        g.x = zoneX + i * (bw + gap); g.w = bw; g.bodyH = this.bodyBase * HEIGHTS[i];
+        const g = b.geo = {}, st = STYLE[b.style];
+        g.x = zoneX + i * (bw + gap); g.w = bw; g.bodyH = Math.min(this.bodyBase * HEIGHTS[i] * st.hk, avail * (st.hk > 1 ? .94 : .8));
         g.top = this.groundY - g.bodyH;
         g.ww = bw * .27; g.wh = g.ww * 1.1;
-        g.wins = [[.26, .24], [.74, .24], [.26, .56], [.74, .56]].map(([fx, fy]) => ({ x: g.x + bw * fx, y: g.top + g.bodyH * fy }));
-        g.roofY = b.roof === 'gable' ? g.top - g.bodyH * .16 : g.top - g.bodyH * .04;
+        g.wins = [];
+        for (const fy of WIN_Y[st.rows]) for (const fx of [.26, .74]) g.wins.push({ x: g.x + bw * fx, y: g.top + g.bodyH * fy });
+        g.roofY = b.style === 'gable' || b.style === 'barn' ? g.top - g.bodyH * .16 : g.top - g.bodyH * .04;
         g.doorX = g.x + bw / 2;
         g.ps = g.ww * .85;
       });
@@ -148,18 +214,23 @@
     newRound(first) {
       this.state = 'play'; this.stateT = 0; this.wonK = 0; this.queue = []; this.cur = null;
       this.sprayT = 0; this.lastTouch = this.t; this.roundStart = this.t;
-      const order = PALETTES.map((p, i) => i).sort(() => Math.random() - .5), pets = PETS.slice().sort(() => Math.random() - .5);
+      const shuffle = list => list.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
+      const lvl = this.bag.level % LEVELS.length, L = LEVELS[lvl], pals = shuffle(L.pals), pets = shuffle(L.pets);
+      this.level = lvl; this.scenic.set(L.scene);
       this.blds = [0, 1, 2].map(i => {
-        const pw = Math.floor(Math.random() * 4), sites = [0, 1, 2, 3].filter(k => k !== pw).map(k => ({ site: k }));
-        if (Math.random() < .7) sites.push({ site: 4 });
-        const flames = sites.map((s, j) => Object.assign(s, { heat: 1, at: this.t + .3 + i * .55 + j * .3, lit: false, out: false, seed: Math.random() * 9, steam: 0 }));
-        return { pal: PALETTES[order[i]], roof: i === 1 ? 'flat' : 'gable', flames, geo: null, done: false, glow: 0,
-          pet: { win: pw, kind: pets[i][0], v: pets[i][1], state: 'wait', t: 0, readyT: 0, x: 0, y: 0, ladderT: 0, dir: 1 } };
+        const style = L.styles[i], nWin = STYLE[style].rows * 2, pw = Math.floor(Math.random() * nWin);
+        const wins = shuffle([...Array(nWin).keys()].filter(k => k !== pw)).slice(0, nWin > 4 ? 4 : nWin - 1);
+        const sites = wins.map(k => ({ site: k }));
+        if (Math.random() < .7) sites.push({ site: nWin });
+        const flames = sites.map((s, j) => Object.assign(s, { heat: 1, at: this.t + .9 + i * .55 + j * .3, lit: false, out: false, seed: Math.random() * 9, steam: 0 }));
+        return { pal: pals[i % pals.length], style, nWin, snow: !!L.snow, flames, geo: null, done: false, glow: 0, appear: -i * .25,
+          pet: { win: pw, spec: pets[i % pets.length], state: 'wait', t: 0, readyT: 0, x: 0, y: 0, ladderT: 0, dir: 1 } };
       });
       if (this.w) this.layout();
       this.fx.p.length = 0;
       this.bag.rounds++; store.save();
-      if (first) voice.say('fire-start'); else { sfx.chime(); }
+      if (first) voice.say('fire-start'); else { sfx.chime(); if (this.bag.rounds > 1 && lvl !== this.lastLevel) voice.say('fire-level'); }
+      this.lastLevel = lvl;
     }
     touch() {
       sfx.unlock && sfx.unlock();
@@ -176,7 +247,7 @@
 
     sitePos(b, f) {
       const g = b.geo;
-      if (f.site === 4) return { x: g.x + g.w * .5, y: g.roofY + g.bodyH * .1, s: g.w * .27 };
+      if (f.site === b.nWin) return { x: g.x + g.w * .5, y: g.roofY + g.bodyH * .1, s: g.w * .27 };
       const wp = g.wins[f.site];
       return { x: wp.x, y: wp.y + g.wh * .5, s: g.w * .27 };
     }
@@ -201,7 +272,8 @@
 
     update(dt) {
       if (!this.w) return;
-      this.stateT += dt;
+      this.stateT += dt; this.scenic.update(dt);
+      for (const b of this.blds) if (b.appear < 1) b.appear = Math.min(1, b.appear + dt / .7);
       const spraying = this.aim.down, idle = this.t - this.lastTouch, fade = idle > IDLE_FAST;
       const nz = this.nozzle();
       // water
@@ -311,6 +383,7 @@
     }
     win() {
       this.state = 'won'; this.stateT = 0; this.wonK = 0;
+      this.bag.level++; store.save();   // the next round is somewhere new
       if (this.sprayT > 2) store.addStars(1);
       sfx.win(); voice.say('fire-done');
       this.fx.burst(this.w / 2, this.h * .35, 26, { colors: RAINBOW, speed: 320, g: 400, life: 1.2, size: 7 * this.ui, shape: 'star', up: 200 });
@@ -321,7 +394,7 @@
       const c = this.ctx, w = this.w, h = this.h;
       if (!w) return;
       c.clearRect(0, 0, w, h);
-      art.scene(c, w, h, this.t, { hill: undefined });
+      this.scenic.draw(c, w, h, this.t);
       if (this.wonK > 0 || this.state === 'rest') {
         const k = this.state === 'rest' ? 1 : ease(this.wonK);
         c.save(); c.globalAlpha = .9 * k; c.lineWidth = Math.min(w, h) * .028; c.lineCap = 'round';
@@ -336,11 +409,16 @@
       this.fx.draw(c);
       if (this.burn > 0) { c.fillStyle = `rgba(130,105,115,${(this.burn * .1).toFixed(3)})`; c.fillRect(0, 0, w, h); }
       if (this.state === 'rest') this.drawRestHint(c);
+      // which place she is in: a little row of dots, the current one big
+      const n = LEVELS.length, r = 6 * this.ui, gap = r * 3.2, x0 = w / 2 - (n - 1) * gap / 2, y0 = 22 * this.ui + 6;
+      for (let i = 0; i < n; i++) { c.fillStyle = i === this.level ? '#59b96e' : 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(x0 + i * gap, y0, i === this.level ? r * 1.4 : r, 0, TAU); c.fill(); if (i === this.level) { c.strokeStyle = '#fff'; c.lineWidth = 3; c.stroke(); } }
     }
 
     drawBuilding(c, b) {
-      const g = b.geo, pal = b.pal;
-      building(c, g.x, this.groundY, g.w, g.bodyH, pal, b.roof);
+      const g = b.geo, pal = b.pal, ap = ease(clamp(b.appear, 0, 1));
+      if (ap <= 0) return;
+      c.save(); c.globalAlpha = ap; c.translate(0, (1 - ap) * this.h * .12);
+      building(c, g.x, this.groundY, g.w, g.bodyH, pal, b.style, { snow: b.snow });
       g.wins.forEach((wp, k) => {
         const hot = b.flames.some(f => f.site === k && !f.out), lit = b.glow > .5;
         const glass = hot ? '#ffd8a3' : lit ? '#fff2b8' : '#cfe9ff';
@@ -350,7 +428,7 @@
           c.save(); c.beginPath(); c.rect(wp.x - g.ww / 2, wp.y - g.wh / 2, g.ww, g.wh); c.clip();
           const hop = p.state === 'ready' ? -Math.abs(Math.sin(this.t * 6)) * g.wh * .12 : Math.sin(this.t * 3 + k) * g.wh * .03;
           c.translate(wp.x, wp.y + g.wh * .3 + hop);
-          art.pet(c, p.kind, p.v, g.ps, this.t, p.state === 'ready' || p.state === 'ladder' ? 'bounce' : 'sit');
+          drawPet(c, p.spec, g.ps, p.state === 'ready' || p.state === 'ladder' ? 'bounce' : 'sit', this.t);
           c.restore();
         }
         if (!(k === p.win && p.state !== 'safe' && p.state !== 'walk' && p.state !== 'down')) windowBars(c, wp.x, wp.y, g.ww, g.wh, pal.trim);
@@ -360,6 +438,7 @@
         const a = .7 + Math.sin(this.t * 3 + g.x) * .12;
         c.save(); c.globalAlpha = a; art.heart(c, g.x + g.w / 2, g.roofY - g.w * .12 - Math.sin(this.t * 2 + g.x) * 4, g.w * .1, '#ff8aa3'); c.restore();
       }
+      c.restore();
     }
     drawHint(c, x, y, r) {
       const p = 1 + Math.sin(this.t * 6) * .16;
@@ -425,7 +504,7 @@
         if (p.state === 'down' || p.state === 'walk' || p.state === 'safe') {
           c.save(); c.translate(p.x, p.y);
           if (p.state === 'walk' && p.dir < 0) c.scale(-1, 1);
-          art.pet(c, p.kind, p.v, g.ps * (p.state === 'down' ? .9 : 1), this.t + g.x, p.state === 'down' ? 'bounce' : p.state === 'walk' ? 'walk' : 'sit');
+          drawPet(c, p.spec, g.ps * (p.state === 'down' ? .9 : 1), p.state === 'down' ? 'bounce' : p.state === 'walk' ? 'walk' : 'sit', this.t + g.x);
           c.restore();
         }
       }
@@ -446,10 +525,10 @@
   SPG.games.push({
     id: 'fire', name: 'Fire Rescue', order: 3.5,
     icon(c, w, h) {
-      art.scene(c, w, h, 8, { sky: ['#bfe3f5', '#e9f6ef', '#fdf3d9'], showSun: true, clouds: true });
+      SPG.scenery.draw(c, w, h, 8, 'meadow');
       const s = Math.min(w, h * 1.15) * 1.3, gy = h * .86;
       building(c, w * .48, gy, s * .32, s * .36, PALETTES[0], 'gable');
-      building(c, w * .18, gy, s * .26, s * .27, PALETTES[1], 'flat');
+      building(c, w * .18, gy, s * .26, s * .27, PALETTES[1], 'shop');
       for (const [x, y] of [[.53, .5], [.68, .5], [.53, .68], [.68, .68]]) { windowPane(c, w * x + s * .04, h * y, s * .07, s * .08, '#ffd8a3', '#fff1e6'); }
       flame(c, w * .585, h * .56, s * .1, 1, 1, 1); flame(c, w * .735, h * .46, s * .085, .85, 1, 3); flame(c, w * .66, h * .24, s * .06, .8, 1, 5);
       c.save(); c.translate(w * .28, gy + 1); art.fireTruck(c, s * .033, 0, { lights: true }); c.restore();

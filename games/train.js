@@ -45,6 +45,7 @@
       this.canvas = document.createElement('canvas'); this.canvas.className = 'game-canvas';
       host.append(this.canvas); this.ctx = this.canvas.getContext('2d');
       this.bag = store.bag('train', () => ({ trains: 0, items: 0 }));
+      this.scenic = SPG.scenery.fader(['meadow', 'farm', 'snow', 'beach', 'city', 'sunset', 'night', 'autumn'][(this.bag.trains || 0) % 8]);   // the train rolls through a new place each trip
       this.bag.trains = this.bag.trains || 0; this.bag.items = this.bag.items || 0;
       this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s * .55); c.fillStyle = '#e8433f'; art.rr(c, -s * .34, -s * .06, s * .5, s * .3, s * .06); c.fill(); c.fillStyle = '#5a3f5e'; art.rr(c, s * .1, -s * .28, s * .24, s * .52, s * .06); c.fill(); c.fillRect(-s * .3, -s * .28, s * .12, s * .24); c.beginPath(); c.arc(-s * .2, s * .26, s * .1, 0, TAU); c.arc(s * .18, s * .26, s * .1, 0, TAU); c.fill(); }, this.bag.trains);
       this.fx = new art.Fx(); this.t = 0; this.running = false;
@@ -91,7 +92,7 @@
       list.forEach((it, k) => {
         const row = Math.floor(k / cols), inRow = row === rows - 1 ? n - row * cols : cols, col = k - row * cols;
         it.hx = this.w / 2 + (col - (inRow - 1) / 2) * r * 2.6; it.hy = top + (rows === 1 ? span / 2 : row * span / (rows - 1)); it.r = r;
-        if (it.state === 'home') { it.x = it.hx; it.y = it.hy; }
+        if (it.state === 'home' && !it.inited) { it.x = it.hx; it.y = it.hy; it.inited = true; }
       });
     }
 
@@ -102,7 +103,8 @@
       const colors = shuffle(Object.keys(COLORS)), shapes = shuffle(SHAPES);
       this.cars = kinds.map((type, i) => {
         const car = { type, body: BODY[(this.bag.trains + i) % BODY.length], filled: 0, shake: 0, bounce: 0, slots: [] };
-        if (type === 'color') { car.val = colors.pop(); car.need = 2; } else if (type === 'shape') { car.val = shapes.pop(); car.need = 2; } else { car.val = 1 + Math.floor(Math.random() * 4); car.need = car.val; }
+        // a car is painted the color it asks for, so the train and the blocks always match (shape cars are pale, count cars are sunny yellow)
+        if (type === 'color') { car.val = colors.pop(); car.need = 2; car.body = COLORS[car.val]; } else if (type === 'shape') { car.val = shapes.pop(); car.need = 2; car.body = '#c9d3ea'; } else { car.val = 1 + Math.floor(Math.random() * 4); car.need = car.val; car.body = '#ffdc8a'; }
         return car;
       });
       this.items = [];
@@ -111,7 +113,22 @@
       this.items = shuffle(this.items);
       this.state = 'arrive'; this.stateT = 0; this.offset = -this.w * 1.2;
       this.layoutItems();
-      this.items.forEach(it => { it.pop = 0; });
+      this.items.forEach((it, k) => { it.pop = 1; it.state = 'spit'; it.t = -.4 - k * .16; it.inited = true; });   // the station machine spits the blocks out one by one
+      this.restockAt = 0;
+    }
+    // the machine on the platform's left edge that spits out blocks
+    chutePos() { return { x: this.w * .045, y: (this.wide ? this.h * .7 : this.h * .62) + this.h * .035 }; }
+    spitOut(count, delay = 0) {
+      for (let k = 0; k < count; k++) {
+        this.addItem(null);
+        const it = this.items[this.items.length - 1]; it.pop = 1; it.state = 'spit'; it.t = -delay - k * .18; it.inited = true;
+      }
+      this.layoutItems();
+    }
+    // keep the platform stocked: whenever she has taken blocks away, the machine spits out fresh ones
+    restock() {
+      const loose = this.items.filter(it => it.state === 'home' || it.state === 'spit' || it.state === 'back' || it.state === 'drag').length;
+      if (loose < 6) this.spitOut(1);
     }
     accepts(car, it) { return car.type === 'color' ? it.col === car.val : car.type === 'shape' ? it.shape === car.val : true; }
     addItem(car) {
@@ -125,7 +142,7 @@
       for (const car of this.cars) {
         const left = car.need - car.filled; if (left <= 0) continue;
         const have = this.items.filter(it => it.state !== 'placed' && this.accepts(car, it)).length;
-        for (let k = have; k < left; k++) { this.addItem(car); added = true; }
+        for (let k = have; k < left; k++) { this.addItem(car); const it = this.items[this.items.length - 1]; it.state = 'spit'; it.t = -.1 - k * .15; it.inited = true; it.pop = 1; added = true; }
       }
       if (added) { this.layoutItems(); this.items.forEach(it => { if (it.state === 'home' && it.pop === 1 && !it.placedOnce) { it.pop = 0; it.placedOnce = true; } }); }
     }
@@ -145,14 +162,19 @@
       // which car is under the item?
       let target = null;
       this.cars.forEach((car, i) => { const b = this.bodyRect(i); if (px > b.x - b.w * .1 && px < b.x + b.w * 1.1 && py > b.y - b.h * .5 && py < b.y + b.h * 1.4) target = car; });
-      if (!target || target.filled >= target.need) { this.sendHome(it, false); return; }
+      if (target && target.filled >= target.need) {   // a full car spits the extra block back out with a puff
+        target.shake = .6; sfx.pop(); const b = this.bodyRect(this.cars.indexOf(target));
+        this.fx.burst(b.cx, b.y, 8, { colors: ['#fff', '#e7e3f0'], speed: 120, g: -30, life: .7, size: this.cw * .06 });
+        this.sendHome(it, false, true); return;
+      }
+      if (!target) { this.sendHome(it, false); return; }
       if (!this.accepts(target, it)) { target.shake = 1; this.sendHome(it, true); return; }
       const k = target.filled++; it.state = 'fly'; it.t = 0; it.car = target; it.slot = k; it.from = { x: it.x, y: it.y };
       target.slots[k] = it;
       this.bag.items++;
     }
-    sendHome(it, wrong) {
-      it.state = 'back'; it.t = 0; it.from = { x: it.x, y: it.y };
+    sendHome(it, wrong, spit) {
+      it.state = 'back'; it.t = 0; it.from = { x: it.x, y: it.y }; it.arc = spit ? this.cw * .55 : this.cw * .12;
       if (wrong) { sfx.boing(); if (!this.spoken.wrong || this.t - this.spoken.wrong > 12) { this.spoken.wrong = this.t; voice.say('train-wrong'); } }
     }
     landed(it) {
@@ -164,7 +186,7 @@
       else voice.say('num/' + car.filled);
       if (car.filled >= car.need) { car.bounce = 1; sfx.chime(); this.fx.burst(this.bodyRect(this.cars.indexOf(car)).cx, this.bodyRect(this.cars.indexOf(car)).y, 14, { colors: ['#ffd54a', '#ff8aa3', '#7fd4f5', '#fff'], speed: 220, g: 400, life: .9, size: 6 * this.ui, shape: 'star', up: 160 }); }
       this.ensureSupply();
-      if (this.cars.every(c => c.filled >= c.need)) { this.state = 'full'; this.stateT = 0; }
+      if (this.cars.every(c => c.filled >= c.need)) { this.state = 'full'; this.stateT = 0; this.spitOut(3, .5); }   // all full: the machine spits out more blocks to play with
     }
 
     /* ---------------------------------------------------------------- loop */
@@ -175,15 +197,15 @@
 
     tick(now) {
       if (!this.running) return;
-      const dt = Math.min(.05, (now - this.last) / 1000); this.last = now; this.t += dt; this.stateT += dt;
+      const dt = Math.min(.05, (now - this.last) / 1000); this.last = now; this.t += dt; this.stateT += dt; this.scenic.update(dt);
       if (this.state === 'arrive') {
         const u = clamp(this.stateT / 2.2, 0, 1), off0 = -this.w * 1.2, prev = this.offset;
         this.offset = lerp(off0, 0, 1 - Math.pow(1 - u, 2.2));
         this.roll += (this.offset - prev) / this.wr;
         if ((this.chugT = (this.chugT || 0) - dt) <= 0 && u < 1) { this.chugT = .28; sfx.chug(); }
-        if (u >= 1) { this.state = 'ready'; this.stateT = 0; sfx.toot(); this.items.forEach((it, k) => { it.pop = -k * .06; }); }
+        if (u >= 1) { this.state = 'ready'; this.stateT = 0; sfx.toot(); }
       } else if (this.state === 'full') {
-        if (this.stateT > 1.3) { this.state = 'depart'; this.stateT = 0; sfx.toot(); voice.say('train-go'); this.bag.trains++; this.counter.set(this.bag.trains); store.addStars(1); store.save(); }
+        if (this.stateT > 1.3) { this.state = 'depart'; this.stateT = 0; sfx.toot(); voice.say('train-go'); this.bag.trains++; this.counter.set(this.bag.trains); store.addStars(1); store.save(); this.scenic.set(['meadow', 'farm', 'snow', 'beach', 'city', 'sunset', 'night', 'autumn'][this.bag.trains % 8]); }
       } else if (this.state === 'depart') {
         const u = clamp(this.stateT / 2.8, 0, 1), prev = this.offset;
         this.offset = this.w * 1.35 * u * u; this.roll += (this.offset - prev) / this.wr;
@@ -195,6 +217,7 @@
         this.smoke -= dt; if (this.smoke <= 0) { this.smoke = this.state === 'ready' ? .5 : .12; const b = this.bodyRect(3); this.fx.burst(b.cx + this.cw * .2, b.y - this.cw * .05, 1, { colors: ['#fff', '#e7e3f0'], speed: 14, g: -55, life: 1.4, size: this.cw * .09 }); }
       }
       for (const car of this.cars) { car.shake = Math.max(0, car.shake - dt * 2.5); car.bounce = Math.max(0, car.bounce - dt * 2); }
+      if (this.state === 'ready' && (this.restockT = (this.restockT || 0) - dt) <= 0) { this.restockT = .6; this.restock(); }
       for (const it of this.items) {
         it.blink += dt;
         if (it.pop < 1) it.pop = Math.min(1, it.pop + dt * 4);
@@ -205,8 +228,17 @@
           if (it.t >= 1) this.landed(it);
         } else if (it.state === 'back') {
           it.t += dt / .35; const u = ease(Math.min(1, it.t));
-          it.x = lerp(it.from.x, it.hx, u); it.y = lerp(it.from.y, it.hy, u) - Math.sin(u * Math.PI) * this.cw * .12;
+          it.x = lerp(it.from.x, it.hx, u); it.y = lerp(it.from.y, it.hy, u) - Math.sin(u * Math.PI) * (it.arc || this.cw * .12);
           if (it.t >= 1) { it.state = 'home'; it.x = it.hx; it.y = it.hy; }
+        } else if (it.state === 'spit') {   // popped out of the machine and tumbling to its place on the platform
+          it.t += dt / .6;
+          if (it.t >= 0) {
+            if (!it.sounded) { it.sounded = true; sfx.pop(); const ch = this.chutePos(); this.fx.burst(ch.x + this.cw * .12, ch.y - this.cw * .06, 4, { colors: ['#fff', '#ffd54a'], speed: 90, g: 200, life: .5, size: this.cw * .04, shape: 'star', up: 60 }); }
+            const u = ease(clamp(it.t, 0, 1)), ch = this.chutePos();
+            it.x = lerp(ch.x + this.cw * .1, it.hx, u); it.y = lerp(ch.y - this.cw * .05, it.hy, u) - Math.sin(u * Math.PI) * this.cw * .5;
+            if (it.t >= 1) { it.state = 'home'; it.x = it.hx; it.y = it.hy; sfx.plink(2); }
+          }
+        } else if (it.state === 'home') { it.x = lerp(it.x, it.hx, Math.min(1, dt * 10)); it.y = lerp(it.y, it.hy, Math.min(1, dt * 10));
         } else if (it.state === 'drag' && this.drag) { it.x = this.drag.x + this.drag.dx; it.y = this.drag.y + this.drag.dy; }
       }
       // slots follow the moving train
@@ -218,7 +250,7 @@
     /* ---------------------------------------------------------------- drawing */
     draw() {
       const c = this.ctx, w = this.w, h = this.h; if (!w) return;
-      art.scene(c, w, h, this.t);
+      this.scenic.draw(c, w, h, this.t);
       // track
       const ty = this.trackY;
       c.fillStyle = '#b08a6a'; for (let x = -((this.offset * .0) % 46); x < w; x += 46) c.fillRect(x, ty - 2, 26, this.wr * .7 + 6);
@@ -228,12 +260,18 @@
       const g = c.createLinearGradient(0, pt, 0, h); g.addColorStop(0, '#e2b98d'); g.addColorStop(1, '#c99a6a');
       c.fillStyle = g; c.fillRect(0, pt, w, h - pt); c.fillStyle = '#f3d3ae'; c.fillRect(0, pt, w, 10);
       c.fillStyle = 'rgba(90,63,94,.12)'; for (let x = 0; x < w; x += 90) c.fillRect(x, pt + 14, 3, h - pt);
+      // the block machine at the end of the platform
+      { const ch = this.chutePos(), m = this.cw * .3; c.save(); c.translate(ch.x, ch.y); c.lineJoin = 'round';
+        c.fillStyle = 'rgba(90,63,94,.18)'; c.beginPath(); c.ellipse(m * .1, m * .08, m * .75, m * .12, 0, 0, TAU); c.fill();
+        c.fillStyle = '#5aa8f0'; art.rr(c, -m * .55, -m * 1.15, m * 1.1, m * 1.2, m * .2); c.fill(); c.fillStyle = '#7fc0ff'; art.rr(c, -m * .55, -m * 1.15, m * 1.1, m * .35, m * .2); c.fill();
+        c.fillStyle = '#ffd54a'; c.fillRect(-m * .55, -m * .55, m * 1.1, m * .1); c.fillStyle = '#3d3560'; art.rr(c, m * .3, -m * .5, m * .55, m * .32, m * .1); c.fill();
+        c.save(); c.translate(-m * .1, -m * .8); art.face(c, m * .3, { mood: this.state === 'full' || this.stateT < 1 ? 'cheer' : 'happy' }); c.restore(); c.restore(); }
       // train
       this.cars.forEach((car, i) => this.drawCar(c, car, i));
       this.drawEngine(c);
       // things on the platform
       for (const it of this.items) {
-        if (it.state === 'placed' || it.pop <= 0) continue;
+        if (it.state === 'placed' || it.pop <= 0 || (it.state === 'spit' && it.t < 0)) continue;
         const lift = it.state === 'drag' ? 1 : 0, sc = (it.state === 'drag' ? 1.18 : 1) * (it.pop < 1 ? ease(it.pop) * 1.1 : 1);
         c.save(); c.translate(it.x, it.y - lift * 8); c.scale(sc, sc);
         if (it.state !== 'fly' && it.state !== 'placed') { c.fillStyle = 'rgba(90,63,94,.18)'; c.beginPath(); c.ellipse(0, it.r * (1.05 + lift * .2), it.r * .9, it.r * .22, 0, 0, TAU); c.fill(); }

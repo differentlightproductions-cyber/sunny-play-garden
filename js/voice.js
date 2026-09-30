@@ -31,10 +31,12 @@
     'train-start': 'All aboard! Fill up the train!', 'train-go': 'Choo choo! Off we go!', 'train-wrong': 'Try another one!',
     'puzzle-start': 'Put the picture together!', 'puzzle-done': 'You made the picture!',
     'care-start': 'Take care of your friend!', 'care-food': 'Yum! Thank you!', 'care-clean': 'So fresh and clean!', 'care-sleep': 'Shhh... sleepy time.', 'care-hungry': 'Your friend is hungry!', 'care-dirty': 'Your friend needs a bath!', 'care-tired': 'Your friend is sleepy!',
-    'hide-start': 'Who is hiding? Touch a bush!', 'hide-found': 'Found you!', 'hide-done': 'You found everybody!',
+    'hide-start': 'Who is hiding? Walk around and look!', 'hide-found': 'Found you!', 'hide-done': 'You found everybody!',
     'num/1': 'One!', 'num/2': 'Two!', 'num/3': 'Three!', 'num/4': 'Four!', 'num/5': 'Five!',
     'color/red': 'Red!', 'color/blue': 'Blue!', 'color/yellow': 'Yellow!', 'color/green': 'Green!',
     'shape/circle': 'Circle!', 'shape/square': 'Square!', 'shape/triangle': 'Triangle!', 'shape/star': 'Star!',
+    'care-morning': 'Good morning!',
+    'fire-level': 'A new place to help!',
     'storm-coming': 'Here comes a big rainy storm!', 'storm-over': 'The storm is over. Look, the sun!',
     'raining-pets': "It's raining cats and dogs!", 'pets-safe': 'You saved them all!',
     'dig-first': 'First, dig a hole with the shovel!', 'dig-one': 'Dig! One!', 'dig-two': 'Two!', 'dig-three': 'Three! A perfect hole!', 'pat-it': 'Now pat the dirt down!', 'bye-bye': 'Bye bye, friend! Have fun!', 'pour-water': 'Hold the can over the plant to water it!', 'seed-in': 'Now drop in a seed!', 'water-me': 'Tap the plant to water it!',
@@ -49,6 +51,9 @@
   // Sound-only keys: no speech fallback. They play only if someone has recorded them.
   const SOUNDS = {};
   for (const k of CRITTERS) SOUNDS['critter/' + k] = CRITTER_NOISE[k];
+  // Purring and happy sounds for the close-up petting in Pet Care. Without a recording the game makes a soft synthesized purr.
+  const PURRS = { cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
+  for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
   const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
 
   const SETS = [{ id: 'male', name: 'Male voice' }, { id: 'female', name: 'Female voice' }];
@@ -61,6 +66,7 @@
     { id: 'words', title: 'Picture words', note: 'The word for each letter picture: apple, bear, cat...', test: k => k.startsWith('word/') },
     { id: 'friends', title: 'Garden friend announcements', note: 'Said when a new garden friend appears.', test: k => k.startsWith('creature/') },
     { id: 'critters', title: 'Critter noises (make the sound!)', note: 'Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.', test: k => k.startsWith('critter/') },
+    { id: 'purrs', title: 'Purring and happy sounds', note: 'Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.', test: k => k.startsWith('purr/') },
     { id: 'players', title: 'Player names', note: 'Say each player\'s greeting, like "Hi Charlotte!".', test: k => k.startsWith('player/') }
   ];
 

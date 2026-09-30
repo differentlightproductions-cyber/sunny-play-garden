@@ -17,6 +17,7 @@
       this.t = 0; this.starIn = 12 + Math.random() * 8; this.sliced = 0; this.recent = []; this.lastSwoosh = 0; this.lastPraise = 0;
       this.running = false; this.ptrs = new Map(); this.faded = []; // up to 5 fingers at once
       this.bag = store.bag('fruit', () => ({ total: 0 }));
+      this.scenic = SPG.scenery.fader(this.sceneAt(this.bag.total));
       this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s / 2 + 2); art.fruit(c, 2, s * .36, {}); }, this.bag.total);
       this.tick = this.tick.bind(this);
       const cv = this.canvas;
@@ -112,6 +113,7 @@
     cut(f) {
       if (f.special) { this.cutStar(f); return; }
       this.sliced++; this.bag.total++; this.counter.set(this.bag.total); store.save();
+      { const sc = this.sceneAt(this.bag.total); if (sc !== this.scenic.id) { this.scenic.set(sc); sfx.chime(); this.fx.burst(this.w / 2, this.h * .3, 22, { colors: ['#ffd54a', '#fff', '#ff9db8', '#a6e8c8'], speed: 320, g: 300, life: 1.2, size: 8, shape: 'star', up: 200 }); } }   // every 40 fruits: somewhere new
       const kick = Math.max(this.h * .1, 70);
       for (const side of [-1, 1]) this.halves.push({ ...f, side, x: f.x + side * 4, vx: f.vx * .6 + side * kick, vy: f.vy * .4 - kick * .5, vr: side * 2.6, life: 1.1 });
       const juice = art.FRUIT_JUICE[f.type];
@@ -151,9 +153,11 @@
       this.spawnIn = 1.2 + Math.random() * .8;
     }
 
+    sceneAt(total) { const L = ['meadow', 'beach', 'farm', 'sunset', 'autumn', 'night', 'snow', 'city']; return L[Math.floor((total || 0) / 40) % L.length]; }
+
     tick(now) {
       if (!this.running) return;
-      const dt = Math.min((now - this.last) / 1000, .05); this.last = now; this.t += dt;
+      const dt = Math.min((now - this.last) / 1000, .05); this.last = now; this.t += dt; this.scenic.update(dt);
       this.spawnIn -= dt;
       if (this.fruits.length === 0) this.spawnIn = Math.min(this.spawnIn, .35);
       if (this.spawnIn <= 0) this.spawn();
@@ -179,7 +183,7 @@
     draw() {
       if (!this.w || !this.h) return;
       const c = this.ctx, { w, h } = this;
-      art.scene(c, w, h, this.t);
+      this.scenic.draw(c, w, h, this.t);
       for (const s of this.splats) {
         c.globalAlpha = Math.min(.5, s.life * .25); c.fillStyle = s.color;
         for (let i = 0; i < 7; i++) { const a = i * TAU / 7 + s.seed, d = s.r * (.3 + (i % 3) * .28); c.beginPath(); c.arc(s.x + Math.cos(a) * d, s.y + Math.sin(a) * d, s.r * (.28 + (i % 2) * .16), 0, TAU); c.fill(); }

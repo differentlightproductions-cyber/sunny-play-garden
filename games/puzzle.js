@@ -28,6 +28,7 @@
       this.canvas = document.createElement('canvas'); this.canvas.className = 'game-canvas';
       host.append(this.canvas); this.ctx = this.canvas.getContext('2d');
       this.bag = store.bag('puzzle', () => ({ solved: 0 }));
+      this.scenic = SPG.scenery.fader(['meadow', 'beach', 'snow', 'farm', 'sunset', 'night', 'autumn', 'city'][(this.bag.solved || 0) % 8]);   // a new place behind every puzzle
       this.bag.solved = this.bag.solved || 0;
       this.counter = SPG.ui.counter(host, (c, s) => {
         c.translate(s / 2, s / 2); c.fillStyle = '#59b96e'; art.rr(c, -s * .3, -s * .28, s * .6, s * .56, s * .08); c.fill();
@@ -154,6 +155,7 @@
     finish() {
       this.state = 'done'; this.stateT = 0;
       this.bag.solved++; this.counter.set(this.bag.solved); store.addStars(1); store.save();
+      this.scenic.set(['meadow', 'beach', 'snow', 'farm', 'sunset', 'night', 'autumn', 'city'][this.bag.solved % 8]);
       sfx.win(); voice.say('puzzle-done');
       this.fx.burst(this.w / 2, this.by + this.bh / 2, 30, { colors: ['#ff6b81', '#ffd54a', '#7ed957', '#5cc8f2', '#b58cf0'], speed: 340, g: 400, life: 1.3, size: 7 * this.ui, shape: 'confetti', up: 220 });
     }
@@ -165,7 +167,7 @@
     destroy() { this.pause(); this.canvas.remove(); this.counter.el.remove(); }
     tick(now) {
       if (!this.running) return;
-      const dt = Math.min(.05, (now - this.last) / 1000); this.last = now; this.t += dt; this.stateT += dt; this.idle += dt;
+      const dt = Math.min(.05, (now - this.last) / 1000); this.last = now; this.t += dt; this.stateT += dt; this.idle += dt; this.scenic.update(dt);
       if (this.drag) { const d = this.drag; d.p.x = d.x + d.dx; d.p.y = d.y + d.dy; d.p.sc = lerp(d.p.sc, 1, Math.min(1, dt * 14)); }
       for (const p of this.pieces) p.flash = Math.max(0, p.flash - dt * 2);
       if (this.state === 'done' && this.stateT > 4.2) this.newPuzzle();
@@ -176,7 +178,7 @@
     /* ---------------------------------------------------------------- drawing */
     draw() {
       const c = this.ctx, w = this.w, h = this.h; if (!w) return;
-      art.scene(c, w, h, this.t, { clouds: true });
+      this.scenic.draw(c, w, h, this.t);
       const bx = this.bx, by = this.by, bw = this.bw, bh = this.bh;
       // the board: a soft frame with the picture very faint behind, and the shape of every place
       c.fillStyle = 'rgba(90,63,94,.14)'; art.rr(c, bx - 14, by - 8, bw + 28, bh + 34, 28); c.fill();

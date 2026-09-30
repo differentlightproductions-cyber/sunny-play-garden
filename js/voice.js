@@ -59,6 +59,16 @@
     'neck-pearls': 'Pearls', 'neck-heart': 'A heart necklace', 'neck-star': 'A star necklace', 'neck-scarf': 'A scarf', 'neck-bowtie': 'A bow tie',
     'back-cape': 'A cape!', 'back-fairy': 'Fairy wings!', 'back-butterfly': 'Butterfly wings!', 'back-angel': 'Angel wings!', 'back-pack': 'A backpack',
     'hand-wand': 'A magic wand!', 'hand-flower': 'Flowers', 'hand-balloon': 'A balloon!', 'hand-purse': 'A purse', 'hand-teddy': 'A teddy bear', 'hand-lolly': 'A lollipop!',
+    'hair-pixie': 'A pixie cut', 'hair-afro': 'A big afro', 'hair-halfup': 'Half up, half down', 'hair-twinbraids': 'Two braids', 'hair-mohawk': 'A mohawk!', 'hair-bowl': 'A bowl cut', 'hair-longcurly': 'Long curls', 'hair-sidepony': 'A side ponytail', 'hair-locs': 'Long locs', 'hair-crownbraid': 'A crown braid',
+    'dress-royal': 'A royal gown!', 'dress-skater': 'A twirly dress!', 'dress-tiers': 'A ruffle dress', 'dress-pinafore': 'A pinafore', 'dress-snow': 'An ice queen gown!',
+    'top-polo': 'A polo shirt', 'top-jersey': 'A sports shirt', 'top-flannel': 'A checked shirt', 'top-cardigan': 'A cardigan', 'top-puffer': 'A puffy jacket', 'top-blazer': 'A blazer', 'top-hearttee': 'A heart shirt',
+    'bottom-capris': 'Capri pants', 'bottom-cargo': 'Pocket pants', 'bottom-joggers': 'Joggers', 'bottom-longskirt': 'A long skirt', 'bottom-plaid': 'A checked skirt',
+    'shoes-rainboots': 'Rain boots', 'shoes-heels': 'Princess heels!', 'shoes-fuzzy': 'Fuzzy slippers', 'shoes-skates': 'Roller skates!',
+    'hat-sun': 'A sun hat', 'hat-beret': 'A beret', 'hat-santa': 'A Santa hat!', 'hat-pirate': 'A pirate hat!', 'hat-chef': 'A chef hat', 'hat-halo': 'A halo', 'hat-ribbon': 'A ribbon headband',
+    'face-shades': 'Sunglasses', 'face-clown': 'A red nose!', 'face-whiskers': 'Kitty whiskers!', 'face-patch': 'A pirate patch',
+    'neck-lei': 'A flower necklace', 'neck-choker': 'A choker', 'neck-tie': 'A necktie', 'neck-medal': 'A gold medal!',
+    'back-bat': 'Bat wings!', 'back-dragon': 'Dragon wings!', 'back-rainbow': 'Rainbow wings!',
+    'hand-umbrella': 'An umbrella', 'hand-icecream': 'Ice cream!', 'hand-mirror': 'A hand mirror', 'hand-plush': 'A bunny toy', 'hand-starballoon': 'A star balloon!',
     'place-0': 'The castle ballroom', 'place-1': 'The garden', 'place-2': 'The beach', 'place-3': 'The salon', 'place-4': 'Under the stars', 'place-5': 'The rainbow meadow',
     'say-start': "Let's get dressed up!", 'say-show': 'Ta-da! Look at you! You look amazing!', 'say-nails': 'Pick a color and touch the nails!', 'say-hair': 'Touch the hair!', 'say-lips': 'Lipstick!', 'say-shadow': 'Sparkly eyes!', 'say-blush': 'Rosy cheeks!', 'say-freckles': 'Freckles!', 'say-gems': 'Face jewels!', 'say-skin': 'Skin color', 'say-eyes': 'Eye color', 'say-glitter': 'Glitter!', 'say-all': 'All the nails!', 'say-clear': 'Clean nails.'
   };

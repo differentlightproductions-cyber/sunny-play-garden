@@ -10,7 +10,7 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { night: 'off', voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { night: 'off', nightFrom: 19, nightTo: 7, voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
@@ -183,19 +183,22 @@
   }
 
   const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5]; // C major pentatonic-ish
-  // Night mode: 'off', 'on', or 'auto' (dark from 7 in the evening until 7 in the morning). The whole app is toned down:
+  // Night mode: 'off', 'on', or 'auto' (dark between two hours the grown-ups choose, 7 pm to 7 am by default). The whole app is toned down:
   // a dim navy veil over everything, a night-sky backdrop, night scenery in every game and quieter sound.
   SPG.night = {
     listeners: [],
     mode() { const m = SPG.store.settings.night; return m === 'on' || m === 'auto' ? m : 'off'; },
-    on() { const m = SPG.night.mode(); if (m === 'on') return true; if (m === 'auto') { const h = new Date().getHours(); return h >= 19 || h < 7; } return false; },
+    override: null,   // the moon button on the games page flips this for now without losing the grown-ups' schedule
+    on() { const m = SPG.night.mode(); if (m === 'auto' && SPG.night.override !== null) return SPG.night.override; if (m === 'on') return true; if (m === 'auto') { const h = new Date().getHours(), a = SPG.night.from(), b = SPG.night.to(); return a === b ? false : a > b ? (h >= a || h < b) : (h >= a && h < b); } return false; },
+    from() { const v = SPG.store.settings.nightFrom; return Number.isInteger(v) && v >= 0 && v < 24 ? v : 19; },
+    to() { const v = SPG.store.settings.nightTo; return Number.isInteger(v) && v >= 0 && v < 24 ? v : 7; },
     apply() {
       const on = SPG.night.on();
       document.body.classList.toggle('night', on);
       if (A.master) A.master.gain.value = on ? .6 : .85;
       if (SPG.night._last !== on) { SPG.night._last = on; SPG.night.listeners.forEach(f => f(on)); }
     },
-    set(m) { SPG.store.settings.night = m; SPG.store.save(); SPG.night.apply(); }
+    set(m) { SPG.night.override = null; SPG.store.settings.night = m; SPG.store.save(); SPG.night.apply(); }
   };
 
   SPG.sfx = {

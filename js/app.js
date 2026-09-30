@@ -127,14 +127,14 @@
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    // Games come four to a page. Swipe, or use the big arrows and dots underneath.
-    const PER_PAGE = 4, pages = [];
+    // Games look like little app icons, eight to a page. Swipe, or use the big arrows and dots underneath.
+    const PER_PAGE = 8, pages = [];
     for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
     const strip = h('div', { class: 'pages' }, ...pages.map((list, pi) => h('div', { class: 'cards page', 'aria-label': `Page ${pi + 1} of ${pages.length}` }, ...list.map((g, k) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
       const canvas = document.createElement('canvas');
       const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-(pi * PER_PAGE + k) * 1.1}s` },
-        canvas, h('span', { class: 'card-name' }, h('span', {}, g.name), h('span', { class: 'go' }, icon('play'))));
+        canvas, h('span', { class: 'card-name' }, g.name));
       // A swipe must turn the page, not start a game, so a card opens on a short tap (the browser cancels the touch when it becomes a swipe).
       let down = null;
       card.addEventListener('pointerdown', e => { if (e.button > 0) return; down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
@@ -568,14 +568,30 @@
   function nightSection() {
     const cur = SPG.night.mode();
     const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Night mode' });
-    for (const [id, label] of [['off', 'Day'], ['on', 'Night'], ['auto', 'Auto']]) {
+    for (const [id, label] of [['off', 'Day'], ['on', 'Night'], ['auto', 'Auto (schedule)']]) {
       const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === id) }, label);
       b.addEventListener('click', () => { SPG.night.set(id); renderParent(); });
       seg.append(b);
     }
-    return h('section', {}, h('h3', {}, 'Night mode'),
-      h('p', {}, 'Tones everything down for bedtime: a night sky behind the games, softer colors and quieter sounds. Auto switches on from 7 in the evening until 7 in the morning. There is also a moon button on the games page.'),
+    const sec = h('section', {}, h('h3', {}, 'Night mode'),
+      h('p', {}, 'Tones everything down for bedtime: a night sky behind the games, softer colors and quieter sounds. Choose Day or Night yourself, or Auto to switch on by a schedule. There is also a moon button on the games page.'),
       seg);
+    if (cur === 'auto') {
+      const hourLabel = n => (n % 12 || 12) + (n < 12 ? ' am' : ' pm');
+      const picker = (title, key, hours, def) => {
+        const row = h('div', { class: 'seg', role: 'group', 'aria-label': title });
+        const now = key === 'nightFrom' ? SPG.night.from() : SPG.night.to();
+        for (const n of hours) {
+          const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(now === n) }, hourLabel(n));
+          b.addEventListener('click', () => { store.settings[key] = n; store.save(); SPG.night.apply(); renderParent(); });
+          row.append(b);
+        }
+        return h('div', {}, h('p', {}, h('b', {}, title)), row);
+      };
+      sec.append(picker('Night starts at', 'nightFrom', [17, 18, 19, 20, 21], 19), picker('Night ends at', 'nightTo', [5, 6, 7, 8, 9], 7),
+        h('p', {}, `Right now: ${SPG.night.on() ? 'night' : 'day'}. Night runs from ${hourLabel(SPG.night.from())} to ${hourLabel(SPG.night.to())}.`));
+    }
+    return sec;
   }
 
   function fruitSection() {
@@ -653,7 +669,7 @@
   const nightBtn = $('hub-night');
   const syncNight = () => nightBtn.setAttribute('aria-pressed', String(SPG.night.on()));
   SPG.night.listeners.push(syncNight); syncNight();
-  nightBtn.addEventListener('click', () => { SPG.night.set(SPG.night.on() ? 'off' : 'on'); SPG.sfx.tap(); });
+  nightBtn.addEventListener('click', () => { if (SPG.night.mode() === 'auto') { SPG.night.override = !SPG.night.on(); SPG.night.apply(); } else SPG.night.set(SPG.night.on() ? 'off' : 'on'); SPG.sfx.tap(); });
   renderCards();
   if (store.profiles.length) { store.setActive(store.active?.id ?? store.profiles[0].id); renderWho(); } else openSetup(false);
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

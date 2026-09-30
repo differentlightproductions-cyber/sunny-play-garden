@@ -553,7 +553,7 @@
     id: 'care', name: 'Pet Care', order: 7,
     icon(c, w, h) {
       const wall = c.createLinearGradient(0, 0, 0, h); wall.addColorStop(0, '#ffe9df'); wall.addColorStop(.62, '#ffd9cc'); wall.addColorStop(.63, '#e2b98d'); wall.addColorStop(1, '#c99a6a'); c.fillStyle = wall; c.fillRect(0, 0, w, h);
-      const s = Math.min(w * .3, h * 1.05);
+      const s = Math.min(w * .6, h * .78);
       c.fillStyle = '#ffb3c6'; c.beginPath(); c.ellipse(w * .5, h * .9, s * .8, s * .12, 0, 0, TAU); c.fill();
       c.save(); c.translate(w * .5, h * .93); SPG.pets.draw(c, 'cat', s, 1, { mood: 'cheer' }); c.restore();
       c.save(); c.translate(w * .78, h * .5); art.fruit(c, 3, s * .16, {}); c.restore();

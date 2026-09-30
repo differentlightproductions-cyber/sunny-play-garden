@@ -351,14 +351,14 @@
     id: 'train', name: 'Choo-Choo Train', order: 9,
     icon(c, w, h) {
       art.scene(c, w, h, 3, { showSun: false });
-      const s = Math.min(w * .3, h * 1.1), ty = h * .82;
+      const s = Math.min(w * .46, h * .7), ty = h * .8;
       c.fillStyle = '#8f96a8'; c.fillRect(0, ty, w, 5);
       const car = (x, col, shape, tone) => { c.fillStyle = col; art.rr(c, x, ty - s * .62, s * .9, s * .5, s * .06); c.fill(); c.fillStyle = '#fffaf0'; art.rr(c, x + s * .18, ty - s * .56, s * .54, s * .26, s * .04); c.fill(); c.save(); c.translate(x + s * .45, ty - s * .43); silhouette(c, shape, s * .09, tone); c.restore(); for (const dx of [.22, .68]) { c.fillStyle = '#3d3560'; c.beginPath(); c.arc(x + s * dx, ty - s * .07, s * .09, 0, TAU); c.fill(); } };
-      car(w * .06, '#ff8aa3', 'star', '#ffd54a'); car(w * .06 + s, '#7fd4f5', 'circle', '#5aa8f0');
-      const ex = w * .06 + s * 2; c.fillStyle = '#e8433f'; art.rr(c, ex + s * .25, ty - s * .5, s * .75, s * .38, s * .06); c.fill(); c.fillStyle = '#c92f2f'; art.rr(c, ex, ty - s * .62, s * .38, s * .5, s * .05); c.fill();
+      car(w * .04, '#ff8aa3', 'star', '#ffd54a');
+      const ex = w * .04 + s; c.fillStyle = '#e8433f'; art.rr(c, ex + s * .25, ty - s * .5, s * .75, s * .38, s * .06); c.fill(); c.fillStyle = '#c92f2f'; art.rr(c, ex, ty - s * .62, s * .38, s * .5, s * .05); c.fill();
       c.fillStyle = '#5a3f5e'; c.fillRect(ex + s * .72, ty - s * .62, s * .16, s * .16); for (const dx of [.2, .75]) { c.beginPath(); c.arc(ex + s * dx, ty - s * .07, s * .09, 0, TAU); c.fill(); }
       c.save(); c.translate(ex + s * .68, ty - s * .3); art.face(c, s * .1); c.restore();
-      for (const [x, y, col, sh] of [[.68, .55, '#ffd54a', 'star'], [.82, .5, '#6fcf6f', 'square']]) { c.save(); c.translate(w * x, h * y); block(c, sh, col, s * .11, false); c.restore(); }
+      for (const [x, y, col, sh] of [[.3, .28, '#ffd54a', 'star'], [.62, .22, '#6fcf6f', 'square']]) { c.save(); c.translate(w * x, h * y); block(c, sh, col, s * .15, false); c.restore(); }
     },
     create: host => new TrainGame(host)
   });

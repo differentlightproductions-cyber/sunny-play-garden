@@ -335,7 +335,7 @@
     id: 'hide', name: 'Hide and Seek', order: 10,
     icon(c, w, h) {
       const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#9fd88a'); g.addColorStop(1, '#86cc74'); c.fillStyle = g; c.fillRect(0, 0, w, h);
-      const S = Math.min(w * .3, h * 1.15);
+      const S = Math.min(w * .4, h * .8);
       c.strokeStyle = '#e9d5a8'; c.lineWidth = S * .16; c.lineCap = 'round'; c.beginPath(); c.moveTo(w * .05, h * .8); c.quadraticCurveTo(w * .35, h * .3, w * .95, h * .7); c.stroke();
       c.save(); c.translate(w * .2, h * .9); SPOT.bush(c, S * .8, {}); c.restore();
       c.save(); c.translate(w * .78, h * .92); SPOT.tree(c, S * .7, {}); c.restore();

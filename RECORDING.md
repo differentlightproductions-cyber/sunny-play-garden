@@ -203,6 +203,60 @@ Said when she touches a friend, a hairstyle or a piece of clothing in the dress-
 | `style-hand-purse.mp3` | A purse |
 | `style-hand-teddy.mp3` | A teddy bear |
 | `style-hand-lolly.mp3` | A lollipop! |
+| `style-hair-pixie.mp3` | A pixie cut |
+| `style-hair-afro.mp3` | A big afro |
+| `style-hair-halfup.mp3` | Half up, half down |
+| `style-hair-twinbraids.mp3` | Two braids |
+| `style-hair-mohawk.mp3` | A mohawk! |
+| `style-hair-bowl.mp3` | A bowl cut |
+| `style-hair-longcurly.mp3` | Long curls |
+| `style-hair-sidepony.mp3` | A side ponytail |
+| `style-hair-locs.mp3` | Long locs |
+| `style-hair-crownbraid.mp3` | A crown braid |
+| `style-dress-royal.mp3` | A royal gown! |
+| `style-dress-skater.mp3` | A twirly dress! |
+| `style-dress-tiers.mp3` | A ruffle dress |
+| `style-dress-pinafore.mp3` | A pinafore |
+| `style-dress-snow.mp3` | An ice queen gown! |
+| `style-top-polo.mp3` | A polo shirt |
+| `style-top-jersey.mp3` | A sports shirt |
+| `style-top-flannel.mp3` | A checked shirt |
+| `style-top-cardigan.mp3` | A cardigan |
+| `style-top-puffer.mp3` | A puffy jacket |
+| `style-top-blazer.mp3` | A blazer |
+| `style-top-hearttee.mp3` | A heart shirt |
+| `style-bottom-capris.mp3` | Capri pants |
+| `style-bottom-cargo.mp3` | Pocket pants |
+| `style-bottom-joggers.mp3` | Joggers |
+| `style-bottom-longskirt.mp3` | A long skirt |
+| `style-bottom-plaid.mp3` | A checked skirt |
+| `style-shoes-rainboots.mp3` | Rain boots |
+| `style-shoes-heels.mp3` | Princess heels! |
+| `style-shoes-fuzzy.mp3` | Fuzzy slippers |
+| `style-shoes-skates.mp3` | Roller skates! |
+| `style-hat-sun.mp3` | A sun hat |
+| `style-hat-beret.mp3` | A beret |
+| `style-hat-santa.mp3` | A Santa hat! |
+| `style-hat-pirate.mp3` | A pirate hat! |
+| `style-hat-chef.mp3` | A chef hat |
+| `style-hat-halo.mp3` | A halo |
+| `style-hat-ribbon.mp3` | A ribbon headband |
+| `style-face-shades.mp3` | Sunglasses |
+| `style-face-clown.mp3` | A red nose! |
+| `style-face-whiskers.mp3` | Kitty whiskers! |
+| `style-face-patch.mp3` | A pirate patch |
+| `style-neck-lei.mp3` | A flower necklace |
+| `style-neck-choker.mp3` | A choker |
+| `style-neck-tie.mp3` | A necktie |
+| `style-neck-medal.mp3` | A gold medal! |
+| `style-back-bat.mp3` | Bat wings! |
+| `style-back-dragon.mp3` | Dragon wings! |
+| `style-back-rainbow.mp3` | Rainbow wings! |
+| `style-hand-umbrella.mp3` | An umbrella |
+| `style-hand-icecream.mp3` | Ice cream! |
+| `style-hand-mirror.mp3` | A hand mirror |
+| `style-hand-plush.mp3` | A bunny toy |
+| `style-hand-starballoon.mp3` | A star balloon! |
 | `style-place-0.mp3` | The castle ballroom |
 | `style-place-1.mp3` | The garden |
 | `style-place-2.mp3` | The beach |

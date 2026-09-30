@@ -212,10 +212,13 @@
     id: 'puzzle', name: 'Puzzle Pond', order: 6,
     icon(c, w, h) {
       const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#d8f0ff'); g.addColorStop(1, '#e6f7ec'); c.fillStyle = g; c.fillRect(0, 0, w, h);
-      const s = Math.min(w * .5, h * 1.6), pw = s * .5, ph = pw * .8;
-      const bunny = SPG.pictures.find(p => p.id === 'bunny') || SPG.pictures[0];
+      const s = Math.min(w, h * 1.2), pw = s * .43, ph = pw * .8;
       const im = document.createElement('canvas'); im.width = Math.round(pw * 2 * 2); im.height = Math.round(ph * 2 * 2);
-      SPG.coloring.draw(im.getContext('2d'), bunny, im.width);
+      { const q = im.getContext('2d'), W2 = im.width, H2 = im.height, sk = q.createLinearGradient(0, 0, 0, H2); sk.addColorStop(0, '#8fd3f8'); sk.addColorStop(1, '#e8f7ff'); q.fillStyle = sk; q.fillRect(0, 0, W2, H2);
+        art.sun(q, W2 * .8, H2 * .22, W2 * .07, 0); art.cloud(q, W2 * .26, H2 * .24, W2 / 500, .95);
+        q.fillStyle = '#9ad97f'; q.beginPath(); q.moveTo(0, H2 * .62); q.quadraticCurveTo(W2 * .4, H2 * .48, W2, H2 * .66); q.lineTo(W2, H2); q.lineTo(0, H2); q.fill();
+        q.fillStyle = '#7fc46f'; q.beginPath(); q.moveTo(0, H2 * .8); q.quadraticCurveTo(W2 * .6, H2 * .68, W2, H2 * .84); q.lineTo(W2, H2); q.lineTo(0, H2); q.fill();
+        for (const [fx, fy, k] of [[.3, .76, '#ff8fc0'], [.55, .86, '#ffd54a'], [.78, .74, '#fff']]) { q.fillStyle = k; for (let a = 0; a < 5; a++) { q.beginPath(); q.arc(W2 * fx + Math.cos(a * 1.257) * W2 * .028, H2 * fy + Math.sin(a * 1.257) * W2 * .028, W2 * .02, 0, 6.3); q.fill(); } q.fillStyle = '#ffe066'; q.beginPath(); q.arc(W2 * fx, H2 * fy, W2 * .015, 0, 6.3); q.fill(); } }
       const ox = w / 2 - pw, oy = h * .5 - ph;
       const cell = [[0, 0, 0, 0], [1, 0, 8, -4], [0, 1, -6, 8]];
       for (const [cx, cy, dx, dy] of cell) {

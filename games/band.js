@@ -273,10 +273,10 @@
     id: 'band', name: 'Bunny Band', order: 8,
     icon(c, w, h) {
       const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ffe3f0'); g.addColorStop(1, '#fff1dc'); c.fillStyle = g; c.fillRect(0, 0, w, h);
-      const s = Math.min(w * .28, h * 1.05);
+      const s = Math.min(w * .38, h * .62);
       c.fillStyle = '#d99a6c'; c.fillRect(0, h * .78, w, h * .22);
       [['bunny', .2, 'drum'], ['cat', .5, 'xylo'], ['bear', .8, 'horn']].forEach(([sp, fx, inst]) => { c.save(); c.translate(w * fx, h * .98); SPG.pets.draw(c, sp, s, 1, { mood: 'cheer' }); instrument(c, inst, s / 10, 0); c.restore(); });
-      c.fillStyle = '#b58cf0'; c.font = `700 ${h * .25}px Fredoka, system-ui`; c.textAlign = 'center'; c.fillText('♪', w * .35, h * .3); c.fillStyle = '#ff8aa3'; c.fillText('♫', w * .66, h * .25);
+      c.fillStyle = '#b58cf0'; c.font = `700 ${h * .26}px Fredoka, system-ui`; c.textAlign = 'center'; c.fillText('♪', w * .3, h * .3); c.fillStyle = '#ff8aa3'; c.fillText('♫', w * .7, h * .24);
     },
     create: host => new BandGame(host)
   });

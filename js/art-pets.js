@@ -181,6 +181,53 @@
     c.restore();
   };
 
+  // A friendly fire truck facing right. Origin = middle of the wheels on the ground, u = a unit of size (about 13u long, 6u tall).
+  // roll spins the wheels (pass the distance driven / wheel radius); lights flash red and blue.
+  art.fireTruck = function fireTruck(c, u, t, { dir = 1, lights = true, roll = 0 } = {}) {
+    const INK = '#5a3f5e', RED = '#e8433f', RED2 = '#c92f2f', GREY = '#cfd6e4';
+    c.save(); c.scale(dir, 1); c.lineCap = c.lineJoin = 'round';
+    c.fillStyle = 'rgba(90,63,94,.16)'; c.beginPath(); c.ellipse(0, 0, u * 6.6, u * .45, 0, 0, TAU); c.fill();
+    // chassis
+    c.fillStyle = '#3d3560'; rr(c, -6.4 * u, -1.95 * u, 12.8 * u, .75 * u, .3 * u); c.fill();
+    // rear body with side compartments and a yellow stripe
+    const bg = c.createLinearGradient(0, -4.3 * u, 0, -1.7 * u); bg.addColorStop(0, '#f0524d'); bg.addColorStop(1, RED2);
+    c.fillStyle = bg; rr(c, -6.5 * u, -4.3 * u, 8.4 * u, 2.6 * u, .6 * u); c.fill();
+    c.fillStyle = RED2; for (const x of [-5.9, -3.85, -1.8]) { rr(c, x * u, -3.95 * u, 1.75 * u, 1.35 * u, .25 * u); c.fill(); }
+    c.fillStyle = GREY; for (const x of [-5.9, -3.85, -1.8]) { rr(c, (x + .55) * u, -3.6 * u, .65 * u, .16 * u, .08 * u); c.fill(); }
+    c.fillStyle = '#ffd54a'; rr(c, -6.5 * u, -2.35 * u, 8.4 * u, .33 * u, .1 * u); c.fill();
+    // ladder on the roof
+    c.fillStyle = GREY; rr(c, -6.2 * u, -5.05 * u, 7.6 * u, .22 * u, .1 * u); c.fill(); rr(c, -6.2 * u, -4.66 * u, 7.6 * u, .22 * u, .1 * u); c.fill();
+    c.strokeStyle = GREY; c.lineWidth = u * .12; for (let x = -5.9; x < 1.3; x += .78) { c.beginPath(); c.moveTo(x * u, -5.0 * u); c.lineTo(x * u, -4.5 * u); c.stroke(); }
+    c.fillStyle = '#8a92a6'; for (const x of [-5.4, -0.6]) { rr(c, x * u, -4.5 * u, .4 * u, .3 * u, .08 * u); c.fill(); }
+    // cab
+    const cg = c.createLinearGradient(0, -4.6 * u, 0, -1.7 * u); cg.addColorStop(0, '#f0524d'); cg.addColorStop(1, RED2);
+    c.fillStyle = cg; rr(c, 1.7 * u, -4.6 * u, 4.9 * u, 2.9 * u, 1.1 * u); c.fill();
+    c.fillStyle = '#cdeefc'; rr(c, 2.3 * u, -4.2 * u, 3.3 * u, 1.6 * u, .55 * u); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.moveTo(2.6 * u, -2.7 * u); c.lineTo(3.4 * u, -4.1 * u); c.lineTo(3.9 * u, -4.1 * u); c.lineTo(3.1 * u, -2.7 * u); c.fill();
+    // a friendly face on the windscreen and grille
+    for (const x of [3.35, 4.6]) { c.fillStyle = INK; c.beginPath(); c.ellipse(x * u, -3.4 * u, .2 * u, .29 * u, 0, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc((x - .06) * u, -3.52 * u, .08 * u, 0, TAU); c.fill(); }
+    c.strokeStyle = INK; c.lineWidth = u * .13; c.beginPath(); c.arc(3.97 * u, -2.85 * u, .5 * u, Math.PI * .18, Math.PI * .82); c.stroke();
+    c.fillStyle = 'rgba(255,130,160,.45)'; for (const x of [2.85, 5.05]) { c.beginPath(); c.ellipse(x * u, -2.95 * u, .3 * u, .17 * u, 0, 0, TAU); c.fill(); }
+    // bumper, headlight
+    c.fillStyle = GREY; rr(c, 5.9 * u, -2.25 * u, 1 * u, .55 * u, .22 * u); c.fill();
+    c.fillStyle = '#fff3b0'; c.beginPath(); c.arc(6.3 * u, -3.05 * u, .33 * u, 0, TAU); c.fill();
+    // flashing lights
+    c.fillStyle = '#8a92a6'; rr(c, 2.7 * u, -4.95 * u, 2.4 * u, .3 * u, .1 * u); c.fill();
+    const on = lights && Math.sin(t * 9) > 0;
+    for (const [x, col, act] of [[3.25, '#ff5a5a', on], [4.55, '#5aa8ff', !on]]) {
+      if (lights && act) { const g = c.createRadialGradient(x * u, -5.3 * u, 0, x * u, -5.3 * u, u * 1.3); g.addColorStop(0, col + 'aa'); g.addColorStop(1, col + '00'); c.fillStyle = g; c.beginPath(); c.arc(x * u, -5.3 * u, u * 1.3, 0, TAU); c.fill(); }
+      c.fillStyle = lights && act ? col : '#f3b9b9'; c.beginPath(); c.arc(x * u, -5.25 * u, .36 * u, Math.PI, 0); c.lineTo((x + .36) * u, -4.95 * u); c.lineTo((x - .36) * u, -4.95 * u); c.fill();
+    }
+    // wheels
+    for (const x of [-3.7, 4.0]) {
+      c.save(); c.translate(x * u, -1.3 * u); c.fillStyle = '#3d3560'; c.beginPath(); c.arc(0, 0, 1.3 * u, 0, TAU); c.fill();
+      c.rotate(roll); c.fillStyle = GREY; c.beginPath(); c.arc(0, 0, .62 * u, 0, TAU); c.fill();
+      c.strokeStyle = '#8a92a6'; c.lineWidth = u * .1; for (let k = 0; k < 4; k++) { c.rotate(Math.PI / 4); c.beginPath(); c.moveTo(-.55 * u, 0); c.lineTo(.55 * u, 0); c.stroke(); }
+      c.restore();
+    }
+    c.restore();
+  };
+
   /* ------------------------------------------------------------ garden friends */
   art.CREATURES.push({ id: 'cat', name: 'Kitty', fly: false }, { id: 'dog', name: 'Puppy', fly: false });
   const prev = art.creature;

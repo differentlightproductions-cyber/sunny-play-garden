@@ -15,6 +15,7 @@
       this.bag = store.bag('rain', () => ({ flowers: 0, drops: 0, pets: 0, petEvents: 0 }));
       this.bag.pets = this.bag.pets || 0; this.bag.petEvents = this.bag.petEvents || 0;
       this.pets = null; this.petsPending = false; this.bucketHide = 0; this.petCounter = null;
+      this.storm = null; this.stormPending = false; this.flash = 0; this.bolts = []; this.thunders = []; this.sunT = 0;
       this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s * .52); art.drop(c, s * .26); }, this.bag.drops || 0);
       this.fx = new art.Fx();
       this.drops = []; this.ripples = []; this.streaks = [];
@@ -55,27 +56,65 @@
     destroy() { this.pause(); removeEventListener('keydown', this.onKey); removeEventListener('keyup', this.onKey); this.canvas.remove(); this.counter.el.remove(); this.petCounter?.el.remove(); }
 
     cloudX(i) { return this.w * (.2 + i * .3) + Math.sin(this.t * .35 + i * 2) * this.w * .06; }
+    // Up to six clouds: the extra three roll in from the sides when a storm comes.
+    stormK() { return this.storm ? this.storm.k : 0; }
+    cloudCount() { return 3 + Math.round(this.stormK() * 3); }
+    cloudPos(i) {
+      if (i < 3) return { x: this.cloudX(i), y: this.cloudY() + Math.sin(this.t * .8 + i) * 6, s: this.cs * (i === 1 ? 1.1 : .95) };
+      const j = i - 3, k = this.stormK(), e = 1 - Math.pow(1 - k, 2), side = j % 2 ? 1 : -1;
+      return { x: this.w * (.09 + j * .41) + Math.sin(this.t * .3 + i * 1.7) * this.w * .05 + side * (1 - e) * this.w * .7, y: this.cloudY() * (.52 + j * .3) + Math.sin(this.t * .8 + i) * 5, s: this.cs * .85 };
+    }
     cloudY() { return Math.max(Math.min(this.h * .3, 78 * this.cs + 30), this.h * .17); }
 
     spawn() {
-      const i = Math.floor(Math.random() * 3), gold = Math.random() < .12;
-      this.drops.push({ x: this.cloudX(i) + (Math.random() - .5) * 90 * this.cs, y: this.cloudY() + 30 * this.cs, vy: this.h * .1, r: this.dropR * (gold ? 1.15 : .9 + Math.random() * .2), gold, blink: Math.random() * 3 });
-      this.spawnIn = Math.max(.55, 1.0 - this.caught * .004) + Math.random() * .45;
+      const i = Math.floor(Math.random() * this.cloudCount()), gold = Math.random() < .12, cp = this.cloudPos(i);
+      this.drops.push({ x: Math.max(8, Math.min(this.w - 8, cp.x + (Math.random() - .5) * 90 * this.cs)), y: cp.y + 30 * this.cs, vy: this.h * .1, r: this.dropR * (gold ? 1.15 : .9 + Math.random() * .2), gold, blink: Math.random() * 3 });
+      this.spawnIn = (Math.max(.55, 1.0 - this.caught * .004) + Math.random() * .45) / (1 + this.stormK() * 8);   // a storm rains about nine times as much
     }
 
     catchDrop(d) {
       this.caught++; this.moodT = .35; this.bag.drops = (this.bag.drops || 0) + 1; this.counter.set(this.bag.drops); store.save();
-      this.fill = Math.min(1, this.fill + (d.gold ? 2 : 1) / BUCKET_CAPACITY);
+      this.fill = Math.min(1, this.fill + (d.gold ? 2 : 1) / (BUCKET_CAPACITY * (1 + this.stormK() * 1.5)));   // (a storm fills it a bit slower per drop, so rainbows stay special)
       this.fx.burst(d.x, this.rimY, 8, { colors: ['#9be0ff', '#fff', d.gold ? '#ffd54a' : '#5cc8f2'], speed: 190, g: 700, life: .5, size: 5, up: 200 });
       sfx.plink(this.caught);
       if (this.fill >= 1) this.celebrate();
     }
 
     celebrate() {
-      this.rainbow = 1; this.fill = 0; this.bag.flowers++; if (this.bag.flowers % 3 === 0) this.petsPending = true; this.newFlower = 1; store.save(); store.addStars(1);
+      this.rainbow = 1; this.fill = 0; this.bag.flowers++; if (this.bag.flowers % 3 === 0) this.petsPending = true; else if (this.bag.flowers % 3 === 2 && !this.storm) this.stormPending = true; this.newFlower = 1; store.save(); store.addStars(1);
       sfx.win(); voice.say('rainbow', 'wow');
       const b = this.bucket;
       this.fx.burst(b.x, this.rimY, 28, { colors: RAINBOW, speed: 420, g: 400, life: 1.2, size: 8, shape: 'confetti', up: 260 });
+    }
+
+    /* ---- a gentle storm: more clouds, soft lightning, soft thunder, lots of rain ---- */
+    startStorm() {
+      if (this.storm) return;
+      this.storm = { phase: 'in', t: 0, k: 0, flashIn: 4 + Math.random() * 2, bolts: 0 };
+      voice.say('storm-coming');
+    }
+    lightning() {
+      const i = Math.floor(Math.random() * this.cloudCount()), cp = this.cloudPos(i), y1 = this.h * (.5 + Math.random() * .12);
+      const pts = [[cp.x, cp.y + 26 * cp.s]]; let x = cp.x;
+      for (let k = 1; k <= 5; k++) { x += (Math.random() - .5) * this.w * .07; pts.push([x, cp.y + 26 * cp.s + (y1 - cp.y) * k / 5]); }
+      this.bolts.push({ pts, life: 1, w: Math.max(7, this.cs * 10) }); this.flash = 1;
+      sfx.zap(); this.thunders.push(.7 + Math.random() * .6);
+      this.fx.burst(pts[pts.length - 1][0], pts[pts.length - 1][1], 8, { colors: ['#fff6a8', '#ffd54a', '#fff'], shape: 'star', speed: 150, g: 100, life: .6, size: 8 });
+    }
+    updateStorm(dt) {
+      const S = this.storm; S.t += dt;
+      if (S.phase === 'in') { S.k = Math.min(1, S.t / 3); if (S.t >= 3) { S.phase = 'on'; S.t = 0; } }
+      else if (S.phase === 'on') {
+        S.k = 1; S.flashIn -= dt;
+        if (S.flashIn <= 0 && S.bolts < 5) { S.bolts++; S.flashIn = 3.2 + Math.random() * 3.2; this.lightning(); }
+        if (S.t >= 22) { S.phase = 'out'; S.t = 0; }
+      } else {
+        S.k = Math.max(0, 1 - S.t / 3.5);
+        if (S.t >= 3.5) {
+          this.storm = null; this.sunT = 5; store.addStars(1); sfx.win(); voice.say('storm-over');
+          this.fx.burst(this.w * .8, this.h * .2, 22, { colors: ['#ffd54a', '#fff6a8', '#ffffff'], shape: 'star', speed: 260, g: 60, life: 1.3, size: 9 });
+        }
+      }
     }
 
     /* ---- raining cats and dogs ---- */
@@ -87,17 +126,46 @@
       this.petCounter.el.classList.add('second');
     }
 
+    // Sizes for the rescue crew and net (shared by drawing and the physics).
+    netSizes() { return { sc: Math.max(12, Math.min(this.h * .045, this.w * .05, 38)), half: Math.max(70, Math.min(230, this.w * .17)) }; }
     startPets() {
       if (this.pets) return;
-      this.pets = { phase: 'in', t: 0, list: [], spawned: 0, total: 12, caught: 0, nextIn: 1.4, ffIn: 0, doneT: 0, net: { x: this.bucket.x, vx: 0, sag: this.h * .045, sagV: 0 } };
+      const { sc, half } = this.netSizes(), pad = sc * 4.2;
+      const nx = Math.max(half + pad, Math.min(this.w - half - pad, this.bucket.x));
+      // the crew arrives by fire truck, hops out, and spreads the net (spread: 0 = folded up, 1 = open)
+      this.pets = { phase: 'in', t: 0, t2: 0, spread: 0, list: [], spawned: 0, total: 12, caught: 0, nextIn: 1.4, doneT: 0, net: { x: nx, vx: 0, sag: this.h * .045, sagV: 0 } };
       if (!this.petCounter) this.showPetCounter();
       voice.say('raining-pets');
     }
 
     netGeom() {
-      const P = this.pets, sc = Math.max(12, Math.min(this.h * .045, this.w * .05, 38)), half = Math.max(70, Math.min(230, this.w * .17));
-      const inOff = (1 - P.ffIn) * (this.w * .6), y0 = this.groundY - 4.35 * sc;
-      return { sc, half, y0, x0: P.net.x - half - inOff, x1: P.net.x + half + inOff, base: this.h * .045 };
+      const P = this.pets, { sc, half } = this.netSizes(), y0 = this.groundY - 4.35 * sc, s = P.spread;
+      return { sc, half, y0, x0: P.net.x - half * s, x1: P.net.x + half * s, base: this.h * .045, s };
+    }
+
+    // Where the fire truck is (null when it is not on screen).
+    truckPos(P, u) {
+      const stop = Math.max(6.8 * u, Math.min(this.w - 6.8 * u, P.net.x - 7.4 * u)), far = this.w + 8 * u, near = -8 * u, ease = x => 1 - (1 - x) * (1 - x);
+      let x = null;
+      if (P.phase === 'in') { const t = P.t2; x = t < 1.4 ? near + (stop - near) * ease(t / 1.4) : t < 1.9 ? stop : stop + (far - stop) * Math.pow(Math.min(1, (t - 1.9) / 1.5), 2); }
+      else if (P.phase === 'board') { const t = P.t2; x = t < 1.4 ? near + (stop - near) * ease(t / 1.4) : stop; }
+      else if (P.phase === 'out') x = stop + (far - stop) * Math.pow(Math.min(1, P.t2 / 2.0), 2);
+      return x === null ? null : { x, stop };
+    }
+
+    // The two firefighters: riding on the truck, hopping on or off it, or holding the net.
+    crewState(P, g, tp, u) {
+      const sc = g.sc, base = [g.x0 - 2.25 * sc, g.x1 + 2.25 * sc], deck = tp ? [tp.x - 4.7 * u, tp.x - 2.5 * u] : base, mix = (a, b, k) => a + (b - a) * k;
+      let mode = 'base', k = 0;
+      if (P.phase === 'in') { if (P.t2 < 1.4) mode = 'ride'; else if (P.t2 < 1.9) { mode = 'hop'; k = (P.t2 - 1.4) / .5; } }
+      else if (P.phase === 'board') { if (P.t2 >= 1.9) mode = 'ride'; else if (P.t2 >= 1.4) { mode = 'hop'; k = 1 - (P.t2 - 1.4) / .5; } }
+      else if (P.phase === 'out') mode = 'ride';
+      const moving = (P.phase === 'in' && P.t2 > 1.9 && P.spread < 1) || (P.phase === 'gather' && P.spread > 0);
+      const walk = moving ? 1 : Math.min(1, Math.abs(P.net.vx) / (this.w * .3));
+      return [0, 1].map(i => {
+        const x = mode === 'ride' ? deck[i] : mode === 'hop' ? mix(base[i], deck[i], 1 - k) : base[i];
+        return { kind: i ? 'fox' : 'bear', x, lift: mode === 'hop' ? Math.sin(k * Math.PI) * sc * 2.2 : 0, dir: mode === 'base' ? (i ? -1 : 1) : 1, walk: mode === 'base' ? walk : 0, wave: mode === 'ride' || P.phase === 'done' || (P.phase === 'gather' && P.t2 > 1.1) || (P.phase === 'board' && P.t2 < 1.4), o: i * 1.3 };
+      });
     }
 
     spawnPet() {
@@ -116,11 +184,11 @@
     updatePets(dt) {
       const P = this.pets, g = this.geomCache = this.netGeom(), pad = g.sc * 4.2;
       P.t += dt;
-      const target = Math.max(g.half + pad, Math.min(this.w - g.half - pad, this.bucket.tx)), old = P.net.x;
+      const target = P.phase === 'play' ? Math.max(g.half + pad, Math.min(this.w - g.half - pad, this.bucket.tx)) : P.net.x, old = P.net.x;
       P.net.x += (target - P.net.x) * Math.min(1, dt * 9); P.net.vx = (P.net.x - old) / Math.max(dt, .001);
       P.net.sagV += (-(P.net.sag - g.base) * 90 - P.net.sagV * 9) * dt; P.net.sag += P.net.sagV * dt;
       const g2 = this.netGeom();
-      if (P.phase === 'in') { P.ffIn = Math.min(1, P.ffIn + dt / 1.4); if (P.ffIn >= 1) P.phase = 'play'; }
+      if (P.phase === 'in') { P.t2 += dt; P.spread = Math.max(0, Math.min(1, (P.t2 - 1.9) / 1.2)); if (P.t2 >= 3.4) { P.phase = 'play'; P.spread = 1; } }
       else if (P.phase === 'play') {
         P.nextIn -= dt;
         if (P.spawned < P.total && P.nextIn <= 0) this.spawnPet();
@@ -128,9 +196,11 @@
           P.phase = 'done'; P.doneT = 0; store.addStars(2); this.bag.petEvents++; store.save(); sfx.win(); voice.say('pets-safe');
           this.fx.burst(this.w / 2, this.h * .4, 30, { colors: RAINBOW, speed: 420, g: 400, life: 1.3, size: 8, shape: 'confetti', up: 240 });
         }
-      } else if (P.phase === 'done') { P.doneT += dt; if (P.doneT > 3) P.phase = 'out'; }
-      else if (P.phase === 'out') { P.ffIn = Math.max(0, P.ffIn - dt / 1.4); if (P.ffIn <= 0) { this.pets = null; this.bucketHide = 0; return; } }
-      this.bucketHide = P.phase === 'in' || P.phase === 'out' ? P.ffIn : 1;
+      } else if (P.phase === 'done') { P.doneT += dt; if (P.doneT > 3) { P.phase = 'gather'; P.t2 = 0; } }
+      else if (P.phase === 'gather') { P.t2 += dt; P.spread = Math.max(0, 1 - P.t2 / 1.2); if (P.t2 >= 1.5) { P.phase = 'board'; P.t2 = 0; } }   // the net folds up as they come together
+      else if (P.phase === 'board') { P.t2 += dt; if (P.t2 >= 2.1) { P.phase = 'out'; P.t2 = 0; } }                                              // the truck comes back and they climb aboard
+      else if (P.phase === 'out') { P.t2 += dt; if (P.t2 >= 2.0) { this.pets = null; this.bucketHide = 0; return; } }                          // and they drive away together
+      this.bucketHide = P.phase === 'in' ? Math.min(1, P.t2) : P.phase === 'out' ? Math.max(0, 1 - P.t2 / 1.2) : 1;
       const geo = g2, grav = this.h * .9;
       for (const q of P.list) {
         q.t += dt;
@@ -156,11 +226,13 @@
     }
 
     drawPets(c) {
-      const P = this.pets, g = this.netGeom(), sc = g.sc, gy = this.groundY;
-      // crew and net
-      c.save(); c.translate(g.x0 - 2.25 * sc, gy); art.firefighter(c, 'bear', sc, this.t, { dir: 1, walk: Math.min(1, Math.abs(P.net.vx) / (this.w * .3)), wave: P.phase === 'done' }); c.restore();
-      c.save(); c.translate(g.x1 + 2.25 * sc, gy); art.firefighter(c, 'fox', sc, this.t + 1.3, { dir: -1, walk: Math.min(1, Math.abs(P.net.vx) / (this.w * .3)), wave: P.phase === 'done' }); c.restore();
-      art.safetyNet(c, g.x0, g.x1, g.y0, P.net.sag, 26);
+      const P = this.pets, g = this.netGeom(), sc = g.sc, gy = this.groundY, u = sc * .95;
+      const tp = this.truckPos(P, u);
+      if (tp) { c.save(); c.translate(tp.x, gy - 2); art.fireTruck(c, u, this.t, { roll: tp.x / (1.3 * u) }); c.restore(); }
+      for (const m of this.crewState(P, g, tp, u)) {
+        c.save(); c.translate(m.x, gy - m.lift); art.firefighter(c, m.kind, sc, this.t + m.o, { dir: m.dir, walk: m.walk, wave: m.wave }); c.restore();
+      }
+      if (g.s > .03) art.safetyNet(c, g.x0, g.x1, g.y0, P.net.sag * Math.min(1, g.s * 1.5), 26);
       for (const q of P.list) {
         c.save(); c.translate(q.x, q.y);
         if (q.state === 'walk' && q.dir < 0) c.scale(-1, 1);
@@ -177,7 +249,14 @@
       b.tx = Math.max(this.bw * .4, Math.min(this.w - this.bw * .4, b.tx));
       b.x += (b.tx - b.x) * Math.min(1, dt * 14);
       this.spawnIn -= dt; if (this.spawnIn <= 0 && !this.pets) this.spawn();
-      if (this.petsPending && !this.pets && this.rainbow <= .02) { this.petsPending = false; this.startPets(); }
+      if (this.petsPending && !this.pets && !this.storm && this.rainbow <= .02) { this.petsPending = false; this.startPets(); }
+      else if (this.stormPending && !this.pets && !this.storm && this.rainbow <= .02) { this.stormPending = false; this.startStorm(); }
+      if (this.storm) this.updateStorm(dt);
+      if (this.flash > 0) this.flash = Math.max(0, this.flash - dt * 3);
+      for (const b of this.bolts) b.life -= dt * 2.6;
+      this.bolts = this.bolts.filter(b => b.life > 0);
+      if (this.sunT > 0) this.sunT = Math.max(0, this.sunT - dt);
+      for (let i = this.thunders.length - 1; i >= 0; i--) { this.thunders[i] -= dt; if (this.thunders[i] <= 0) { this.thunders.splice(i, 1); sfx.thunder(); } }
       if (this.pets) this.updatePets(dt);
       const g = this.h * .22, vmax = this.h * .46;
       for (const d of this.drops) { d.vy = Math.min(vmax, d.vy + g * dt); d.y += d.vy * dt; d.blink -= dt; }
@@ -207,14 +286,25 @@
         RAINBOW.forEach((col, i) => { c.strokeStyle = col; c.lineWidth = w * .022; c.beginPath(); c.arc(w / 2, h * .84, w * (.42 - i * .021), Math.PI, Math.PI + Math.PI * grow); c.stroke(); });
         c.restore();
       }
-      // soft rain streaks
+      // storm: the sky goes a soft, friendly grey-blue
+      const K = this.stormK();
+      if (K > 0) { c.fillStyle = `rgba(88, 112, 160, ${(.3 * K).toFixed(3)})`; c.fillRect(0, 0, w, h); }
+      if (this.sunT > 0) { c.save(); c.globalAlpha = Math.min(1, this.sunT, 1); art.sun(c, w * .84, h * .17, Math.min(48, w * .05), this.t); c.restore(); }
+      // soft rain streaks (many more in a storm)
       c.strokeStyle = 'rgba(120,170,215,.28)'; c.lineWidth = 2; c.lineCap = 'round';
-      for (const s of this.streaks) { const y = ((s.y * h + this.t * h * .5 * s.s) % h), x = s.x * w; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 3, y + 16 * s.s); c.stroke(); }
+      for (let rep = 0; rep < 1 + Math.round(K * 2); rep++) for (const s of this.streaks) { const y = ((s.y * h + this.t * h * (.5 + K * .3) * s.s + rep * h * .37) % h), x = ((s.x + rep * .31) % 1) * w; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 3, y + 16 * s.s); c.stroke(); }
       // clouds
-      for (let i = 0; i < 3; i++) {
-        const x = this.cloudX(i), y = this.cloudY() + Math.sin(this.t * .8 + i) * 6, s = this.cs * (i === 1 ? 1.1 : .95);
-        art.cloud(c, x, y, s, 1, '#e3ecf7');
-        c.save(); c.translate(x + 8 * s, y + 4 * s); art.face(c, 26 * s, { mood: this.rainbow > 0 || this.pets ? 'cheer' : 'happy', blink: Math.sin(this.t * .9 + i * 2) > .97 }); c.restore();
+      for (let i = 0; i < 6; i++) {
+        if (i >= 3 && K <= 0) break;
+        const { x, y, s } = this.cloudPos(i);
+        art.cloud(c, x, y, s, 1, K > 0 ? '#cdd8ea' : '#e3ecf7');
+        c.save(); c.translate(x + 8 * s, y + 4 * s); art.face(c, 26 * s, { mood: this.flash > .4 ? 'wow' : this.rainbow > 0 || this.pets ? 'cheer' : 'happy', blink: Math.sin(this.t * .9 + i * 2) > .97 }); c.restore();
+      }
+      // lightning: a short, bright, cartoon zig-zag (never anything scary)
+      for (const b of this.bolts) {
+        c.save(); c.globalAlpha = Math.min(1, b.life * 1.6); c.lineJoin = c.lineCap = 'round';
+        for (const [col, wd] of [['#ffe45e', b.w], ['#fffbe0', b.w * .4]]) { c.strokeStyle = col; c.lineWidth = wd; c.beginPath(); b.pts.forEach(([x, y], k) => k ? c.lineTo(x, y) : c.moveTo(x, y)); c.stroke(); }
+        c.restore();
       }
       // drops
       for (const d of this.drops) { c.save(); c.translate(d.x, d.y); art.drop(c, d.r, { gold: d.gold, mood: d.y > this.rimY - this.h * .25 ? 'wow' : 'happy', blink: d.blink < .1 && d.blink > 0 }); c.restore(); }
@@ -235,6 +325,7 @@
       if (this.bucketHide < .98) art.bucket(c, this.bucket.x, this.rimY + this.bucketHide * this.h * .4, this.bw, this.bh, this.fill, this.t, this.moodT > 0 || this.rainbow > .5 ? 'cheer' : 'happy');
       if (this.pets) this.drawPets(c);
       this.fx.draw(c);
+      if (this.flash > 0) { c.fillStyle = `rgba(255, 255, 236, ${(this.flash * .28).toFixed(3)})`; c.fillRect(0, 0, w, h); }
     }
   }
 

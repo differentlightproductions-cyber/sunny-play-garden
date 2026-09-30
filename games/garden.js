@@ -42,7 +42,7 @@
       this.plots = Array.from({ length: SLOTS_MAX }, (_, i) => fromSaved(this.bag.plots[i]));
       this.tool = 'shovel'; this.seed = 'sunflower';
       this.canMode = this.bag.canMode || 'grab'; this.can = null; this.recentKinds = [];
-      this.creatures = []; this.fx = new art.Fx(); this.banners = []; this.banner = null;
+      this.creatures = []; this.pal = null; this.fx = new art.Fx(); this.banners = []; this.banner = null;
       this.t = 0; this.running = false; this.nudge = 0; this.said = {}; this.ambientUntil = 0;
       this.canvas = el('canvas', 'game-canvas'); host.append(this.canvas);
       this.ctx = this.canvas.getContext('2d');
@@ -143,7 +143,34 @@
       this.bed = { x: this.w * .05, y: top, w: this.w * .9, h: this.h - barH - top };
       this.cw = this.bed.w / cols; this.ch = this.bed.h / rows; this.cols = cols;
       this.ps = Math.min(this.ch * .82, this.cw * .8);
+      this.setupPal();
       this.draw();
+    }
+    // Her pet (if she has one from the Pet Shop) comes along, walks beside where she is working, cheers when something blooms.
+    setupPal() {
+      const st = SPG.pets && SPG.pets.active();
+      if (!st) { this.pal = null; return; }
+      const size = Math.max(70, Math.min(170, this.ps * .7)), y = this.bed.y + this.bed.h + 2;
+      if (!this.pal) this.pal = { x: this.bed.x + this.bed.w * .12, y, tx: this.bed.x + this.bed.w * .12, dir: 1, hop: 0, cheer: 0, idle: 0, t: Math.random() * 5, moving: false };
+      Object.assign(this.pal, { size, y });
+    }
+    palCheer(sec = 2.4) { if (this.pal) { this.pal.cheer = sec; this.pal.hop = 1; this.pal.idle = 0; } }
+    palFollow(x) { if (this.pal) { this.pal.tx = Math.max(this.bed.x + this.pal.size * .5, Math.min(this.bed.x + this.bed.w - this.pal.size * .5, x)); this.pal.idle = 0; } }
+    updatePal(dt) {
+      const a = this.pal; if (!a) return;
+      a.t += dt; a.idle += dt;
+      if (a.hop > 0) a.hop = Math.max(0, a.hop - dt * 2.2);
+      if (a.cheer > 0) a.cheer = Math.max(0, a.cheer - dt);
+      // stay a little to one side of where she is working, so the pet never sits on the thing she is tapping
+      const want = a.tx + (a.tx < this.bed.x + this.bed.w / 2 ? 1 : -1) * a.size * .9, dx = want - a.x;
+      a.moving = Math.abs(dx) > 6;
+      if (a.moving) { a.x += Math.sign(dx) * Math.min(Math.abs(dx), this.w * .22 * dt); a.dir = dx > 0 ? 1 : -1; }
+    }
+    drawPal(c) {
+      const a = this.pal, st = SPG.pets.active(); if (!a || !st) return;
+      c.save(); c.translate(a.x, a.y - (a.moving ? Math.abs(Math.sin(a.t * 9)) * a.size * .04 : 0));
+      SPG.pets.draw(c, st.id, a.size, a.t, { mood: a.cheer > 0 ? 'cheer' : a.idle > 25 ? 'sleep' : 'happy', hop: a.hop > 0 ? 1 - a.hop : 0, hat: st.hat });
+      c.restore();
     }
     slot(i) { const col = i % this.cols, row = Math.floor(i / this.cols); return { x: this.bed.x + (col + .5) * this.cw, y: this.bed.y + (row + .5) * this.ch + this.ch * .22 }; }
 
@@ -296,6 +323,11 @@
       this.tray.classList.add('hidden');
       if (this.banner) { this.nextBanner(); return; }
       const r = this.canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      this.palFollow(x);
+      if (this.pal && Math.abs(x - this.pal.x) < this.pal.size * .5 && y > this.pal.y - this.pal.size * 1.1 && y < this.pal.y + 12) {
+        this.pal.hop = 1; this.pal.idle = 0; SPG.pets.noise(SPG.pets.active().id);
+        this.fx.burst(this.pal.x, this.pal.y - this.pal.size, 5, { colors: ['#ff7a8a', '#ff9db8'], speed: 110, g: -60, life: .9, size: 7, shape: 'heart' }); return;
+      }
       for (let i = this.creatures.length - 1; i >= 0; i--) {
         const cr = this.creatures[i];
         if (!cr.leaving && Math.hypot(x - cr.x, y - (cr.y - cr.s * .3)) < cr.s * 1.6 + 18) {
@@ -469,7 +501,7 @@
       if (p.stage === 3) this.bloom(p, s);
     }
     bloom(p, s) {
-      this.bag.blooms++; this.counter.set(this.bag.blooms); store.addStars(1); sfx.win();
+      this.bag.blooms++; this.counter.set(this.bag.blooms); store.addStars(1); sfx.win(); this.palCheer();
       this.fx.burst(s.x, s.y - this.ps * .7, 26, { colors: ['#ff7a8a', '#ffd54a', '#59b96e', '#4fb3e8', '#9a7be8'], speed: 380, g: 500, life: 1.1, size: 8, shape: 'confetti', up: 200 });
       const kind = p.type === 'carrot' ? 'bunny' : this.pickCreature(p.type); // a grown carrot always brings a hungry bunny
       this.spawnCreature(kind, s.x, s.y - this.ps * .6);
@@ -559,6 +591,7 @@
       }
       this.creatures = this.creatures.filter(cr => !(cr.leaving && cr.leaveT > .8 && (cr.x < -cr.s * 3 || cr.x > this.w + cr.s * 3)));
       this.updateCan(dt);
+      this.updatePal(dt);
       this.fx.update(dt);
       if (this.banner) { this.banner.t += dt; if (this.banner.t > 6) this.nextBanner(); }
       const hint = this.suggest();
@@ -657,6 +690,7 @@
         art.creature(c, cr.kind, cr.s * 1.6, cr.t, moving);
         c.restore();
       }
+      this.drawPal(c);
       this.drawGrabCan(c);
       this.fx.draw(c);
       if (this.banner) this.drawBanner(c);

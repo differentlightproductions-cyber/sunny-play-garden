@@ -690,3 +690,15 @@ body { position: fixed; inset: 0; width: 100%; }
 .shop-sign::before { left: 16%; } .shop-sign::after { right: 16%; }
 .shopfront { animation: none; }
 @media (max-height: 520px) { .shopfront { height: 62px; } .shop-sign { font-size: 1.1rem; border-width: 3px; } .hub-shop { padding-bottom: 8px; } }
+
+/* ---- name pickers: touch a name to hear it; typing is for grown-ups (behind the gate) */
+.name-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin: 6px 0 10px; }
+.name-btn { border: 4px solid transparent; border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-weight: 700; font-size: clamp(1rem, 3.2vmin, 1.35rem); padding: .55em .2em; min-height: 52px; box-shadow: 0 5px 0 rgba(90, 63, 94, .16); cursor: pointer; }
+.name-btn:active { transform: translateY(2px); box-shadow: 0 3px 0 rgba(90, 63, 94, .16); }
+.name-btn[aria-pressed="true"] { border-color: var(--leaf); background: #eaf8dd; box-shadow: 0 0 0 3px #fff, 0 5px 0 var(--leaf-edge); transform: translateY(-2px); }
+@media (max-width: 520px) { .name-grid { grid-template-columns: repeat(3, 1fr); } }
+#nick-pick { margin-bottom: 4px; }
+#type-name { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 8px; }
+#type-name svg { width: 1.3em; height: 1.3em; }
+.ps-sheet .name-grid { margin-top: 2px; }
+.ps-sheet .ps-dice svg { width: 1.4em; height: 1.4em; }

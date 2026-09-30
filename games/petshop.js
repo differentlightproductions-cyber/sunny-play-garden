@@ -164,18 +164,23 @@
       }, guard);
       this.openSheet(this.preview(item, type), el('h2', '', type === 'pet' ? `Take ${item.name} home?` : `Get the ${item.name.toLowerCase()}?`), el('div', 'ps-cost', price(item.price)), el('div', 'row', no, yes));
     }
+    // Names are picked from a list (touching one says it out loud). Typing needs the keyboard, so it sits behind the grown-up gate.
     askName(id, first) {
       const cur = first ? '' : P.nameOf(id), input = el('input');
-      input.type = 'text'; input.maxLength = 12; input.autocomplete = 'off'; input.setAttribute('autocapitalize', 'words'); input.spellcheck = false; input.placeholder = 'Name'; input.value = cur || '';
-      const dice = btn('btn quiet ps-dice', 'Pick a name for me', icon('dice')); tap(dice, () => { input.value = P.randomName(); sfx.pop(); });
+      input.type = 'text'; input.maxLength = 12; input.autocomplete = 'off'; input.setAttribute('autocapitalize', 'words'); input.spellcheck = false; input.placeholder = 'Name'; input.value = '';
+      const field = el('label', 'field hidden', input);
+      const grid = SPG.ui.nameGrid(P.NAMES, () => { input.value = ''; });
+      if (cur && P.NAMES.includes(cur)) grid.pick(cur, false);
+      const dice = btn('btn quiet ps-dice', 'Pick a name for me', icon('dice')); tap(dice, () => { grid.pick(P.randomName(), true); grid.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest' }); });
+      const kb = btn('btn quiet ps-dice', 'Grown-up: type a name', icon('lock'), icon('keyboard'));
+      tap(kb, () => SPG.app.askGate(() => { kb.classList.add('hidden'); field.classList.remove('hidden'); grid.clear(); input.value = cur && !P.NAMES.includes(cur) ? cur : ''; setTimeout(() => input.focus(), 120); }), () => this.opened);
       const ok = btn('btn go ps-yn', 'Done', icon('check')); const guard = () => this.opened;
       tap(ok, () => {
-        const name = input.value.trim() || P.randomName();
+        const name = input.value.trim() || grid.value || cur || P.randomName();
         P.rename(id, name); this.closeSheet(); this.render();
         if (first) { this.celebrate(); voice.say({ say: `Welcome home, ${name}!` }); }
       }, guard);
-      const sheet = this.openSheet(this.preview({ id }, 'pet'), el('h2', '', first ? 'What is your friend called?' : 'New name'), el('label', 'field', input), el('div', 'row', dice, ok));
-      if (!first) setTimeout(() => input.focus(), 200);
+      this.openSheet(this.preview({ id }, 'pet'), el('h2', '', first ? 'What is your friend called?' : 'New name'), grid, el('div', 'row', dice, kb), field, el('div', 'row', ok));
       input.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
     }
     celebrate() {

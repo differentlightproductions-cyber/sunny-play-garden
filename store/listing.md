@@ -22,7 +22,13 @@ GROW A GARDEN
 Learn how plants grow, step by step: dig the hole with the shovel, drop in a seed, pat the dirt down, then pour water from the can. Watch it grow, unlock new seeds, and meet garden friends like bees, bunnies, frogs and hedgehogs.
 
 COLORING BOOK
-Twenty friendly pictures to color: bunnies, bears, flowers, bees and more. Tap to fill a shape, paint with the brush (paint stays inside the lines), rub out mistakes, and undo as many times as you like. Finish a picture to win a golden frame, and save any picture to keep.
+Fifty friendly pictures to color, in five collections: animal friends, garden, Halloween, Thanksgiving and fall, and Christmas. Tap to fill a shape, paint with the brush (paint stays inside the lines), rub out mistakes, and undo as many times as you like. Finish a picture to win a golden frame, and save any picture to keep.
+
+PET SHOP
+Collect stars while you play, then take a pet home from the Pet Shop: a bunny, kitten, bear cub, fox pup, froggy or panda. Give it a name, dress it up with hats, and it keeps you company while you color. Stars are earned by playing; nothing in the app is ever bought with money.
+
+SEASONS
+The Coloring Book has collections for Halloween, Thanksgiving and fall, and Christmas, each with its own calm instrumental music.
 
 FOR GROWN-UPS
 - No ads, no in-app purchases, no accounts, no tracking. Everything stays on the device.

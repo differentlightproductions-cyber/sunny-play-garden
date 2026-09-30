@@ -29,6 +29,7 @@
     'raining-pets': "It's raining cats and dogs!", 'pets-safe': 'You saved them all!',
     'dig-first': 'First, dig a hole with the shovel!', 'dig-one': 'Dig! One!', 'dig-two': 'Two!', 'dig-three': 'Three! A perfect hole!', 'pat-it': 'Now pat the dirt down!', 'bye-bye': 'Bye bye, friend! Have fun!', 'pour-water': 'Hold the can over the plant to water it!', 'seed-in': 'Now drop in a seed!', 'water-me': 'Tap the plant to water it!',
     'new-friend': 'A new friend!', 'new-seeds': 'New seeds to plant!', 'bigger-garden': 'Your garden got bigger!',
+    'confirm-bye': 'Do you want to say bye-bye? Tap the soft pink button to say bye-bye, or the green one to stay.',
     'break-time': 'Time for a little rest!'
   };
   for (const [l, t] of Object.entries(NAMES)) LINES['letter/' + l] = t;

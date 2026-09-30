@@ -74,7 +74,11 @@ for (const [kind, w, h] of [['phone', 540, 960], ['tablet', 960, 600]]) {
   await p.evaluate(() => { const g = SPG.app.running().inst; g.open(SPG.pictures[4]); });
   await p.waitForTimeout(500);
   await p.evaluate(() => { const g = SPG.app.running().inst; g.ops = [[0, 'sky', 6], [0, 'sun', 2], [0, 'bank', 3], [0, 'pond', 7], [0, 'pad', 3], [0, 'body', 4], [0, 'head', 4], [0, 'eyes', 1]]; g.redraw(); });
-  await p.waitForTimeout(300); await shot(p, `${kind}-7-color`);
+  await p.waitForTimeout(300); await shot(p, `${kind}-7-color`); await home(p);
+
+  // Pet Shop: a friend at home with a hat
+  await p.evaluate(() => { SPG.store.active.stars = 40; SPG.pets.adopt('bunny'); SPG.pets.rename('bunny', 'Biscuit'); SPG.pets.buyHat('bow'); SPG.pets.wear('bow'); SPG.store.save(); });
+  await p.click('#hub-shop .shopfront', F); await p.waitForTimeout(1200); await shot(p, `${kind}-8-shop`);
   await ctx.close();
 }
 

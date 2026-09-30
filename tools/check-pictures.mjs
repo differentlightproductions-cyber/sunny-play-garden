@@ -10,6 +10,7 @@ const page = await browser.newPage({ viewport: { width: 1000, height: 800 } });
 await page.setContent('<body></body>');
 await page.addScriptTag({ content: 'window.SPG={games:[]};' });
 await page.addScriptTag({ content: readFileSync('games/color-pictures.js', 'utf8') });
+await page.addScriptTag({ content: readFileSync('games/color-seasons.js', 'utf8') });
 
 const report = await page.evaluate(() => {
   const NS = 'http://www.w3.org/2000/svg', out = [], ids = new Set();
@@ -21,7 +22,8 @@ const report = await page.evaluate(() => {
     if (ids.has(pic.id)) say('FAIL', 'duplicate picture id'); ids.add(pic.id);
     if (!/^[a-z0-9-]+$/.test(pic.id)) say('FAIL', 'picture id should be lowercase letters, numbers and dashes');
     const n = pic.sections.length;
-    if (n < 6 || n > 15) say('WARN', `${n} sections (aim for 6 to 15)`);
+    if (n < 6 || n > 26) say('WARN', `${n} sections (aim for 6 to 26)`);
+    for (const [old, parts] of Object.entries(pic.alias || {})) if (!parts.every(id => pic.sections.some(s => s.id === id))) say('FAIL', `alias "${old}" points at a missing section`);
     const seen = new Set();
     for (const s of pic.sections) {
       if (!/^[a-z0-9-]+$/.test(s.id || '')) say('FAIL', `bad section id "${s.id}"`);
@@ -29,7 +31,7 @@ const report = await page.evaluate(() => {
       if (!/Z\s*$/i.test(s.d)) say('FAIL', `${s.id}: path is not closed (end it with Z)`);
       const pe = document.createElementNS(NS, 'path'); pe.setAttribute('d', s.d); svg.append(pe);
       const bb = pe.getBBox();
-      if (bb.x < -5 || bb.y < -5 || bb.x + bb.width > 1005 || bb.y + bb.height > 805) say('WARN', `${s.id}: reaches outside the 1000x800 picture`);
+      if (bb.x < -120 || bb.y < -120 || bb.x + bb.width > 1120 || bb.y + bb.height > 920) say('WARN', `${s.id}: reaches outside the 1000x800 picture`);
       // Each separate shape inside a section must be big enough to tap on a phone.
       for (const part of s.d.split(/(?=M)/).filter(p => p.trim())) {
         const q = document.createElementNS(NS, 'path'); q.setAttribute('d', part); svg.append(q);

@@ -17,6 +17,10 @@
   const { art, sfx, store, voice } = SPG;
   const TAU = Math.PI * 2;
   const PICS = SPG.pictures;
+  const GROUPS = SPG.pictureGroups;
+  const groupOf = id => GROUPS.find(g => g.id === id) || GROUPS[0];
+  // Which season (if any) is coming up, so its tab is the first thing a child sees.
+  const seasonNow = () => { const d = new Date(), m = d.getMonth() + 1, day = d.getDate(); return (m === 9 && day >= 20) || m === 10 ? 'halloween' : m === 11 && day <= 26 ? 'thanksgiving' : (m === 11 && day >= 27) || m === 12 ? 'christmas' : null; };
   const INK = '#5a3f5e', PAPER = '#fffdf6', OUTLINE = 10;
   const W = 1000, H = 800;
   // Append new colors at the end only: saved pictures store the position in this list.
@@ -53,7 +57,7 @@
     svg.remove();
     const near = (a, b) => a.bb.x < b.bb.x + b.bb.width + 12 && b.bb.x < a.bb.x + a.bb.width + 12 && a.bb.y < b.bb.y + b.bb.height + 12 && b.bb.y < a.bb.y + a.bb.height + 12;
     secs.forEach((s, i) => { s.occ = secs.slice(i + 1).filter(o => near(s, o)); });
-    const sheet = { def, secs, byId: Object.fromEntries(secs.map(s => [s.id, s])) };
+    const sheet = { def, secs, byId: Object.fromEntries(secs.map(s => [s.id, s])), alias: def.alias || {} };
     compiled.set(def.id, sheet);
     return sheet;
   }
@@ -86,10 +90,13 @@
   }
   function applyOp(ctx, sheet, op) {
     if (op[0] === ALL) { ctx.fillStyle = PAPER; ctx.fillRect(-10, -10, W + 20, H + 20); return; }
-    const sec = sheet.byId[op[1]]; if (!sec) return;
-    if (op[0] === FILL || op[0] === CLEAR) within(ctx, sec, () => { ctx.fillStyle = op[0] === FILL ? PALETTE[op[2]] : PAPER; ctx.fill(sec.path); });
-    else if (op[0] === BRUSHOP) within(ctx, sec, () => stroke(ctx, op[3], PALETTE[op[2]], BRUSH));
-    else if (op[0] === ERASE) within(ctx, sec, () => stroke(ctx, op[2], PAPER, ERASER));
+    // Pictures colored before a section was split into separate shapes still apply to every part.
+    for (const id of sheet.alias[op[1]] || [op[1]]) {
+      const sec = sheet.byId[id]; if (!sec) continue;
+      if (op[0] === FILL || op[0] === CLEAR) within(ctx, sec, () => { ctx.fillStyle = op[0] === FILL ? PALETTE[op[2]] : PAPER; ctx.fill(sec.path); });
+      else if (op[0] === BRUSHOP) within(ctx, sec, () => stroke(ctx, op[3], PALETTE[op[2]], BRUSH));
+      else if (op[0] === ERASE) within(ctx, sec, () => stroke(ctx, op[2], PAPER, ERASER));
+    }
   }
   const paintAll = (ctx, sheet, ops) => { ctx.fillStyle = PAPER; ctx.fillRect(-10, -10, W + 20, H + 20); for (const op of ops) applyOp(ctx, sheet, op); };
 
@@ -182,6 +189,8 @@
       document.addEventListener('visibilitychange', this.onHide); addEventListener('pagehide', this.onHide);
       this.autosave = setInterval(() => { if (this.dirty) this.saveNow(); }, 8000);
       this.buildGallery();
+      // her pet keeps her company (only if she has taken one home from the Pet Shop)
+      this.buddy = SPG.pets && SPG.pets.companion(this.root, { size: Math.round(Math.max(66, Math.min(118, Math.min(innerWidth, innerHeight) * .16))) });
     }
 
     start() { this.showGallery(); }
@@ -189,13 +198,14 @@
     pause() { this.paused = true; this.endStroke(); this.saveNow(true); }
     resume() { this.paused = false; }
     resize() {
-      if (this.view === 'editor') { this.endStroke(); this.layout(); } else { this.tilesDirty = true; this.paintTiles(); }
+      if (this.view === 'editor') { this.endStroke(); this.layout(); } else { this.tilesDirty = true; this.paintTabs(); this.paintTiles(); }
     }
     destroy() {
       this.endStroke(); this.saveNow(true);
       clearInterval(this.autosave); this.timers.forEach(clearTimeout);
       document.removeEventListener('visibilitychange', this.onHide); removeEventListener('pagehide', this.onHide);
       voice.hushed = false; SPG.music.scene(null);
+      if (this.buddy) this.buddy.destroy();
       this.root.remove();
     }
     // Back button: picture -> gallery -> (app) hub.
@@ -245,23 +255,56 @@
         };
         tap(open, () => { sfx.tap(); this.open(def); });
         tap(dl, () => this.savePicture(def, dl));
-        this.tiles.set(def.id, { tile, canvas });
+        tile.dataset.group = def.group;
+        this.tiles.set(def.id, { tile, canvas, group: def.group });
         this.grid.append(tile);
       }
       this.gallery.append(this.grid);
+      this.tabs = el('div', 'cb-tabs');
+      this.tabBtns = new Map();
+      for (const g of GROUPS) {
+        const canvas = el('canvas'), badge = el('span', 'cb-tabcount');
+        const b = btn('cb-tab', g.name, canvas, badge); b.style.setProperty('--tint', g.tint); b.style.setProperty('--edge', g.edge);
+        b.addEventListener('click', () => { sfx.tap(); this.setTab(g.id); });
+        this.tabBtns.set(g.id, { b, canvas, badge });
+        this.tabs.append(b);
+      }
+      const season = seasonNow(), seenKey = new Date().getFullYear() + '-' + season;
+      if (season && this.bag.seasonSeen !== seenKey) { this.bag.seasonSeen = seenKey; this.tab = season; } else this.tab = GROUPS.some(g => g.id === this.bag.tab) ? this.bag.tab : GROUPS[0].id;
       this.toast = el('div', 'cb-toast', icon('check'), el('b', '', 'Saved!'));
-      this.root.append(this.gallery, this.toast);
+      this.root.append(this.gallery, this.tabs, this.toast);
     }
     showGallery(justDone) {
       this.view = 'gallery'; this.cur = null;
-      this.gallery.classList.remove('hidden');
+      this.gallery.classList.remove('hidden'); this.tabs.classList.remove('hidden');
       this.root.querySelector('.cb-editor')?.remove();
       for (const [id, t] of this.tiles) {
         const s = this.stateOf(id);
         t.tile.classList.toggle('done', s === 'done'); t.tile.classList.toggle('wip', s === 'wip');
         t.tile.classList.toggle('just', id === justDone);
       }
-      requestAnimationFrame(() => this.paintTiles());
+      this.applyTab(); this.placeBuddy();
+      requestAnimationFrame(() => { this.paintTabs(); this.paintTiles(); });
+    }
+    setTab(id) { this.tab = id; this.bag.tab = id; store.save(); this.applyTab(); this.paintTiles(); this.grid.parentElement.scrollTop = 0; }
+    applyTab() {
+      for (const [id, t] of this.tiles) t.tile.classList.toggle('hidden', t.group !== this.tab);
+      for (const [id, t] of this.tabBtns) {
+        t.b.setAttribute('aria-pressed', String(id === this.tab));
+        const list = PICS.filter(p => p.group === id), done = list.filter(p => this.stateOf(p.id) === 'done').length;
+        t.badge.textContent = done === list.length ? '\u2605' : `${done}/${list.length}`; t.badge.classList.toggle('all', done === list.length);
+      }
+      SPG.music.scene('color', groupOf(this.tab).theme);      // each collection has its own music
+      this.tilesDirty = true;
+    }
+    // A small colored picture on each tab, so a child can tell them apart without reading.
+    paintTabs() {
+      const dpr = SPG.ui.dpr();
+      for (const g of GROUPS) {
+        const t = this.tabBtns.get(g.id), w = t.canvas.clientWidth; if (!w) continue;
+        t.canvas.width = Math.round(w * dpr); t.canvas.height = Math.round(w * dpr * H / W);
+        render(t.canvas.getContext('2d'), PICS.find(p => p.id === g.emblem), g.demo.map(([sec, ci]) => [FILL, sec, ci]), t.canvas.width);
+      }
     }
     paintTiles() {
       const dpr = SPG.ui.dpr(), todo = [];
@@ -309,7 +352,8 @@
       this.ops = r && r.ops ? r.ops.map(o => o.slice()) : [];
       this.done = !!(r && r.done); this.dirty = false;
       this.view = 'editor'; this.celebrating = false;
-      this.gallery.classList.add('hidden');
+      this.gallery.classList.add('hidden'); this.tabs.classList.add('hidden');
+      SPG.music.scene('color', groupOf(def.group).theme);
       this.buildEditor();
       requestAnimationFrame(() => this.layout());
     }
@@ -322,10 +366,10 @@
       this.pctx = this.paintCv.getContext('2d'); this.lctx = this.lineCv.getContext('2d');
 
       const tool = (id, label, ic) => { const b = btn('cb-tool', label, icon(ic)); b.dataset.tool = id; SPG.ui.press(b, () => this.setTool(id)); return b; };
-      this.toolBtns = [tool('bucket', 'Fill', 'bucket'), tool('brush', 'Brush', 'brush'), tool('erase', 'Eraser', 'eraser')];
-      this.undoBtn = btn('cb-tool cb-undo', 'Undo', icon('back')); SPG.ui.press(this.undoBtn, () => this.undo());
-      this.againBtn = btn('cb-tool', 'Start over', icon('again')); SPG.ui.press(this.againBtn, () => this.askClear());
-      this.galleryBtn = btn('cb-tool', 'All pictures', icon('grid')); SPG.ui.press(this.galleryBtn, () => { sfx.tap(); this.toGallery(); });
+      this.toolBtns = [tool('bucket', 'Fill with paint', 'c-bucket'), tool('brush', 'Paintbrush', 'c-brush'), tool('erase', 'Eraser', 'c-eraser')];
+      this.undoBtn = btn('cb-tool cb-undo', 'Undo', icon('c-undo')); SPG.ui.press(this.undoBtn, () => this.undo());
+      this.againBtn = btn('cb-tool', 'Start over', icon('c-again')); SPG.ui.press(this.againBtn, () => this.askClear());
+      this.galleryBtn = btn('cb-tool', 'All pictures', icon('c-grid')); SPG.ui.press(this.galleryBtn, () => { sfx.tap(); this.toGallery(); });
       this.doneBtn = btn('cb-tool cb-done', 'Finished', icon('check')); SPG.ui.press(this.doneBtn, () => this.finish());
       this.tools = el('div', 'cb-tools', ...this.toolBtns, this.undoBtn, this.againBtn, this.galleryBtn, this.doneBtn);
 
@@ -374,6 +418,16 @@
       this.pctx.setTransform(k, 0, 0, k, 0, 0); this.lctx.setTransform(k, 0, 0, k, 0, 0);
       this.fxCv.width = innerWidth; this.fxCv.height = innerHeight;
       this.redraw(); drawLines(this.lctx, this.sheet);
+      this.placeBuddy();
+    }
+    // In the gallery the pet sits in the corner. While coloring it sits just outside the page: on top of it if
+    // there is room above, otherwise at the bottom of the tool column.
+    placeBuddy() {
+      const b = this.buddy; if (!b) return;
+      if (this.view !== 'editor') { b.el.style.left = b.el.style.top = b.el.style.right = b.el.style.bottom = ''; return; }
+      const r = this.paper.getBoundingClientRect(), root = this.root.getBoundingClientRect(), h = b.el.offsetHeight || 100;
+      if (r.top - root.top >= h + 4) b.place(r.left - root.left + 4, r.top - root.top - h - 2);
+      else b.place(8, root.height - h - 8);
     }
     redraw() { paintAll(this.pctx, this.sheet, this.ops); }
 
@@ -424,6 +478,7 @@
         this.puff(st.pts[0], st.pts[1], ['#ffffff', '#d9d2e0']);
       } else if (st.kind === ERASE) this.ops.push([ERASE, id, simplify(st.pts)]);
       else this.ops.push([BRUSHOP, id, this.ci, simplify(st.pts)]);
+      if (this.buddy) { this.strokes = (this.strokes || 0) + 1; this.strokes % 5 === 0 ? this.buddy.hop() : this.buddy.wake(); }
       this.touched();
     }
     bucket(sec, e) {
@@ -438,6 +493,7 @@
       const op = [FILL, sec.id, this.ci];
       this.ops.push(op); applyOp(this.pctx, this.sheet, op);
       sfx.fill(this.ci); this.puff(e.clientX, e.clientY, [PALETTE[this.ci], '#ffffff'], true);
+      if (this.buddy) this.buddy.hop();
       this.touched();
     }
     undo() {
@@ -470,7 +526,7 @@
       if (!this.done) { this.done = true; store.addStars(1); }
       this.dirty = true; this.saveNow(true);
       this.celebrating = true;
-      sfx.cheer();
+      sfx.cheer(); if (this.buddy) this.buddy.cheer(3);
       this.paper.classList.add('celebrate');
       const badge = el('div', 'cb-cele', el('div', 'cb-rosette', icon('rosette')));
       SPG.ui.press(badge, () => this.endCelebration());

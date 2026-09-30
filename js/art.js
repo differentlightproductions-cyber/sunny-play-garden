@@ -412,7 +412,7 @@
 
   /* ------------------------------------------------------------ avatars */
   const AVATARS = ['bunny', 'bear', 'cat', 'fox', 'frog', 'panda'];
-  function avatar(c, kind, r) {
+  function avatar(c, kind, r, o = {}) {
     c.save(); c.lineCap = 'round';
     const head = { bunny: '#fff', bear: '#c98b5b', cat: '#ffb45e', fox: '#ff8a4c', frog: '#84d96a', panda: '#fff' }[kind];
     const ear = (x, y, rad, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, rad, 0, TAU); c.fill(); };
@@ -425,8 +425,8 @@
     c.fillStyle = 'rgba(255,255,255,.25)'; c.beginPath(); c.ellipse(-r * .4, -r * .5, r * .3, r * .13, -.5, 0, TAU); c.fill();
     if (kind === 'fox') { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(-r * 1, r * .1); c.quadraticCurveTo(0, r * .3, r * 1, r * .1); c.quadraticCurveTo(r * .7, r * .95, 0, r * .98); c.quadraticCurveTo(-r * .7, r * .95, -r * 1, r * .1); c.fill(); }
     if (kind === 'panda') { c.fillStyle = '#3d2c44'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * r * .34, -r * .05, r * .19, r * .25, s * .4, 0, TAU); c.fill(); } }
-    face(c, r * .9, { mood: 'happy', cheeks: kind !== 'panda' });
-    if (kind === 'panda') { c.fillStyle = '#fff'; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * r * .31, -r * .08, r * .06, 0, TAU); c.fill(); } }
+    face(c, r * .9, { mood: o.mood || 'happy', blink: !!o.blink, cheeks: kind !== 'panda' });
+    if (kind === 'panda' && !o.blink && (o.mood || 'happy') === 'happy') { c.fillStyle = '#fff'; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * r * .31, -r * .08, r * .06, 0, TAU); c.fill(); } }
     c.fillStyle = kind === 'cat' || kind === 'fox' || kind === 'bear' ? '#5a3f5e' : '#ff8aa3';
     c.beginPath(); c.ellipse(0, r * .16, r * .07, r * .05, 0, 0, TAU); c.fill();
     c.restore();

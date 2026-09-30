@@ -10,21 +10,54 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] } });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) { data = Object.assign(fresh(), JSON.parse(raw)); data.settings = Object.assign(fresh().settings, data.settings); }
     } catch (_) { /* private mode or blocked storage: play on without saving */ }
-    let timer = 0;
+    let timer = 0, rev = 0;
+    const clone = x => JSON.parse(JSON.stringify(x));
     const flush = () => {
       clearTimeout(timer); timer = 0;
-      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (_) { /* ignore */ }
+      try { localStorage.setItem(KEY, JSON.stringify(data)); store.saveFailed = false; } catch (_) { store.saveFailed = true; } // storage full or blocked
     };
-    const save = () => { if (!timer) timer = setTimeout(flush, 350); };
+    // Every change stamps the active player, so two devices can tell whose copy is newer.
+    const save = () => {
+      const a = data.profiles.find(p => p.id === data.activeId); if (a) a.t = Date.now();
+      rev++; if (!timer) timer = setTimeout(flush, 350);
+      if (store.onChange) store.onChange();
+    };
+    const commit = () => { rev++; flush(); if (store.onChange) store.onChange(); }; // for merges: keeps the original stamps
     addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
 
+    // Merge two copies of one player (this device and the cloud). The newer copy wins, but nothing a child
+    // finished is ever lost: every coloring picture keeps its newest version, and owned pets and hats are unioned.
+    const mergeProfile = (l, r) => {
+      const rNewer = (r.t || 0) > (l.t || 0);
+      const a = clone(rNewer ? r : l), b = rNewer ? l : r;
+      a.data = a.data || {};
+      const bc = b.data && b.data.color;
+      if (bc && bc.pics) {
+        const ac = a.data.color = a.data.color || { v: 1, pics: {} }; ac.pics = ac.pics || {};
+        for (const [id, pr] of Object.entries(bc.pics)) {
+          const mine = ac.pics[id];
+          if (!mine || (pr.t || 0) > (mine.t || 0)) ac.pics[id] = Object.assign(clone(pr), { done: !!(pr.done || (mine && mine.done)) });
+          else if (pr.done) mine.done = true;
+        }
+      }
+      const bp = b.data && b.data.pets;
+      if (bp) {
+        const ap = a.data.pets = a.data.pets || { v: 1, owned: {}, hats: {}, active: null };
+        for (const k of ['owned', 'hats']) { ap[k] = ap[k] || {}; for (const [id, v] of Object.entries(bp[k] || {})) if (!ap[k][id]) ap[k][id] = clone(v); }
+        if (!ap.active && bp.active) ap.active = bp.active;
+      }
+      a.t = Math.max(l.t || 0, r.t || 0);
+      return a;
+    };
+
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); // ask the browser to keep it
     const store = {
       save, flush,
       get settings() { return data.settings; },
@@ -36,7 +69,45 @@
         data.profiles.push(p); data.activeId = p.id; save();
         return p;
       },
+      // Safety nets: removing or resetting a player keeps a copy for a grown-up to bring back.
+      get trash() { return data.trash || []; },
+      trashAdd(p, why) { data.trash = [{ p: clone(p), why, t: Date.now() }, ...(data.trash || [])].slice(0, 8); },
+      restoreTrash(i) {
+        const item = (data.trash || [])[i]; if (!item) return null;
+        const p = clone(item.p);
+        const clash = data.profiles.findIndex(q => q.id === p.id);
+        if (clash >= 0) data.profiles[clash] = p; else data.profiles.push(p);
+        data.trash.splice(i, 1); if (!data.activeId) data.activeId = p.id;
+        commit(); return p;
+      },
+      resetProfile(id) {
+        const p = data.profiles.find(q => q.id === id); if (!p) return;
+        store.trashAdd(p, 'reset'); p.stars = 0; p.data = {}; save();
+      },
+      saveFailed: false, onChange: null,
+      get rev() { return rev; },
+      flush,
+      exportProfiles() { return clone(data.profiles); },
+      // Bring in players from a backup (file or cloud). Returns how many were new.
+      mergeProfiles(remote) {
+        store.snapshot();
+        let added = 0;
+        for (const r of remote || []) {
+          if (!r || !r.id) continue;
+          const i = data.profiles.findIndex(p => p.id === r.id);
+          if (i < 0) { data.profiles.push(clone(r)); added++; } else data.profiles[i] = mergeProfile(data.profiles[i], r);
+        }
+        if (!data.activeId && data.profiles[0]) data.activeId = data.profiles[0].id;
+        commit(); return { added, total: data.profiles.length };
+      },
+      // A copy of everything as it was just before a restore, so a restore can be undone.
+      snapshot() { try { localStorage.setItem(KEY + '.undo', JSON.stringify({ t: Date.now(), data })); } catch (_) { /* no room */ } },
+      undoInfo() { try { const r = JSON.parse(localStorage.getItem(KEY + '.undo')); return r && r.t ? { t: r.t, players: (r.data.profiles || []).length } : null; } catch (_) { return null; } },
+      undoRestore() {
+        try { const r = JSON.parse(localStorage.getItem(KEY + '.undo')); if (!r || !r.data) return false; data = Object.assign(fresh(), r.data); localStorage.removeItem(KEY + '.undo'); commit(); return true; } catch (_) { return false; }
+      },
       removeProfile(id) {
+        const gone = data.profiles.find(p => p.id === id); if (gone) store.trashAdd(gone, 'removed');
         data.profiles = data.profiles.filter(p => p.id !== id);
         if (data.activeId === id) data.activeId = data.profiles[0]?.id ?? null;
         save();
@@ -152,6 +223,7 @@
     erase() { noise(.08, { freq: 800 + Math.random() * 300, q: .7, vol: .035 }); },
     undo() { tone(540, .09, { slide: .6, vol: .13 }); tone(400, .11, { slide: .6, vol: .11, at: .07 }); },
     cheer() { [0, 2, 4, 5, 7, 5, 7].forEach((n, k) => tone(NOTES[n], .34, { at: k * .1, vol: .17 })); [5, 6, 7].forEach((n, k) => tone(NOTES[n] * 2, .3, { at: .55 + k * .09, vol: .07 })); tone(NOTES[0] / 2, .9, { type: 'triangle', vol: .1 }); },
+    crunch() { noise(.07, { freq: 1900, q: 1.3, vol: .17 }); noise(.06, { freq: 950, q: 1, vol: .1, at: .06 }); tone(190, .06, { type: 'triangle', vol: .06 }); },
     pat() { tone(110, .2, { slide: .55, type: 'sine', vol: .34 }); noise(.14, { freq: 500, vol: .12 }); },
     squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); }
   };
@@ -160,7 +232,7 @@
   // Coloring Book has its own gentler music-box loop that is on by default (and has its own switch).
   const CHORDS = [[261.6, 329.6, 392], [220, 261.6, 329.6], [174.6, 220, 261.6], [196, 246.9, 293.7]];
   const BOX = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
-  let musicTimer = 0, musicKey = '', beat = 0, mel = 2, scene = null;
+  let musicTimer = 0, musicKey = '', beat = 0, mel = 2, scene = null, theme = null;
   const musicStep = () => {
     if (!A.ctx || document.hidden) return;
     const ch = CHORDS[Math.floor(beat / 4) % CHORDS.length];
@@ -180,20 +252,69 @@
     }
     beat++;
   };
+
+  // Themed music for the Coloring Book. Instrumental only (simple synth voices), and always quiet.
+  // Each theme is a short written loop: a melody per bar (0 = rest), a bass note and a chord per bar.
+  const THEMES = {
+    // Kids' spooky: a tiptoeing waltz in D minor, plucked strings and a little xylophone.
+    halloween: {
+      ms: 330, per: 6,
+      bass: [73.42, 110, 73.42, 98, 73.42, 110, 98, 110], chords: [[293.66, 349.23, 440], [277.18, 329.63, 440], [293.66, 349.23, 440], [293.66, 392, 466.16], [293.66, 349.23, 440], [277.18, 329.63, 440], [293.66, 392, 466.16], [277.18, 329.63, 440]],
+      melody: [[440, 0, 349.23, 0, 293.66, 0], [554.37, 0, 440, 0, 329.63, 0], [349.23, 392, 440, 466.16, 440, 392], [440, 0, 0, 0, 0, 0], [587.33, 0, 466.16, 0, 349.23, 0], [554.37, 0, 440, 0, 329.63, 0], [349.23, 392, 440, 466.16, 554.37, 466.16], [440, 0, 0, 0, 0, 0]],
+      play(bar, i, m, ch, bass, n) {
+        if (i === 0) tone(bass, .55, { type: 'triangle', vol: .05 });
+        if (i === 2 || i === 4) ch.forEach(f => tone(f, .17, { type: 'triangle', vol: .017 }));
+        if (m) { tone(m, .24, { type: 'triangle', vol: .05 }); tone(m * 2, .1, { type: 'sine', vol: .012 }); }
+        if (i === 4 && bar % 4 === 3) tone(1174.66, .35, { type: 'sine', vol: .022 });          // xylophone tinkle at the end of a phrase
+        if (i === 5 && bar % 8 === 7 && n % 2) noise(.16, { freq: 5200, sweep: .35, q: 1, vol: .016 }); // a tiny bat flutter
+      }
+    },
+    // Relaxed old-school children's tune: warm woodwind melody over a gentle walking bass and brushes.
+    thanksgiving: {
+      ms: 430, per: 8,
+      bass: [98, 82.41, 130.81, 146.83, 98, 130.81, 146.83, 98], chords: [[196, 246.94, 293.66], [164.81, 196, 246.94], [261.63, 329.63, 392], [293.66, 369.99, 440], [196, 246.94, 293.66], [261.63, 329.63, 392], [293.66, 369.99, 440], [196, 246.94, 293.66]],
+      melody: [[392, 0, 493.88, 0, 587.33, 0, 493.88, 0], [659.25, 0, 587.33, 0, 493.88, 0, 392, 0], [523.25, 0, 659.25, 0, 523.25, 0, 440, 0], [440, 0, 493.88, 0, 587.33, 0, 0, 0], [392, 440, 493.88, 587.33, 493.88, 0, 392, 0], [523.25, 0, 587.33, 659.25, 523.25, 0, 392, 0], [587.33, 0, 493.88, 0, 440, 0, 493.88, 0], [392, 0, 0, 0, 0, 0, 0, 0]],
+      play(bar, i, m, ch, bass) {
+        if (i === 0 || i === 4) tone(i === 0 ? bass : bass * 1.5, .5, { type: 'triangle', vol: .055 });
+        if (i === 2 || i === 6) { ch.forEach((f, k) => tone(f, .3, { type: 'sine', vol: .016, at: k * .02 })); noise(.06, { freq: 6500, q: .5, vol: .012 }); } // soft strum and brush
+        if (m) { tone(m, .55, { type: 'triangle', vol: .04 }); tone(m * 2, .4, { type: 'sine', vol: .009 }); }
+      }
+    },
+    // Christmas: sleigh bells, a glockenspiel tune and warm chords in C major.
+    christmas: {
+      ms: 300, per: 8,
+      bass: [130.81, 110, 87.31, 98, 130.81, 110, 87.31, 98], chords: [[261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66], [261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66]],
+      melody: [[659.25, 0, 783.99, 0, 1046.5, 0, 783.99, 0], [880, 0, 783.99, 0, 659.25, 0, 523.25, 0], [698.46, 0, 880, 0, 1046.5, 0, 880, 0], [783.99, 0, 698.46, 0, 587.33, 0, 0, 0], [1046.5, 0, 880, 0, 783.99, 0, 659.25, 0], [659.25, 783.99, 880, 0, 1046.5, 0, 880, 0], [880, 0, 1046.5, 0, 1174.66, 0, 1046.5, 0], [1046.5, 0, 783.99, 0, 523.25, 0, 0, 0]],
+      play(bar, i, m, ch, bass) {
+        if (i === 0) { ch.forEach((f, k) => tone(f, 2.2, { type: 'sine', vol: .018, at: k * .04 })); tone(bass, .9, { type: 'triangle', vol: .05 }); }
+        if (i === 4) tone(bass * 1.5, .5, { type: 'triangle', vol: .035 });
+        if (i % 2 === 0) noise(.05, { freq: 7000, q: 2.5, vol: i % 4 === 0 ? .03 : .02 }), noise(.04, { freq: 8200, q: 3, vol: .015, at: .05 }); // sleigh bells
+        if (m) { tone(m, 1.1, { type: 'sine', vol: .04 }); tone(m * 3, .3, { type: 'sine', vol: .008 }); }
+      }
+    }
+  };
+  let tbar = 0, tstep = 0, tpass = 0;
+  const themeStep = th => () => {
+    if (!A.ctx || document.hidden) return;
+    const bar = tbar % th.melody.length, m = th.melody[bar][tstep];
+    th.play(tbar, tstep, m, th.chords[bar], th.bass[bar], tpass);
+    if (++tstep >= th.per) { tstep = 0; tbar++; if (tbar % th.melody.length === 0) tpass++; }
+  };
   SPG.music = {
     sync() {
       const s = SPG.store.settings;
-      const key = scene || 'main';
+      const key = scene ? scene + ':' + (theme || '') : 'main';
       const want = !document.hidden && s.sound && (scene === 'color' ? s.colorMusic !== false : s.music);
       if (musicTimer && (!want || key !== musicKey)) { clearInterval(musicTimer); musicTimer = 0; }
       if (want && !musicTimer) {
         musicKey = key;
-        const step = scene === 'color' ? boxStep : musicStep;
-        step(); musicTimer = setInterval(step, scene === 'color' ? 640 : 950);
+        const th = scene === 'color' && THEMES[theme];
+        const step = th ? themeStep(th) : scene === 'color' ? boxStep : musicStep;
+        step(); musicTimer = setInterval(step, th ? th.ms : scene === 'color' ? 640 : 950);
       }
     },
-    // Switch the music to a named scene ('color') or back to the normal one (null).
-    scene(name) { scene = name; beat = 0; SPG.music.sync(); }
+    // Switch the music to a scene ('color') with an optional theme ('halloween', 'thanksgiving', 'christmas'), or back to normal (null).
+    scene(name, th) { if (name !== scene || (th || null) !== theme) { tbar = 0; tstep = 0; tpass = 0; beat = 0; } scene = name; theme = th || null; SPG.music.sync(); }
   };
 
   // A small "icon + number" pill next to the stars, for counting things (fruits sliced, drops caught...).

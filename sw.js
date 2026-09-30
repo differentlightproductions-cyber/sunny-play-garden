@@ -1,10 +1,10 @@
 // Offline support: the whole site is cached so it keeps working with no internet once opened.
 // Network first (so a new deploy shows up right away), cache as the fallback.
-const CACHE = 'spg-v4';
+const CACHE = 'spg-v6';
 const SHELL = [
   './', 'styles.css', 'manifest.webmanifest',
-  'js/glyphs.js', 'js/core.js', 'js/voice.js', 'js/art.js', 'js/art-garden.js', 'js/art-pets.js', 'js/studio.js', 'js/app.js',
-  'games/letters.js', 'games/fruit.js', 'games/rain.js', 'games/garden.js', 'games/color-pictures.js', 'games/color.js',
+  'js/glyphs.js', 'js/core.js', 'js/sync.js', 'js/voice.js', 'js/art.js', 'js/art-garden.js', 'js/art-pets.js', 'js/pets.js', 'js/studio.js', 'js/app.js',
+  'games/letters.js', 'games/fruit.js', 'games/rain.js', 'games/garden.js', 'games/color-pictures.js', 'games/color-seasons.js', 'games/color.js', 'games/petshop.js',
   'fonts/fredoka-latin-400-normal.woff2', 'fonts/fredoka-latin-600-normal.woff2', 'fonts/fredoka-latin-700-normal.woff2',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
@@ -15,7 +15,7 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin || new URL(req.url).pathname.startsWith('/api/')) return; // never cache the backup service
   e.respondWith(
     fetch(req).then(res => {
       if (res.ok && res.status === 200) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }

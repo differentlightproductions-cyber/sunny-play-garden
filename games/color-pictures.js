@@ -2,6 +2,9 @@
 //
 //   { id: 'bunny', name: 'Bunny', sections: [ { id, d, det? }, ... ] }
 //
+// A section made of several separate shapes (two ears, four raindrops) is split automatically so that each
+// shape can be colored on its own (ids become ears-1, ears-2...; see `explode` below).
+//
 // - Every picture lives in a 1000 x 800 box.
 // - `sections` go back to front. Each one is a closed SVG path (`d`) the child can color on its own.
 //   Later sections sit in front of earlier ones, and paint never crosses into a section in front.
@@ -72,6 +75,13 @@
   const drop = (cx, cy, s) => `M${P(cx, cy - 1.5 * s)}C${P(cx + .35 * s, cy - .7 * s)} ${P(cx + s, cy - .1 * s)} ${P(cx + s, cy + .45 * s)}A${s} ${s} 0 0 1 ${P(cx - s, cy + .45 * s)}C${P(cx - s, cy - .1 * s)} ${P(cx - .35 * s, cy - .7 * s)} ${P(cx, cy - 1.5 * s)}Z`;
   const star = (cx, cy, R, r, n = 5, rot = -90) => poly(Array.from({ length: n * 2 }, (_, i) => { const a = (rot + i * 180 / n) * Math.PI / 180, k = i % 2 ? r : R; return [cx + Math.cos(a) * k, cy + Math.sin(a) * k]; }));
   const compound = (...ds) => ds.join('');
+  // A ring with a hole (the inner circle runs the other way, so the hole stays open).
+  const ring = (cx, cy, R, r) => `${circ(cx, cy, R)}M${P(cx - r, cy)}A${r} ${r} 0 1 0 ${P(cx + r, cy)}A${r} ${r} 0 1 0 ${P(cx - r, cy)}Z`;
+  // A crescent moon: a circle of radius r with a bite taken out by a circle of radius r2 shifted d to the right.
+  const crescent = (x, y, r, d = r * .55, r2 = r * .9) => {
+    const a = (d * d + r * r - r2 * r2) / (2 * d), h = Math.sqrt(r * r - a * a);
+    return `M${P(x + a, y - h)}A${r1(r)} ${r1(r)} 0 1 0 ${P(x + a, y + h)}A${r1(r2)} ${r1(r2)} 0 0 1 ${P(x + a, y - h)}Z`;
+  };
 
   /* ------------------------------------------------------------ details */
   const eye = (x, y, r) => [{ d: ell(x, y, r * .85, r * 1.15), f: INK }, { d: circ(x - r * .28, y - r * .42, r * .38), f: '#fff' }];
@@ -355,6 +365,51 @@
     }
   ];
 
+  // Every separate shape inside a section becomes its own colorable section (two ears, five stars, four
+  // raindrops...). Part ids are "<id>-1", "<id>-2"... and `alias` remembers the old id, so pictures colored
+  // before the split keep their colors. A ring (a shape with a hole) stays whole.
+  const hctx = document.createElement('canvas').getContext('2d');
+  const explode = pic => {
+    const out = [], alias = {};
+    for (const s of pic.sections) {
+      const parts = s.d.split(/(?=M)/).filter(p => p.trim());
+      let split = parts.length > 1;
+      const paths = parts.map(p => new Path2D(p));
+      const starts = parts.map(p => { const m = /M\s*(-?[\d.]+)[ ,]+(-?[\d.]+)/.exec(p); return [+m[1], +m[2]]; });
+      for (let i = 0; i < parts.length && split; i++) for (let j = 0; j < parts.length; j++) if (i !== j && hctx.isPointInPath(paths[j], starts[i][0], starts[i][1])) { split = false; break; }
+      if (!split) { out.push(s); continue; }
+      const made = parts.map((d, i) => ({ id: `${s.id}-${i + 1}`, d, det: [] }));
+      for (const det of s.det || []) {
+        const m = /M\s*(-?[\d.]+)[ ,]+(-?[\d.]+)/.exec(det.d);
+        let at = 0;
+        if (m) {
+          const x = +m[1], y = +m[2];
+          let best = -1, bd = Infinity;
+          paths.forEach((pa, i) => { if (hctx.isPointInPath(pa, x, y)) best = best < 0 ? i : best; const d = Math.hypot(starts[i][0] - x, starts[i][1] - y); if (d < bd) { bd = d; if (best < 0) at = i; } });
+          if (best >= 0) at = best;
+        }
+        made[at].det.push(det);
+      }
+      alias[s.id] = made.map(m => m.id);
+      out.push(...made);
+    }
+    pic.sections = out; pic.alias = alias;
+    return pic;
+  };
+  PICTURES.forEach(explode);
+
+  const GROUP = { bunny: 'friends', bear: 'friends', cat: 'friends', fox: 'friends', frog: 'friends', panda: 'friends', hedgehog: 'friends', duckling: 'friends', turtle: 'friends', rescue: 'friends' };
+  for (const pic of PICTURES) pic.group = GROUP[pic.id] || 'garden';
+
+  // The groups shown as tabs in the gallery. `theme` picks the music. `demo` colors a sample picture for the tab icon.
+  SPG.pictureGroups = [
+    { id: 'friends', name: 'Animal friends', theme: null, tint: '#ffe3ec', edge: '#f5b8cb', emblem: 'bunny', demo: [['sky', 6], ['ground', 3], ['ears', 9], ['head', 10], ['body', 8], ['carrot', 1]] },
+    { id: 'garden', name: 'Garden', theme: null, tint: '#dff5d0', edge: '#a9d98f', emblem: 'sunflower', demo: [['sky', 6], ['ground', 4], ['stem', 4], ['petals', 2], ['center', 11]] },
+    { id: 'halloween', name: 'Halloween', theme: 'halloween', tint: '#d9cdf5', edge: '#a693e0', emblem: 'jack', demo: [['sky', 13], ['moon', 2], ['ground', 8], ['seg-m', 1], ['seg-l', 1], ['seg-r', 1], ['seg-l2', 1], ['seg-r2', 1], ['stem', 4]] },
+    { id: 'thanksgiving', name: 'Thanksgiving and fall', theme: 'thanksgiving', tint: '#ffe6c2', edge: '#f0b968', emblem: 'turkey', demo: [['sky', 10], ['ground', 11], ['o1', 0], ['o2', 1], ['o3', 2], ['o4', 1], ['o5', 0], ['body', 11], ['head', 11]] },
+    { id: 'christmas', name: 'Christmas', theme: 'christmas', tint: '#d6f0e0', edge: '#8fd0a8', emblem: 'tree', demo: [['sky', 7], ['ground', 12], ['tier-1', 4], ['tier-2', 4], ['tier-3', 4], ['trunk', 11], ['star', 2]] }
+  ];
+
   SPG.pictures = PICTURES;
-  SPG.pictureKit = { ell, circ, rect, poly, rpoly, spline, curve, line, polar, flower, leaf, strip, dome, drop, star, compound, face, eye, nose, sky, ground, sun, cloud, INK };
+  SPG.pictureKit = { r1, P, ell, circ, rect, poly, rpoly, spline, curve, line, polar, flower, leaf, strip, dome, drop, star, compound, face, eye, nose, sky, ground, sun, cloud, INK, ring, crescent, explode };
 })();

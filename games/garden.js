@@ -149,13 +149,13 @@
 
     start() {
       this.resize();
-      this.plots.forEach((p, i) => { if (i < this.slotCount() && p.kind === 'plant' && p.stage === 3 && this.creatures.length < 4) this.spawnCreature(this.pickCreature(p.type), this.slot(i).x, this.slot(i).y); });
+      this.plots.forEach((p, i) => { if (i < this.slotCount() && p.kind === 'plant' && p.stage === 3 && this.creatures.length < 4) this.spawnCreature(p.type === 'carrot' ? 'bunny' : this.pickCreature(p.type), this.slot(i).x, this.slot(i).y); });
       this.resume();
       if (!this.plots.some(p => p.kind !== 'bare')) voice.say('dig-first');
     }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
     pause() { this.running = false; cancelAnimationFrame(this.raf); }
-    destroy() { this.pause(); clearTimeout(this.later); this.canvas.remove(); this.bar.remove(); this.tray.remove(); this.steps.remove(); this.book?.remove(); this.counter.el.remove(); }
+    destroy() { this.pause(); clearTimeout(this.later); this.canvas.remove(); this.bar.remove(); this.tray.remove(); this.steps.remove(); this.book?.remove(); this.dialog?.el.remove(); this.counter.el.remove(); }
 
     save() {
       this.bag.plots = this.plots.map(p => p.kind === 'bare' ? null : p.kind === 'hole' ? { k: 'hole', level: p.level } : { k: 'plant', type: p.type, stage: p.stage, loose: p.loose });
@@ -184,7 +184,7 @@
     spawnCreature(kind, x, y) {
       const info = CREATURES[kind];
       if (this.creatures.length >= 7) this.creatures.shift();
-      const cr = { kind, fly: info.fly, x, y, tx: x, ty: y, wait: 0, sndT: 1 + Math.random() * 5, hop: 0, t: Math.random() * 9, jump: 0, dir: 1, s: this.ps * SIZE[kind] };
+      const cr = { kind, fly: info.fly, x, y, tx: x, ty: y, wait: 0, sndT: 1 + Math.random() * 5, hop: 0, t: Math.random() * 9, jump: 0, dir: 1, s: this.ps * SIZE[kind], hunger: kind === 'bunny' ? 7 + Math.random() * 6 : 0, goal: null, eating: null };
       this.creatures.push(cr); this.retarget(cr);
       return cr;
     }
@@ -194,8 +194,83 @@
       else { cr.tx = b.x + b.w * (.08 + Math.random() * .84); cr.ty = b.y + b.h - this.ch * .06 - Math.random() * this.ch * .12; cr.wait = 1.5 + Math.random() * 2.5; }
     }
 
+    /* ---- hungry bunnies: a ready carrot or strawberry is a snack ---- */
+    isClaimed(i) { return this.creatures.some(c => c.goal === i); }
+    snackFor(cr) {
+      let best = -1, bd = 1e9;
+      for (let i = 0; i < this.slotCount(); i++) {
+        const p = this.plots[i];
+        if (p.kind !== 'plant' || p.stage !== 3 || (p.type !== 'carrot' && p.type !== 'strawberry') || p.pop > 0 || this.isClaimed(i)) continue;
+        const s = this.slot(i), d = Math.hypot(s.x - cr.x, s.y - cr.y) - (p.type === 'carrot' ? this.w : 0); // carrots first
+        if (d < bd) { bd = d; best = i; }
+      }
+      return best;
+    }
+    stopEating(cr) {
+      if (cr.eating) { const p = this.plots[cr.eating.i]; if (p) p.eaten = 0; }
+      cr.eating = null; cr.goal = null;
+    }
+    // Where the bunny stands to eat: beside the plant, on whichever side it came from.
+    eatSpot(i, cr) { const s = this.slot(i); return { x: s.x + (cr.x < s.x ? -1 : 1) * this.ps * .3, y: s.y + this.ch * .03 }; }
+    updateBunny(cr, dt) {
+      if (cr.leaving) return;
+      if (cr.eating) {
+        const e = cr.eating, p = this.plots[e.i], s = this.slot(e.i);
+        if (!p || p.kind !== 'plant') { this.stopEating(cr); return; }
+        e.t += dt; p.eaten = Math.min(1, e.t / 2.4);
+        if (e.t > (e.bites + 1) * .5 && e.bites < 4) {                       // a bite every half second
+          e.bites++; sfx.crunch();
+          this.fx.burst(s.x, s.y - this.ps * (.35 - e.bites * .05), 6, { colors: p.type === 'carrot' ? ['#ff9d4d', '#ffb870', '#7ed957'] : ['#ff6b81', '#ff9db8', '#7ed957'], speed: 130, g: 420, life: .5, size: 5, up: 90 });
+        }
+        if (e.t >= 2.4) {                                                    // all gone: the ground is free again
+          this.plots[e.i] = bare(); this.save();
+          this.fx.burst(s.x, s.y - this.ps * .2, 10, { colors: ['#ff7a8a', '#ff9db8', '#ffd54a'], speed: 140, g: -50, life: 1, size: 7, shape: 'heart' });
+          sfx.boing(); cr.jump = 1; cr.eating = null; cr.goal = null;
+          cr.hunger = 16 + Math.random() * 12; cr.wait = .8; this.retarget(cr);
+        }
+        return;
+      }
+      if (cr.goal != null) {
+        const p = this.plots[cr.goal];
+        if (!p || p.kind !== 'plant' || p.stage !== 3) { cr.goal = null; cr.wait = 0; return; }
+        if (Math.hypot(cr.tx - cr.x, cr.ty - cr.y) <= 8) { cr.eating = { i: cr.goal, t: 0, bites: 0 }; cr.dir = this.slot(cr.goal).x > cr.x ? 1 : -1; }
+        return;
+      }
+      if (cr.hunger > 0) { cr.hunger -= dt; return; }
+      const i = this.snackFor(cr);
+      if (i < 0) { cr.hunger = 5 + Math.random() * 4; return; }
+      const spot = this.eatSpot(i, cr);
+      cr.goal = i; cr.tx = spot.x; cr.ty = spot.y; cr.wait = 99;
+    }
+
+    // Saying goodbye needs a second, clear step so it can never happen by accident.
+    askGoodbye(cr) {
+      if (this.dialog) return;
+      const name = CREATURES[cr.kind].name.toLowerCase();
+      const canvas = el('canvas', 'gd-bye-art'); canvas.width = canvas.height = 240;
+      const c = canvas.getContext('2d'), f = cr.kind in FLIP ? FLIP[cr.kind] : 1;
+      c.translate(120, 165); if (f) c.scale(f, 1); art.creature(c, cr.kind, 140, 0, false);
+      const armed = { t: 0 };
+      const btn = (cls, label, emoji, fn) => {
+        const b = el('button', 'gd-bye-btn ' + cls, el('span', 'gd-bye-emoji', emoji), el('span', '', label)); b.type = 'button';
+        b.addEventListener('pointerdown', () => { armed.b = b; armed.t = performance.now(); });
+        b.addEventListener('click', e => { if ((e.detail === 0 || armed.b === b) && performance.now() - this.dialog.t0 > 400) fn(); armed.b = null; });
+        return b;
+      };
+      const close = () => { this.dialog.el.remove(); this.dialog = null; voice.stop(); };
+      const stay = btn('stay', 'Stay', '\u{1F49A}', () => { sfx.tap(); close(); });
+      const bye = btn('bye', 'Bye-bye', '\u{1F44B}', () => { const target = cr; close(); if (this.creatures.includes(target)) this.sendOff(target); });
+      const sheet = el('div', 'gd-bye-sheet', canvas, el('h2', '', `Say bye-bye to the ${name}?`), el('p', '', 'Tap the soft pink button to say bye-bye. Tap the green one to keep your friend.'), el('div', 'gd-bye-row', stay, bye));
+      const overlay = el('div', 'gd-bye', sheet);
+      this.host.append(overlay);
+      this.dialog = { el: overlay, t0: performance.now() };
+      sfx.tap(); voice.say('confirm-bye');
+    }
+    back() { if (this.dialog) { this.dialog.el.remove(); this.dialog = null; voice.stop(); return true; } return false; }
+
     // Say goodbye: the friend waves, then heads back to the wild off the edge of the screen.
     sendOff(cr) {
+      this.stopEating(cr);
       cr.leaving = true; cr.leaveT = 0; cr.jump = 1;
       const toRight = cr.x > this.w / 2;
       cr.tx = toRight ? this.w + cr.s * 5 : -cr.s * 5; cr.ty = cr.fly ? cr.y - this.h * .25 : cr.y;
@@ -207,7 +282,7 @@
     // A very quiet, single sound for one animal. A global gap keeps two animals from sounding at once.
     critterVoice(cr) {
       const now = performance.now();
-      if (now < this.ambientUntil || cr.leaving || this.banner || this.book || cr.x < 0 || cr.x > this.w) return;
+      if (now < this.ambientUntil || cr.leaving || cr.eating || this.banner || this.book || cr.x < 0 || cr.x > this.w) return;
       cr.sndT = 8 + Math.random() * 10; // each animal speaks up only now and then
       this.ambientUntil = now + 700; // reserve the slot straight away
       voice.ambient('critter/' + cr.kind, .2).then(len => {
@@ -224,7 +299,7 @@
       for (let i = this.creatures.length - 1; i >= 0; i--) {
         const cr = this.creatures[i];
         if (!cr.leaving && Math.hypot(x - cr.x, y - (cr.y - cr.s * .3)) < cr.s * 1.6 + 18) {
-          if (this.tool === 'free') { this.sendOff(cr); return; }
+          if (this.tool === 'free') { this.askGoodbye(cr); return; }
           cr.jump = 1; sfx.boing(); this.fx.burst(cr.x, cr.y - cr.s, 6, { colors: ['#ff7a8a', '#ff9db8'], speed: 120, g: -60, life: .9, size: 7, shape: 'heart' });
           voice.sound('critter/' + cr.kind, 'creature/' + cr.kind); return;
         }
@@ -396,7 +471,7 @@
     bloom(p, s) {
       this.bag.blooms++; this.counter.set(this.bag.blooms); store.addStars(1); sfx.win();
       this.fx.burst(s.x, s.y - this.ps * .7, 26, { colors: ['#ff7a8a', '#ffd54a', '#59b96e', '#4fb3e8', '#9a7be8'], speed: 380, g: 500, life: 1.1, size: 8, shape: 'confetti', up: 200 });
-      const kind = this.pickCreature(p.type);
+      const kind = p.type === 'carrot' ? 'bunny' : this.pickCreature(p.type); // a grown carrot always brings a hungry bunny
       this.spawnCreature(kind, s.x, s.y - this.ps * .6);
       if (!this.bag.seen[kind]) { this.bag.seen[kind] = true; this.banners.push({ type: 'creature', id: kind }); }
       for (const pl of art.PLANTS) if (pl.unlock && pl.unlock === this.bag.blooms) this.banners.push({ type: 'plant', id: pl.id });
@@ -442,7 +517,9 @@
     /* ---- loop ---- */
     tick(now) {
       if (!this.running) return;
-      const dt = Math.min((now - this.last) / 1000, .05); this.last = now; this.t += dt;
+      const dt = Math.min((now - this.last) / 1000, .05); this.last = now;
+      if (this.dialog) { this.draw(); this.raf = requestAnimationFrame(this.tick); return; } // everything waits while she decides
+      this.t += dt;
       if (this.nudge > 0) this.nudge -= dt;
       this.plots.forEach((p, i) => {
         if (i >= this.slotCount()) return;
@@ -468,6 +545,7 @@
           if (cr.leaveT < .8) { cr.jump = Math.max(cr.jump, .5 + Math.sin(cr.leaveT * 14) * .3); continue; } // waving goodbye
           if (Math.random() < .5) this.fx.burst(cr.x, cr.y - cr.s * .5, 1, { colors: ['#ffd54a', '#fff', '#ff9db8'], speed: 40, g: 0, life: .7, size: 8, shape: 'star' });
         }
+        if (cr.kind === 'bunny') this.updateBunny(cr, dt);
         cr.sndT -= dt;
         if (cr.sndT <= 0 && !cr.leaving) {
           if (cr.kind === 'bunny' || cr.kind === 'frog') { // hoppers make their sound as they land
@@ -476,7 +554,7 @@
           } else this.critterVoice(cr);
         }
         const dx = cr.tx - cr.x, dy = cr.ty - cr.y, d = Math.hypot(dx, dy), speed = this.w * SPEED[cr.kind] * (cr.leaving ? 3.2 : 1);
-        if (d > 8) { cr.x += dx / d * speed * dt; cr.y += dy / d * speed * dt; if (Math.abs(dx) > 4) cr.dir = dx > 0 ? 1 : -1; } else if (cr.wait <= 0 && !cr.leaving) this.retarget(cr);
+        if (d > 8) { cr.x += dx / d * speed * dt; cr.y += dy / d * speed * dt; if (Math.abs(dx) > 4) cr.dir = dx > 0 ? 1 : -1; } else if (cr.wait <= 0 && !cr.leaving && cr.goal == null && !cr.eating) this.retarget(cr);
         if (cr.jump > 0) cr.jump = Math.max(0, cr.jump - dt * 2);
       }
       this.creatures = this.creatures.filter(cr => !(cr.leaving && cr.leaveT > .8 && (cr.x < -cr.s * 3 || cr.x > this.w + cr.s * 3)));
@@ -542,6 +620,7 @@
         if (p.kind === 'plant') {
           c.save(); c.translate(s.x, s.y - 4);
           if (p.wiggle > 0) c.rotate(Math.sin(p.wiggle * 20) * .05 * p.wiggle);
+          if (p.eaten) c.scale(1 - p.eaten * .25, 1 - p.eaten * .92);
           art.plant(c, p.type, p.stage, this.ps, this.t + i, p.pop);
           c.restore();
           if (p.stage < 3 && !p.water && !p.loose) {
@@ -570,7 +649,9 @@
         const moving = Math.hypot(cr.tx - cr.x, cr.ty - cr.y) > 8;
         let bob = cr.fly ? Math.sin(cr.t * (cr.kind === 'bee' || cr.kind === 'dragonfly' ? 9 : 5)) * cr.s * .18 : 0;
         if ((cr.kind === 'bunny' || cr.kind === 'frog') && moving) bob = -Math.abs(Math.sin(cr.t * 4)) * cr.s * .5;
+        if (cr.eating) bob = Math.abs(Math.sin(cr.t * 12)) * cr.s * .1;
         c.translate(0, bob - Math.sin(cr.jump * Math.PI) * cr.s * 1.2);
+        if (cr.eating) c.rotate(Math.sin(cr.t * 12) * .05);
         if (cr.kind === 'duckling' && moving) c.rotate(Math.sin(cr.t * 9) * .12);
         const f = cr.kind in FLIP ? FLIP[cr.kind] : 1; if (f) c.scale(cr.dir * f, 1);
         art.creature(c, cr.kind, cr.s * 1.6, cr.t, moving);

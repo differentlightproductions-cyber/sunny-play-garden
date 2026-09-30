@@ -25,6 +25,11 @@
     { id: 'plant', z: 'floor' }, { id: 'chest', z: 'floor' }, { id: 'teddy', z: 'floor' }, { id: 'beanbag', z: 'floor' }, { id: 'ball', z: 'floor' }, { id: 'lamp', z: 'floor' }, { id: 'shelf', z: 'floor' }
   ];
   const MAX_DECO = 26;
+  // Themed rooms (castle, spooky house, Christmas...) live in petcare-rooms.js. In a themed room the tray shows its six
+  // themed things plus eight friendly favourites, so it is never longer than the cozy home's tray.
+  const { ROOMS, Z, TRAY_SCALE, pattern: roomPattern, PATS } = SPG.careRooms;
+  const GLOW = { lamp: 1.4, candle: 1.1, torch: .35, lights: 0, tree: 1.3, volcano: 1.0, ufo: 0, planet: 0, comet: 0, fish: 0 };   // things that shine at night (how high the light sits)
+  const GENERIC = ['star', 'heart', 'moon', 'frame', 'plant', 'teddy', 'chest', 'lamp'];
 
   // One decoration, drawn with its base on (0, 0) for floor things and centered for wall things. u = a unit of size.
   function drawDeco(c, id, u, t, who) {
@@ -45,7 +50,7 @@
       case 'lamp': c.fillStyle = '#8a7a9a'; c.fillRect(-u * .05, -u * 1.5, u * .1, u * 1.5); c.fillStyle = '#8a7a9a'; c.beginPath(); c.ellipse(0, 0, u * .4, u * .1, 0, 0, TAU); c.fill(); c.fillStyle = '#ffe3a0'; c.beginPath(); c.moveTo(-u * .5, -u * 1.15); c.lineTo(u * .5, -u * 1.15); c.lineTo(u * .32, -u * 1.75); c.lineTo(-u * .32, -u * 1.75); c.closePath(); c.fill(); break;
       case 'shelf': c.fillStyle = '#b9805a'; art.rr(c, -u * .7, -u * 2.0, u * 1.4, u * 2.0, u * .08); c.fill(); c.fillStyle = '#e8d3b0'; for (let r = 0; r < 3; r++) c.fillRect(-u * .6, -u * 1.9 + r * u * .62, u * 1.2, u * .55);
         ['#ff7a93', '#5cc8f2', '#ffd54a', '#7ed957', '#b58cf0'].forEach((col, i) => { const r = Math.floor(i / 2); c.fillStyle = col; c.fillRect(-u * .55 + (i % 2) * u * .6 + (i > 3 ? 0 : 0), -u * 1.85 + r * u * .62 + u * .12, u * .18, u * .4); c.fillRect(-u * .3 + (i % 2) * u * .6, -u * 1.85 + r * u * .62 + u * .05, u * .16, u * .47); }); break;
-      default: break;
+      default: { const f = SPG.careRooms && SPG.careRooms.EXTRA[id]; if (f) f(c, u, t, who); break; }
     }
     c.restore();
   }
@@ -61,6 +66,8 @@
       b.hunger = Math.min(.85, Math.max(b.hunger || 0, .35) + mins * .03); b.dirt = Math.min(.85, Math.max(b.dirt || 0, .3) + mins * .02); b.tired = Math.min(.85, Math.max(b.tired || 0, .3) + mins * .02);
       b.flags = b.flags || {}; b.cares = b.cares || 0; b.t = Date.now();
       b.wall = b.wall || 0; b.floor = b.floor || 0; b.rug = b.rug || 0; b.lamp = b.lamp || 0; b.deco = b.deco || [];
+      b.room = b.room || 'home'; b.rooms = b.rooms || {}; if (!ROOMS.some(r => r.id === b.room)) b.room = 'home';
+      this.picking = false;
       this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s * .54); art.heart(c, 0, 0, s * .32, '#ff6b81'); }, b.cares);
       this.fx = new art.Fx(); this.t = 0; this.running = false;
       this.tool = null; this.hold = null; this.sleeping = false; this.sleepT = 0; this.night = 0; this.morning = 0;
@@ -77,6 +84,27 @@
     }
     who() { const a = SPG.pets.active(); return a ? { id: a.id, name: a.name, hat: a.hat, face: a.face, neck: a.neck } : { id: 'bunny', name: 'Pip', hat: null }; }
     wallsOpen() { return clamp(3 + Math.floor(this.bag.cares / UNLOCK_EVERY), 3, WALLS.length); }
+    // Rooms: the cozy home keeps its things in the bag itself (so older saves just work); every other room has its own.
+    room() { return ROOMS.find(r => r.id === this.bag.room) || ROOMS[0]; }
+    st() { const b = this.bag; if (b.room === 'home') return b; return b.rooms[b.room] || (b.rooms[b.room] = { wall: 0, floor: 0, rug: 0, deco: [] }); }
+    walls() { return this.room().walls || WALLS; }
+    floors() { return this.room().floors || FLOORS; }
+    decoOf(id) { return DECO.find(q => q.id === id) || (Z[id] ? { id, z: Z[id] } : null); }
+    trayItems() { const r = this.room(); return r.deco ? [...r.deco.map(id => ({ id, z: Z[id] })), ...GENERIC.map(id => DECO.find(q => q.id === id))] : DECO; }
+    pickLayout() {
+      const n = ROOMS.length, wide = this.wide, cols = wide ? 4 : 2, rows = Math.ceil(n / cols), pad = this.cell * .3, top = this.bs * 1.5 + pad;
+      const aw = this.w - pad * 2, ah = this.h - this.bs * 2.3 - top - pad, cw = aw / cols, ch = ah / rows, gap = pad * .5;
+      return ROOMS.map((r, i) => ({ id: r.id, r, x: pad + (i % cols) * cw + gap / 2, y: top + Math.floor(i / cols) * ch + gap / 2, w: cw - gap, h: ch - gap }));
+    }
+    chooseRoom(id) {
+      this.picking = false; this.hold = null;
+      if (id !== this.bag.room) {
+        this.bag.room = id; this.tray = this.trayItems(); this.resize();
+        sfx.win(); this.fx.burst(this.w / 2, this.floorY * .5, 18, { colors: ['#ffd54a', '#fff', '#ff8aa3', '#7fd4f5'], speed: 260, g: 120, life: 1.1, size: 7 * this.ui, shape: 'star', up: 100 });
+        voice.say('room/' + id);
+      } else sfx.tap();
+      this.save();
+    }
 
     /* ---------------------------------------------------------------- layout */
     resize() {
@@ -100,7 +128,7 @@
       // the decoration tray: a column on the right (wide) or two rows above the toolbar (tall)
       const cell = wide ? Math.min(this.h * .1, this.w * .07) : this.w / 8.8; this.cell = cell;
       const slot = i => wide ? { x: this.w - cell * (i % 2 ? .75 : 1.95), y: this.h * .1 + cell * (Math.floor(i / 2) + .6) * 1.12 } : { x: this.w / 2 + ((i % 8) - 3.5) * cell * 1.07, y: by - this.bs * 1.35 - cell * (1.15 * (1 - Math.floor(i / 8)) + .5) };
-      this.trayPos = DECO.map((d, i) => slot(i)); this.bin = slot(DECO.length);
+      this.tray = this.trayItems(); this.trayPos = this.tray.map((d, i) => slot(i)); this.bin = slot(this.tray.length); this.roomBtn = slot(this.tray.length + 1);
       if (!this.pet.x) { this.pet.x = this.homeX; this.pet.y = this.feetY; }
       // close-up: the pet's feet near the bottom, big; a row of little tools along the bottom edge
       this.S2 = Math.min(this.h * .92, this.w * 1.3); this.zx = this.w / 2; this.zy = this.h * .97;
@@ -143,6 +171,7 @@
       this.idle = 0;
       const near = (b, r) => Math.hypot(x - b.x, y - b.y) < r;
       if (this.zoomOn) { this.pressZoom(x, y, id, near); return; }
+      if (this.picking) { const hit = this.pickLayout().find(k => x > k.x && x < k.x + k.w && y > k.y && y < k.y + k.h); if (hit) this.chooseRoom(hit.id); else { this.picking = false; sfx.tap(); } return; }
       for (const t of this.tools) if (near(t, this.bs * .85)) { this.chooseTool(t.id); return; }
       if (this.sleeping) {
         const l = this.lampPos(); if (near(l, this.s * .3)) { this.bag.lamp = (this.bag.lamp + 1) % LAMPS.length; sfx.tap(); this.save(); return; }   // change the night light's color
@@ -166,7 +195,7 @@
       if (this.ztool === 'spray') sfx.spray();
     }
     chooseTool(id) {
-      sfx.tap();
+      sfx.tap(); this.picking = false;
       if (id === 'bed') { this.tool = null; this.hold = null; if (this.sleeping) this.wakeUp(); else this.goSleep(); return; }
       if (this.sleeping) this.wakeUp();
       this.tool = this.tool === id ? null : id; this.hold = null;
@@ -218,24 +247,26 @@
     zoneY(d, y, u) { return d.z === 'wall' ? clamp(y, u * 1.05, this.floorY - u * 1.0) : clamp(y, this.floorY + u * .5, this.h - this.bs * 2.2); }
     pressDeco(x, y, id) {
       // from the tray: a fresh one
-      for (let i = 0; i < DECO.length; i++) { const p = this.trayPos[i]; if (Math.hypot(x - p.x, y - p.y) < this.cell * .55) { if (this.bag.deco.length >= MAX_DECO) { sfx.oops(); return; } this.hold = { kind: 'deco', d: DECO[i], fresh: true, id, x, y }; sfx.pop(); return; } }
+      if (Math.hypot(x - this.roomBtn.x, y - this.roomBtn.y) < this.cell * .55) { this.picking = true; sfx.pop(); return; }
+      for (let i = 0; i < this.tray.length; i++) { const p = this.trayPos[i]; if (Math.hypot(x - p.x, y - p.y) < this.cell * .55) { if (this.st().deco.length >= MAX_DECO) { sfx.oops(); return; } this.hold = { kind: 'deco', d: this.tray[i], fresh: true, id, x, y }; sfx.pop(); return; } }
       // a placed one: pick it up (topmost first)
-      for (let i = this.bag.deco.length - 1; i >= 0; i--) {
-        const it = this.bag.deco[i], d = DECO.find(q => q.id === it.id), ix = it.x * this.w, iy = it.y * this.h, u = this.sizeOf(d), r = u * (d.z === 'wall' ? 1.15 : 1.0);
-        if (Math.abs(x - ix) < r && y > iy - r * (d.z === 'wall' ? 1 : 2.1) && y < iy + r * (d.z === 'wall' ? 1 : .35)) { this.bag.deco.splice(i, 1); this.hold = { kind: 'deco', d, fresh: false, id, x, y }; sfx.pop(); return; }
+      const S = this.st();
+      for (let i = S.deco.length - 1; i >= 0; i--) {
+        const it = S.deco[i], d = this.decoOf(it.id); if (!d) continue; const ix = it.x * this.w, iy = it.y * this.h, u = this.sizeOf(d), r = u * (d.z === 'wall' ? 1.15 : 1.0);
+        if (Math.abs(x - ix) < r && y > iy - r * (d.z === 'wall' ? 1 : 2.1) && y < iy + r * (d.z === 'wall' ? 1 : .35)) { S.deco.splice(i, 1); this.hold = { kind: 'deco', d, fresh: false, id, x, y }; sfx.pop(); return; }
       }
       // otherwise the wall, the floor and the rug change when touched
       const rug = { x: this.homeX, y: this.feetY + 6, rx: this.s * .95, ry: this.s * .16 };
-      if (Math.abs(x - rug.x) < rug.rx && Math.abs(y - rug.y) < rug.ry * 1.5) { this.bag.rug = (this.bag.rug + 1) % RUGS.length; sfx.plink(this.bag.rug); this.save(); return; }
-      if (y < this.floorY) { this.bag.wall = (this.bag.wall + 1) % this.wallsOpen(); sfx.plink(this.bag.wall); this.fx.burst(x, y, 6, { colors: ['#fff', '#ffd54a'], speed: 120, g: 0, life: .6, size: 5 * this.ui, shape: 'star' }); this.save(); return; }
-      if (y < this.h - this.bs * 2.2) { this.bag.floor = (this.bag.floor + 1) % FLOORS.length; sfx.plink(this.bag.floor + 2); this.save(); }
+      if (Math.abs(x - rug.x) < rug.rx && Math.abs(y - rug.y) < rug.ry * 1.5) { S.rug = (S.rug + 1) % RUGS.length; sfx.plink(S.rug); this.save(); return; }
+      if (y < this.floorY) { S.wall = (S.wall + 1) % (this.bag.room === 'home' ? this.wallsOpen() : this.walls().length); sfx.plink(S.wall); this.fx.burst(x, y, 6, { colors: ['#fff', '#ffd54a'], speed: 120, g: 0, life: .6, size: 5 * this.ui, shape: 'star' }); this.save(); return; }
+      if (y < this.h - this.bs * 2.2) { S.floor = (S.floor + 1) % this.floors().length; sfx.plink(S.floor + 2); this.save(); }
     }
     dropDeco(h) {
       const overBin = Math.hypot(h.x - this.bin.x, h.y - this.bin.y) < this.cell * .7;
       const inTray = this.wide ? h.x > this.w - this.cell * 2.75 : h.y > this.trayPos[0].y - this.cell * .75;
       if (overBin || inTray || !h.d) { if (!h.fresh && (overBin || inTray)) { sfx.whoosh(); this.save(); } return; }   // dropped back in the tray or the bin: gone
       const us = this.sizeOf(h.d), y = this.zoneY(h.d, h.y, us);
-      this.bag.deco.push({ id: h.d.id, x: clamp(h.x, us, this.w - us) / this.w, y: y / this.h });
+      this.st().deco.push({ id: h.d.id, x: clamp(h.x, us, this.w - us) / this.w, y: y / this.h });
       sfx.snap(); this.fx.burst(h.x, y - us * .5, 6, { colors: ['#fff', '#ffd54a'], speed: 110, g: 40, life: .6, size: 5 * this.ui, shape: 'star' });
       this.save();
     }
@@ -327,12 +358,13 @@
       return list.length ? list[0][0] : null;
     }
     drawRoom(c) {
-      const w = this.w, h = this.h, fy = this.floorY, n = this.night, W = WALLS[this.bag.wall % WALLS.length], F = FLOORS[this.bag.floor % FLOORS.length];
+      const w = this.w, h = this.h, fy = this.floorY, n = this.night, R = this.room(), S = this.st(), W = this.walls()[S.wall % this.walls().length], F = this.floors()[S.floor % this.floors().length];
       const wall = c.createLinearGradient(0, 0, 0, fy); wall.addColorStop(0, W.top); wall.addColorStop(1, W.bot); c.fillStyle = wall; c.fillRect(0, 0, w, fy);
       // the wallpaper pattern
       c.save(); c.beginPath(); c.rect(0, 0, w, fy); c.clip();
       const pw = 70;
-      if (W.pat === 'stripes') { c.fillStyle = 'rgba(255,255,255,.35)'; for (let x = 0; x < w; x += pw) c.fillRect(x, 0, 24, fy); }
+      if (PATS.has(W.pat)) roomPattern(c, W.pat, w, fy, this.t);
+      else if (W.pat === 'stripes') { c.fillStyle = 'rgba(255,255,255,.35)'; for (let x = 0; x < w; x += pw) c.fillRect(x, 0, 24, fy); }
       else if (W.pat === 'dots') { c.fillStyle = 'rgba(255,255,255,.55)'; for (let y = 22; y < fy; y += 46) for (let x = (y / 46 % 2 ? 22 : 0); x < w; x += 46) { c.beginPath(); c.arc(x, y, 8, 0, TAU); c.fill(); } }
       else if (W.pat === 'clouds') { for (let y = 40; y < fy; y += 90) for (let x = (y / 90 % 2 ? 60 : 10); x < w; x += 130) art.cloud(c, x, y, .32, .7); }
       else if (W.pat === 'rays') { c.fillStyle = 'rgba(255,255,255,.4)'; for (let i = 0; i < 14; i++) { c.beginPath(); c.moveTo(w / 2, fy * 1.2); c.arc(w / 2, fy * 1.2, w, Math.PI + i * .22, Math.PI + i * .22 + .11); c.closePath(); c.fill(); } }
@@ -345,8 +377,9 @@
       // window: the sky turns to night
       const wx = this.wide ? w * .42 : w * .5, wy = h * .06, ww = Math.min(w * .3, 300), wh = ww * .75;
       c.fillStyle = '#fff'; art.rr(c, wx - ww / 2 - 12, wy - 12, ww + 24, wh + 24, 18); c.fill();
-      const sky = c.createLinearGradient(0, wy, 0, wy + wh); sky.addColorStop(0, '#a9e1f3'); sky.addColorStop(1, '#fdf6df'); c.fillStyle = sky; c.fillRect(wx - ww / 2, wy, ww, wh);
-      art.cloud(c, wx - ww * .15 + Math.sin(this.t * .3) * 14, wy + wh * .4, ww / 620, .95);
+      if (R.view) { c.save(); c.beginPath(); c.rect(wx - ww / 2, wy, ww, wh); c.clip(); R.view(c, wx - ww / 2, wy, ww, wh, this.t); c.restore(); }
+      else { const sky = c.createLinearGradient(0, wy, 0, wy + wh); sky.addColorStop(0, '#a9e1f3'); sky.addColorStop(1, '#fdf6df'); c.fillStyle = sky; c.fillRect(wx - ww / 2, wy, ww, wh);
+        art.cloud(c, wx - ww * .15 + Math.sin(this.t * .3) * 14, wy + wh * .4, ww / 620, .95); }
       if (n > 0) {
         c.globalAlpha = n; const ns = c.createLinearGradient(0, wy, 0, wy + wh); ns.addColorStop(0, '#2c3566'); ns.addColorStop(1, '#5d55a0'); c.fillStyle = ns; c.fillRect(wx - ww / 2, wy, ww, wh);
         for (let i = 0; i < 8; i++) art.star(c, wx - ww / 2 + ww * (.1 + (i * .13) % .82), wy + wh * (.12 + (i * .29) % .6), 4 + (i % 3) * 2 + Math.sin(this.t * 2 + i) * 1.5, '#fff3b0');
@@ -354,7 +387,7 @@
       }
       c.fillStyle = '#fff'; c.fillRect(wx - 4, wy, 8, wh); c.fillRect(wx - ww / 2, wy + wh / 2 - 4, ww, 8);
       // rug
-      c.fillStyle = RUGS[this.bag.rug % RUGS.length]; c.beginPath(); c.ellipse(this.homeX, this.feetY + 6, this.s * .95, this.s * .16, 0, 0, TAU); c.fill();
+      c.fillStyle = RUGS[S.rug % RUGS.length]; c.beginPath(); c.ellipse(this.homeX, this.feetY + 6, this.s * .95, this.s * .16, 0, 0, TAU); c.fill();
       c.strokeStyle = '#fff'; c.lineWidth = 5; c.setLineDash([12, 10]); c.beginPath(); c.ellipse(this.homeX, this.feetY + 6, this.s * .84, this.s * .12, 0, 0, TAU); c.stroke(); c.setLineDash([]);
       // bed and the little table with its night light
       const bx = this.bedX, by = this.feetY, bw = this.s * .95;
@@ -385,8 +418,8 @@
     }
     drawDecos(c, before) {
       const who = this.who();
-      for (const it of this.bag.deco) {
-        const d = DECO.find(q => q.id === it.id); if (!d) continue;
+      for (const it of this.st().deco) {
+        const d = this.decoOf(it.id); if (!d) continue;
         const y = it.y * this.h; if (before !== undefined && (y < this.pet.y) !== before && d.z === 'floor') continue;
         if (before === false && d.z === 'wall') continue;
         c.save(); c.translate(it.x * this.w, y); if (d.z === 'floor') { c.fillStyle = 'rgba(90,63,94,.13)'; c.beginPath(); c.ellipse(0, 2, this.sizeOf(d) * .7, this.sizeOf(d) * .1, 0, 0, TAU); c.fill(); } drawDeco(c, d.id, this.sizeOf(d), this.t, who); c.restore();
@@ -431,7 +464,7 @@
       c.globalAlpha = 1;
       // night: the room goes dark, then the night light and its stars glow; lamps in the room light up too
       if (this.night > 0) { c.fillStyle = `rgba(14,16,54,${(this.night * .7).toFixed(3)})`; c.fillRect(0, 0, w, h); }
-      if (this.night > .05) for (const it of this.bag.deco) if (it.id === 'lamp') { const us = this.sizeOf({ z: 'floor' }), lx = it.x * w, ly = it.y * h - us * 1.4, g = c.createRadialGradient(lx, ly, 0, lx, ly, us * 3); g.addColorStop(0, `rgba(255,222,150,${(this.night * .55).toFixed(3)})`); g.addColorStop(1, 'rgba(255,222,150,0)'); c.fillStyle = g; c.beginPath(); c.arc(lx, ly, us * 3, 0, TAU); c.fill(); }
+      if (this.night > .05) for (const it of this.st().deco) if (GLOW[it.id] != null) { const us = this.sizeOf({ z: 'floor' }), lx = it.x * w, ly = it.y * h - us * GLOW[it.id], g = c.createRadialGradient(lx, ly, 0, lx, ly, us * 3); g.addColorStop(0, `rgba(255,222,150,${(this.night * .55).toFixed(3)})`); g.addColorStop(1, 'rgba(255,222,150,0)'); c.fillStyle = g; c.beginPath(); c.arc(lx, ly, us * 3, 0, TAU); c.fill(); }
       this.drawNightLight(c);
       // morning: warm sunshine sweeps across the room and fades
       if (this.morning > 0) { const k = this.morning, g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, `rgba(255,236,160,${(k * .55).toFixed(3)})`); g.addColorStop(1, `rgba(255,214,150,${(k * .15).toFixed(3)})`); c.fillStyle = g; c.fillRect(0, 0, w, h); }
@@ -452,6 +485,7 @@
       if (this.tool === 'bath' && !this.hold) { c.save(); c.translate(this.wide ? w * .86 : w * .82, this.wide ? h * .5 : h * .87 - this.bs * 1.5); c.scale(1 + Math.sin(this.t * 4) * .05, 1 + Math.sin(this.t * 4) * .05); this.icon(c, 'bath', s * .2); c.restore(); }
       if (this.hold && this.hold.kind === 'sponge') { c.save(); c.translate(this.hold.x, this.hold.y); this.icon(c, 'bath', s * .2); c.restore(); }
       if (this.tool === 'deco') this.drawTray(c);
+      if (this.picking) this.drawPicker(c);
       this.fx.draw(c);
       // toolbar
       if (this.zoom > .3) this.drawZoomBar(c);
@@ -529,16 +563,35 @@
       else if (!hs) { c.save(); c.globalAlpha = e * .9; art.hand(c, this.zx + Math.sin(this.t * 2) * this.S2 * .12, this.zy - this.S2 * .5 + Math.cos(this.t * 2) * 6, r * 2.2, 0); c.restore(); }
       c.restore();
     }
+    // the room chooser: one big picture per room (touch one to move in; touch anywhere else to close)
+    drawPicker(c) {
+      c.fillStyle = 'rgba(60,44,80,.55)'; c.fillRect(0, 0, this.w, this.h);
+      for (const k of this.pickLayout()) {
+        const r = k.r, W = (r.walls || WALLS)[0], F = (r.floors || FLOORS)[0], cur = r.id === this.bag.room, fy = k.y + k.h * .64;
+        c.save(); c.beginPath(); art.rr(c, k.x, k.y, k.w, k.h, 22); c.clip();
+        const g = c.createLinearGradient(0, k.y, 0, fy); g.addColorStop(0, W.top); g.addColorStop(1, W.bot); c.fillStyle = g; c.fillRect(k.x, k.y, k.w, fy - k.y);
+        const f = c.createLinearGradient(0, fy, 0, k.y + k.h); f.addColorStop(0, F[0]); f.addColorStop(1, F[1]); c.fillStyle = f; c.fillRect(k.x, fy, k.w, k.y + k.h - fy);
+        if (r.view) { const vw = k.w * .34, vh = k.h * .36, vx = k.x + k.w * .08, vy = k.y + k.h * .12; c.fillStyle = '#fff'; art.rr(c, vx - 5, vy - 5, vw + 10, vh + 10, 8); c.fill(); c.save(); c.beginPath(); c.rect(vx, vy, vw, vh); c.clip(); r.view(c, vx, vy, vw, vh, this.t); c.restore(); }
+        c.restore();
+        c.save(); c.translate(k.x + k.w * (r.view ? .7 : .5), k.y + k.h * .52); r.emblem(c, Math.min(k.w * .42, k.h * .62)); c.restore();
+        c.lineWidth = cur ? 8 : 3; c.strokeStyle = cur ? '#59b96e' : 'rgba(255,255,255,.9)'; art.rr(c, k.x, k.y, k.w, k.h, 22); c.stroke();
+        c.font = `700 ${Math.max(13, Math.min(k.h * .15, this.ui * 22))}px Fredoka, system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.lineWidth = 5; c.strokeStyle = 'rgba(60,44,80,.6)'; c.strokeText(r.name, k.x + k.w / 2, k.y + k.h * .9); c.fillStyle = '#fff'; c.fillText(r.name, k.x + k.w / 2, k.y + k.h * .9);
+      }
+    }
     drawTray(c) {
       const cell = this.cell, u = this.u * .5;
       // panel behind the tray
       c.fillStyle = 'rgba(255,255,255,.78)';
-      if (this.wide) art.rr(c, this.w - cell * 2.75, this.h * .06, cell * 2.6, this.h * .8, 20), c.fill();
+      if (this.wide) art.rr(c, this.w - cell * 2.75, this.h * .06, cell * 2.6, this.roomBtn.y + cell * .7 - this.h * .06, 20), c.fill();
       else art.rr(c, this.w / 2 - cell * 4.4, this.trayPos[0].y - cell * .75, cell * 8.8, cell * 3.0, 20), c.fill();
-      DECO.forEach((d, i) => {
+      this.tray.forEach((d, i) => {
         const p = this.trayPos[i]; c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.arc(p.x, p.y, cell * .5, 0, TAU); c.fill();
-        c.save(); c.translate(p.x, p.y + (d.z === 'floor' ? cell * .28 : 0)); drawDeco(c, d.id, cell * (d.z === 'wall' ? .32 : .25), this.t, this.who()); c.restore();
+        c.save(); c.translate(p.x, p.y + (d.z === 'floor' ? cell * .28 : 0)); drawDeco(c, d.id, cell * (d.z === 'wall' ? .32 : .25) * (TRAY_SCALE[d.id] || 1), this.t, this.who()); c.restore();
       });
+      // the room button: a little house with the current room's picture; touch it to choose another room
+      const rb = this.roomBtn, rp = 1 + Math.sin(this.t * 3) * .03; c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(rb.x, rb.y, cell * .5 * rp, 0, TAU); c.fill(); c.strokeStyle = '#59b96e'; c.lineWidth = 4; c.stroke();
+      c.save(); c.translate(rb.x, rb.y + cell * .02); this.room().emblem(c, cell * .62); c.restore();
       // a little bin: drop a decoration here to take it away
       const b = this.bin; c.fillStyle = 'rgba(255,255,255,.9)'; c.beginPath(); c.arc(b.x, b.y, cell * .5, 0, TAU); c.fill();
       c.fillStyle = '#9aa6bd'; art.rr(c, b.x - cell * .2, b.y - cell * .16, cell * .4, cell * .4, cell * .06); c.fill(); c.fillRect(b.x - cell * .26, b.y - cell * .24, cell * .52, cell * .07); c.fillRect(b.x - cell * .08, b.y - cell * .3, cell * .16, cell * .07);

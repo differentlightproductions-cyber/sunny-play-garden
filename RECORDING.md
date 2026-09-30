@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 73 short lines.
+1. **Cheering** and **Prompts**: about 100 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -86,9 +86,36 @@ Short lines that tell her what to do.
 | `shape-square.mp3` | Square! |
 | `shape-triangle.mp3` | Triangle! |
 | `shape-star.mp3` | Star! |
+| `aq-start.mp3` | Touch the water to feed the fish! |
+| `aq-coin.mp3` | A shiny coin! Touch it! |
+| `aq-grow.mp3` | Your fish is growing! |
+| `aq-shop.mp3` | Spend your coins! |
+| `aq-boss.mp3` | A grumpy visitor! Tap it with bubbles! |
+| `aq-boss-done.mp3` | You made a new friend! Hooray! |
+| `aq-guppy.mp3` | A little guppy |
+| `aq-clown.mp3` | A clownfish |
+| `aq-angel.mp3` | An angelfish |
+| `aq-puffer.mp3` | A pufferfish |
+| `aq-food.mp3` | Better fish food |
+| `aq-more.mp3` | More fish food |
+| `aq-snail.mp3` | A helper snail |
+| `aq-power.mp3` | Bubble power |
+| `aq-castle.mp3` | A castle |
+| `aq-chest.mp3` | A treasure chest |
+| `aq-weed.mp3` | Seaweed |
+| `aq-shell.mp3` | A big shell |
 | `care-morning.mp3` | Good morning! |
+| `room-home.mp3` | A cozy home! |
+| `room-castle.mp3` | A castle! |
+| `room-halloween.mp3` | A spooky house! |
+| `room-christmas.mp3` | A Christmas house! |
+| `room-dino.mp3` | Dinosaur land! |
+| `room-space.mp3` | Outer space! |
+| `room-beach.mp3` | A seaside house! |
 | `fire-level.mp3` | A new place to help! |
 | `fire-next.mp3` | Tap the green arrow to go somewhere new! |
+| `meteor-start.mp3` | Shooting stars! Catch them in your bucket! |
+| `meteor-done.mp3` | You kept all the dinosaurs safe! Hooray! |
 | `storm-coming.mp3` | Here comes a big rainy storm! |
 | `storm-over.mp3` | The storm is over. Look, the sun! |
 | `raining-pets.mp3` | It's raining cats and dogs! |
@@ -142,6 +169,10 @@ Said when a name button is touched (player nicknames and pet names) and in "Welc
 | `name-Cocoa.mp3` | Cocoa |
 | `name-Daisy.mp3` | Daisy |
 | `name-Muffin.mp3` | Muffin |
+| `name-Rex.mp3` | Rex |
+| `name-Spike.mp3` | Spike |
+| `name-Stompy.mp3` | Stompy |
+| `name-Dino.mp3` | Dino |
 | `name-Waddles.mp3` | Waddles |
 | `name-Nibbles.mp3` | Nibbles |
 | `name-Whiskers.mp3` | Whiskers |
@@ -474,6 +505,11 @@ Played while she strokes a pet in the close-up view in Pet Care (it loops while 
 
 | File | Say |
 |---|---|
+| `purr-trex.mp3` | a low, rumbly happy growl |
+| `purr-trike.mp3` | a low, happy rumble |
+| `purr-stego.mp3` | a deep, sleepy rumble |
+| `purr-bronto.mp3` | a slow, deep hum |
+| `purr-babydino.mp3` | a squeaky happy chirp |
 | `purr-cat.mp3` | a long, happy purr (a real cat purring is best) |
 | `purr-dog.mp3` | a happy, sleepy dog groan or soft pant |
 | `purr-bunny.mp3` | a bunny "tooth purr", soft chattering teeth |

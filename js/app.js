@@ -472,6 +472,7 @@
       voicesSection(),
       timerSection(),
       pinSection(),
+      fruitSection(),
       backupSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
@@ -560,6 +561,20 @@
     return h('section', {}, h('h3', {}, 'Voices'),
       h('p', {}, 'Record your own voice for the games (a male and a female voice can be mixed), switch off lines you don\u2019t want, and choose how often the games cheer.'),
       h('p', { class: 'fine' }, `Recorded so far: male ${n('male')}, female ${n('female')} of ${keys.length} lines.`), b);
+  }
+
+  // Fruit Splash for older kids: naughty water balloons that shake the screen, spray water and take points away.
+  function fruitSection() {
+    const cur = store.settings.fruitAge === 'big' ? 'big' : 'little';
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Fruit Splash age' });
+    for (const [id, label] of [['little', 'Little kids'], ['big', 'Bigger kids']]) {
+      const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === id) }, label);
+      b.addEventListener('click', () => { store.settings.fruitAge = id; store.save(); renderParent(); });
+      seg.append(b);
+    }
+    return h('section', {}, h('h3', {}, 'Fruit Splash age'),
+      h('p', {}, 'Little kids: only happy fruit, nothing is ever lost. Bigger kids: water balloons float up too. Popping one shakes the screen, splashes water everywhere and takes 5 fruit points away (never stars).'),
+      seg);
   }
 
   function pinSection() {

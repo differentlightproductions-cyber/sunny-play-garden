@@ -728,3 +728,13 @@ body { position: fixed; inset: 0; width: 100%; }
   .pg-dot { width: 14px; height: 14px; }
   #hub-games { gap: 4px; }
 }
+
+/* ---- Fruit Splash: theme picker */
+.fruit-theme-btn { position: absolute; z-index: 6; top: calc(var(--safe-t) + var(--edge)); left: calc(var(--safe-l) + var(--edge) + var(--ui) + 12px); width: var(--ui); height: var(--ui); border: 0; border-radius: 50%; background: #fff; box-shadow: 0 6px 0 rgba(90, 63, 94, .16), 0 12px 20px rgba(90, 63, 94, .14); display: grid; place-items: center; padding: 0; }
+.fruit-theme-btn canvas { width: 72%; height: 72%; }
+.fruit-theme-btn:active { transform: translateY(3px); }
+.fruit-themes { position: absolute; z-index: 7; top: calc(var(--safe-t) + var(--edge) + var(--ui) + 16px); left: calc(var(--safe-l) + var(--edge)); display: flex; flex-wrap: wrap; gap: 12px; padding: 12px; max-width: min(92vw, 660px); background: rgba(255, 255, 255, .92); border-radius: 26px; box-shadow: 0 10px 0 rgba(90, 63, 94, .14), 0 18px 30px rgba(90, 63, 94, .2); }
+.ft-tile { border: 5px solid transparent; border-radius: 20px; padding: 0; overflow: hidden; background: #fff; width: clamp(92px, 19vmin, 150px); box-shadow: 0 5px 0 rgba(90, 63, 94, .16); }
+.ft-tile canvas { width: 100%; height: auto; display: block; }
+.ft-tile:active { transform: translateY(3px); }
+.ft-tile.on { border-color: var(--leaf); }

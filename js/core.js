@@ -231,6 +231,7 @@
         case 'turtle': tone(110, .14, { vol: q }); return .16;
         case 'dragonfly': noise(.1, { freq: 5000, sweep: .5, q: 1.2, vol: q * .6 }); return .12;
         case 'cat': tone(600, .22, { slide: 1.5, type: 'triangle', vol: q }); tone(900, .2, { slide: .6, type: 'triangle', vol: q * .8, at: .2 }); return .42;
+        case 'dino': tone(130, .35, { slide: .5, type: 'sawtooth', vol: q * .7 }); tone(95, .4, { slide: .6, type: 'triangle', vol: q, at: .05 }); noise(.3, { freq: 350, sweep: .5, q: .6, vol: q * .5 }); return .4;
         case 'dog': tone(300, .07, { slide: .7, type: 'triangle', vol: q }); tone(320, .07, { slide: .7, type: 'triangle', vol: q, at: .12 }); return .2;
       }
       return 0;
@@ -275,7 +276,7 @@
     purr(kind = 'cat') {
       const c = A.ctx;
       if (!c || !SPG.store.settings.sound) return { set() {}, off() {} };
-      const P = { cat: { rate: 25, f: 230, q: .8, v: .16, hum: 55 }, dog: { rate: 9, f: 160, q: .7, v: .14, hum: 70 }, bunny: { rate: 38, f: 950, q: 1.4, v: .07, hum: 0 }, bear: { rate: 16, f: 140, q: .6, v: .17, hum: 50 }, fox: { rate: 21, f: 340, q: 1, v: .13, hum: 60 }, panda: { rate: 13, f: 190, q: .7, v: .15, hum: 52 }, frog: { rate: 11, f: 280, q: 2, v: .09, hum: 80 } }[kind] || { rate: 25, f: 230, q: .8, v: .15, hum: 55 };
+      const P = { cat: { rate: 25, f: 230, q: .8, v: .16, hum: 55 }, dog: { rate: 9, f: 160, q: .7, v: .14, hum: 70 }, bunny: { rate: 38, f: 950, q: 1.4, v: .07, hum: 0 }, bear: { rate: 16, f: 140, q: .6, v: .17, hum: 50 }, fox: { rate: 21, f: 340, q: 1, v: .13, hum: 60 }, panda: { rate: 13, f: 190, q: .7, v: .15, hum: 52 }, frog: { rate: 11, f: 280, q: 2, v: .09, hum: 80 }, trex: { rate: 6, f: 95, q: .6, v: .2, hum: 38 }, trike: { rate: 8, f: 110, q: .6, v: .18, hum: 42 }, stego: { rate: 7, f: 105, q: .6, v: .18, hum: 40 }, bronto: { rate: 5, f: 85, q: .5, v: .18, hum: 34 }, babydino: { rate: 15, f: 240, q: .8, v: .14, hum: 70 } }[kind] || { rate: 25, f: 230, q: .8, v: .15, hum: 55 };
       const buf = c.createBuffer(1, c.sampleRate, c.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const src = c.createBufferSource(); src.buffer = buf; src.loop = true;

@@ -76,7 +76,7 @@
   // The names in the name pickers (players and pets) are real lines too, so they can be recorded in the grown-ups' voice.
   const PICK_NAMES = {
     nicks: ['Sunny', 'Bunny', 'Sprout', 'Star', 'Peanut', 'Buttercup', 'Pumpkin', 'Ladybug', 'Honey', 'Dot', 'Bee', 'Twinkle'],
-    pets: ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle', 'Waddles', 'Nibbles', 'Whiskers', 'Snowball', 'Ginger', 'Bubbles', 'Oreo', 'Pepper', 'Fluffy', 'Sparkle', 'Bean', 'Noodle']
+    pets: ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle', 'Rex', 'Spike', 'Stompy', 'Dino', 'Waddles', 'Nibbles', 'Whiskers', 'Snowball', 'Ginger', 'Bubbles', 'Oreo', 'Pepper', 'Fluffy', 'Sparkle', 'Bean', 'Noodle']
   };
   for (const n of new Set([...PICK_NAMES.nicks, ...PICK_NAMES.pets])) LINES['name/' + n] = n;
   Object.assign(LINES, { 'hello': 'Hello!', 'welcome-home': 'Welcome home,' });
@@ -88,7 +88,7 @@
   const SOUNDS = {};
   for (const k of CRITTERS) SOUNDS['critter/' + k] = CRITTER_NOISE[k];
   // Purring and happy sounds for the close-up petting in Pet Care. Without a recording the game makes a soft synthesized purr.
-  const PURRS = { cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
+  const PURRS = { trex: 'a low, rumbly happy growl', trike: 'a low, happy rumble', stego: 'a deep, sleepy rumble', bronto: 'a slow, deep hum', babydino: 'a squeaky happy chirp', cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
   for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
   const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
 

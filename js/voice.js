@@ -29,7 +29,7 @@
     'fire-start': 'Some little fires! Spray them with water!', 'fire-pet': 'Tap the pet to help them down!', 'fire-done': 'Everyone is safe! Hooray!',
     'band-start': 'Touch the friends to make music!', 'band-copy': 'Listen... now you play!', 'band-song': 'Play some notes, then touch the red button!',
     'train-start': 'All aboard! Fill up the train!', 'train-go': 'Choo choo! Off we go!', 'train-wrong': 'Try another one!',
-    'puzzle-start': 'Put the picture together!', 'puzzle-done': 'You made the picture!',
+    'puzzle-start': 'Put the picture together!', 'puzzle-done': 'You made the picture!', 'puzzle-next': 'Tap the green arrow for another puzzle!',
     'care-start': 'Take care of your friend!', 'care-food': 'Yum! Thank you!', 'care-clean': 'So fresh and clean!', 'care-sleep': 'Shhh... sleepy time.', 'care-hungry': 'Your friend is hungry!', 'care-dirty': 'Your friend needs a bath!', 'care-tired': 'Your friend is sleepy!',
     'hide-start': 'Who is hiding? Walk around and look!', 'hide-found': 'Found you!', 'hide-done': 'You found everybody!',
     'num/1': 'One!', 'num/2': 'Two!', 'num/3': 'Three!', 'num/4': 'Four!', 'num/5': 'Five!',

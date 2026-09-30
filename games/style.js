@@ -182,7 +182,11 @@
       this.stage.append(this.toolBar, this.diceBtn, this.showBtn);
       this.tabs = el('div', 'st-tabs'); this.body = el('div', 'st-body'); this.colors = el('div', 'st-colors');
       this.body.setAttribute('data-scroll', '');
-      this.panel = el('section', 'st-panel', this.tabs, this.body, this.colors);
+      this.more = btn('st-more', 'See more', icon('left'));
+      this.more.addEventListener('click', () => { this.body.scrollBy({ top: Math.max(120, this.body.clientHeight * .8), behavior: 'smooth' }); sfx.tap(); });
+      this.body.addEventListener('scroll', () => this.updateMore(), { passive: true });
+      this.bodyWrap = el('div', 'st-bodywrap', this.body, this.more);
+      this.panel = el('section', 'st-panel', this.tabs, this.bodyWrap, this.colors);
       this.root.append(this.stage, this.panel);
       this.cv.addEventListener('pointerdown', e => this.pDown(e));
       this.cv.addEventListener('pointermove', e => this.pMove(e));
@@ -223,7 +227,7 @@
       }
       const T = this.tab;
       if (T === 'who') {
-        const g = el('div', 'st-grid');
+        const g = el('div', 'st-grid st-friends');
         PRESETS.forEach((_, i) => { g.append(this.tile(cv => drawThumb(cv, this.bag.cur === i ? look : (this.bag.kids[i] ? Object.assign(baseLook(i), this.bag.kids[i]) : baseLook(i)), FOCUS.who), this.bag.cur === i, 'who-' + i, () => { this.saveNow(); this.loadKid(i); this.hop = .8; sfx.chime(); this.renderPanel(); })); });
         this.body.append(g, this.section('skin', 'Skin', this.swatchRow('skin', P.SKIN, 'say-skin', { title: 'skin', kind: 'skin', big: true })), this.section('eyes', 'Eyes', this.swatchRow('eyes', P.EYES, 'say-eyes', { title: 'eyes', kind: 'eyes', big: true })));
       } else if (T === 'hair') {
@@ -253,7 +257,9 @@
         this.body.append(g);
       }
       if (keep) this.body.scrollTop = top;
+      requestAnimationFrame(() => this.updateMore());
     }
+    updateMore() { const b = this.body; this.more.classList.toggle('show', b.scrollHeight - b.clientHeight - b.scrollTop > 24); }
     thumbLook(cat, id) {
       const l = Object.assign({}, this.look);
       if (cat === 'dress') { l.dress = id; l.hat = null; }

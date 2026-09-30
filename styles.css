@@ -907,3 +907,45 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
   body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 4.6em)); height: min(100cqw, calc(100cqh - 4.6em)); }
 }
 @media (max-height: 520px) and (orientation: landscape) { #hub-games .card { font-size: .8rem; } #hub-games .card-name { padding: .08em .6em .1em; } #hub-games .card canvas { width: min(100cqw, calc(100cqh - 2.6em)); } body.night #hub-games .lamp { display: none; } }
+
+/* ---- hub, landscape tablets and computers: arrows at the sides so the icons get the room; icons as big as possible ---- */
+@media (orientation: landscape) {
+  #hub-games { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr) auto; column-gap: clamp(6px, 1.6vmin, 20px); row-gap: 0; }
+  #hub-games .pages { grid-column: 2; grid-row: 1; }
+  #hub-games .pg-nav { display: contents; }
+  #hub-games .pg-arrow { align-self: center; }
+  #hub-games .pg-arrow:first-child { grid-column: 1; grid-row: 1; }
+  #hub-games .pg-arrow:last-child { grid-column: 3; grid-row: 1; }
+  #hub-games .pg-dots { grid-column: 2; grid-row: 2; justify-self: center; padding: 4px 0 2px; }
+  #hub-games .card { font-size: clamp(.95rem, 2.3vmin, 1.4rem); }
+  #hub-games .card canvas { width: min(100cqw, calc(100cqh - 2.9em)); }
+  body.night #hub-games .lamp { width: calc(min(100cqw, calc(100cqh - 2.9em)) * .34); }
+  body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 2.9em)); height: min(100cqw, calc(100cqh - 2.9em)); }
+}
+/* ---- Style Studio: pickers that show every choice at once, and a bouncing arrow when there is more below ---- */
+.st-sw-row.big { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: clamp(4px, 1vmin, 10px); justify-items: center; }
+.st-sw-row.big .st-sw { width: 100%; height: auto; aspect-ratio: 1; max-width: 88px; }
+.st-body { position: relative; }
+.st-more { position: absolute; right: 10px; bottom: 8px; width: clamp(48px, 8vmin, 72px); height: clamp(48px, 8vmin, 72px); border: 0; border-radius: 50%; background: var(--leaf); color: #fff; display: none; place-items: center; box-shadow: 0 5px 0 var(--leaf-edge), 0 8px 14px rgba(60, 100, 70, .3); z-index: 5; animation: stBounce 1.4s ease-in-out infinite; }
+.st-more.show { display: grid; }
+.st-more svg { width: 60%; height: 60%; transform: rotate(-90deg); }
+@keyframes stBounce { 0%, 100% { translate: 0 0; } 50% { translate: 0 6px; } }
+.st-bodywrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.st-bodywrap .st-body { flex: 1; }
+.st-friends { grid-template-columns: repeat(auto-fill, minmax(clamp(56px, 10vmin, 96px), 1fr)); }
+/* landscape: the name pill sits over the bottom of the icon so the icon can be as big as the row allows */
+@media (orientation: landscape) {
+  #hub-games .card { gap: 0; }
+  #hub-games .card-name { position: relative; z-index: 4; margin-top: -1.5em; box-shadow: 0 3px 0 rgba(90, 63, 94, .2), 0 0 0 3px rgba(255, 255, 255, .55); }
+  #hub-games .card canvas { width: min(100cqw, calc(100cqh - .9em)); }
+  body.night #hub-games .card canvas { width: min(100cqw, calc(100cqh - 2.1em)); }
+  body.night #hub-games .lamp { width: calc(min(100cqw, calc(100cqh - 2.1em)) * .34); }
+  body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 2.1em)); height: min(100cqw, calc(100cqh - 2.1em)); }
+  .shopfront { height: clamp(78px, 13vh, 130px); }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  #hub-games .card canvas, body.night #hub-games .card canvas { width: min(100cqw, calc(100cqh - .8em)); }
+  .hub-shop { padding-bottom: 6px; }
+  .shopfront { height: 54px; }
+}
+@media (max-height: 520px) and (orientation: landscape) { #hub-games .card-name { margin-top: -1.05em; font-size: .78rem; } }

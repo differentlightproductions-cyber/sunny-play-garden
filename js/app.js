@@ -110,9 +110,18 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'] };
   function renderCards() {
-    const games = SPG.games.slice().sort((a, b) => a.order - b.order);
+    const all = SPG.games.slice().sort((a, b) => a.order - b.order);
+    const games = all.filter(g => !g.shop), shops = all.filter(g => g.shop);
+    const paint = (canvas, g) => () => {
+      const r = canvas.getBoundingClientRect();
+      if (!r.width) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+      const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.icon(c, r.width, r.height);
+    };
     $('hub-games').dataset.n = games.length;
     $('hub-games').replaceChildren(...games.map((g, i) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
@@ -120,19 +129,20 @@
       const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-i * 1.1}s` },
         canvas, h('span', { class: 'card-name' }, h('span', {}, g.name), h('span', { class: 'go' }, icon('play'))));
       SPG.ui.press(card, () => openGame(g));
-      card._draw = () => {
-        const r = canvas.getBoundingClientRect();
-        if (!r.width) return;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
-        const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-        g.icon(c, r.width, r.height);
-      };
+      card._draw = paint(canvas, g);
       return card;
+    }));
+    // Shops are not games: they get their own storefront under the games.
+    $('hub-shop').replaceChildren(...shops.map(g => {
+      const canvas = document.createElement('canvas');
+      const front = h('button', { class: 'shopfront', type: 'button', 'aria-label': g.name }, canvas, h('span', { class: 'shop-sign' }, g.name));
+      SPG.ui.press(front, () => openGame(g));
+      front._draw = paint(canvas, g);
+      return front;
     }));
     drawCards();
   }
-  function drawCards() { $('hub-games').querySelectorAll('.card').forEach(c => c._draw && c._draw()); }
+  function drawCards() { document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
 
   /* ------------------------------------------------------------ games */
   function openGame(g) {

@@ -232,7 +232,7 @@
   // Coloring Book has its own gentler music-box loop that is on by default (and has its own switch).
   const CHORDS = [[261.6, 329.6, 392], [220, 261.6, 329.6], [174.6, 220, 261.6], [196, 246.9, 293.7]];
   const BOX = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
-  let musicTimer = 0, musicKey = '', beat = 0, mel = 2, scene = null;
+  let musicTimer = 0, musicKey = '', beat = 0, mel = 2, scene = null, theme = null;
   const musicStep = () => {
     if (!A.ctx || document.hidden) return;
     const ch = CHORDS[Math.floor(beat / 4) % CHORDS.length];
@@ -252,20 +252,69 @@
     }
     beat++;
   };
+
+  // Themed music for the Coloring Book. Instrumental only (simple synth voices), and always quiet.
+  // Each theme is a short written loop: a melody per bar (0 = rest), a bass note and a chord per bar.
+  const THEMES = {
+    // Kids' spooky: a tiptoeing waltz in D minor, plucked strings and a little xylophone.
+    halloween: {
+      ms: 330, per: 6,
+      bass: [73.42, 110, 73.42, 98, 73.42, 110, 98, 110], chords: [[293.66, 349.23, 440], [277.18, 329.63, 440], [293.66, 349.23, 440], [293.66, 392, 466.16], [293.66, 349.23, 440], [277.18, 329.63, 440], [293.66, 392, 466.16], [277.18, 329.63, 440]],
+      melody: [[440, 0, 349.23, 0, 293.66, 0], [554.37, 0, 440, 0, 329.63, 0], [349.23, 392, 440, 466.16, 440, 392], [440, 0, 0, 0, 0, 0], [587.33, 0, 466.16, 0, 349.23, 0], [554.37, 0, 440, 0, 329.63, 0], [349.23, 392, 440, 466.16, 554.37, 466.16], [440, 0, 0, 0, 0, 0]],
+      play(bar, i, m, ch, bass, n) {
+        if (i === 0) tone(bass, .55, { type: 'triangle', vol: .05 });
+        if (i === 2 || i === 4) ch.forEach(f => tone(f, .17, { type: 'triangle', vol: .017 }));
+        if (m) { tone(m, .24, { type: 'triangle', vol: .05 }); tone(m * 2, .1, { type: 'sine', vol: .012 }); }
+        if (i === 4 && bar % 4 === 3) tone(1174.66, .35, { type: 'sine', vol: .022 });          // xylophone tinkle at the end of a phrase
+        if (i === 5 && bar % 8 === 7 && n % 2) noise(.16, { freq: 5200, sweep: .35, q: 1, vol: .016 }); // a tiny bat flutter
+      }
+    },
+    // Relaxed old-school children's tune: warm woodwind melody over a gentle walking bass and brushes.
+    thanksgiving: {
+      ms: 430, per: 8,
+      bass: [98, 82.41, 130.81, 146.83, 98, 130.81, 146.83, 98], chords: [[196, 246.94, 293.66], [164.81, 196, 246.94], [261.63, 329.63, 392], [293.66, 369.99, 440], [196, 246.94, 293.66], [261.63, 329.63, 392], [293.66, 369.99, 440], [196, 246.94, 293.66]],
+      melody: [[392, 0, 493.88, 0, 587.33, 0, 493.88, 0], [659.25, 0, 587.33, 0, 493.88, 0, 392, 0], [523.25, 0, 659.25, 0, 523.25, 0, 440, 0], [440, 0, 493.88, 0, 587.33, 0, 0, 0], [392, 440, 493.88, 587.33, 493.88, 0, 392, 0], [523.25, 0, 587.33, 659.25, 523.25, 0, 392, 0], [587.33, 0, 493.88, 0, 440, 0, 493.88, 0], [392, 0, 0, 0, 0, 0, 0, 0]],
+      play(bar, i, m, ch, bass) {
+        if (i === 0 || i === 4) tone(i === 0 ? bass : bass * 1.5, .5, { type: 'triangle', vol: .055 });
+        if (i === 2 || i === 6) { ch.forEach((f, k) => tone(f, .3, { type: 'sine', vol: .016, at: k * .02 })); noise(.06, { freq: 6500, q: .5, vol: .012 }); } // soft strum and brush
+        if (m) { tone(m, .55, { type: 'triangle', vol: .04 }); tone(m * 2, .4, { type: 'sine', vol: .009 }); }
+      }
+    },
+    // Christmas: sleigh bells, a glockenspiel tune and warm chords in C major.
+    christmas: {
+      ms: 300, per: 8,
+      bass: [130.81, 110, 87.31, 98, 130.81, 110, 87.31, 98], chords: [[261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66], [261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66]],
+      melody: [[659.25, 0, 783.99, 0, 1046.5, 0, 783.99, 0], [880, 0, 783.99, 0, 659.25, 0, 523.25, 0], [698.46, 0, 880, 0, 1046.5, 0, 880, 0], [783.99, 0, 698.46, 0, 587.33, 0, 0, 0], [1046.5, 0, 880, 0, 783.99, 0, 659.25, 0], [659.25, 783.99, 880, 0, 1046.5, 0, 880, 0], [880, 0, 1046.5, 0, 1174.66, 0, 1046.5, 0], [1046.5, 0, 783.99, 0, 523.25, 0, 0, 0]],
+      play(bar, i, m, ch, bass) {
+        if (i === 0) { ch.forEach((f, k) => tone(f, 2.2, { type: 'sine', vol: .018, at: k * .04 })); tone(bass, .9, { type: 'triangle', vol: .05 }); }
+        if (i === 4) tone(bass * 1.5, .5, { type: 'triangle', vol: .035 });
+        if (i % 2 === 0) noise(.05, { freq: 7000, q: 2.5, vol: i % 4 === 0 ? .03 : .02 }), noise(.04, { freq: 8200, q: 3, vol: .015, at: .05 }); // sleigh bells
+        if (m) { tone(m, 1.1, { type: 'sine', vol: .04 }); tone(m * 3, .3, { type: 'sine', vol: .008 }); }
+      }
+    }
+  };
+  let tbar = 0, tstep = 0, tpass = 0;
+  const themeStep = th => () => {
+    if (!A.ctx || document.hidden) return;
+    const bar = tbar % th.melody.length, m = th.melody[bar][tstep];
+    th.play(tbar, tstep, m, th.chords[bar], th.bass[bar], tpass);
+    if (++tstep >= th.per) { tstep = 0; tbar++; if (tbar % th.melody.length === 0) tpass++; }
+  };
   SPG.music = {
     sync() {
       const s = SPG.store.settings;
-      const key = scene || 'main';
+      const key = scene ? scene + ':' + (theme || '') : 'main';
       const want = !document.hidden && s.sound && (scene === 'color' ? s.colorMusic !== false : s.music);
       if (musicTimer && (!want || key !== musicKey)) { clearInterval(musicTimer); musicTimer = 0; }
       if (want && !musicTimer) {
         musicKey = key;
-        const step = scene === 'color' ? boxStep : musicStep;
-        step(); musicTimer = setInterval(step, scene === 'color' ? 640 : 950);
+        const th = scene === 'color' && THEMES[theme];
+        const step = th ? themeStep(th) : scene === 'color' ? boxStep : musicStep;
+        step(); musicTimer = setInterval(step, th ? th.ms : scene === 'color' ? 640 : 950);
       }
     },
-    // Switch the music to a named scene ('color') or back to the normal one (null).
-    scene(name) { scene = name; beat = 0; SPG.music.sync(); }
+    // Switch the music to a scene ('color') with an optional theme ('halloween', 'thanksgiving', 'christmas'), or back to normal (null).
+    scene(name, th) { if (name !== scene || (th || null) !== theme) { tbar = 0; tstep = 0; tpass = 0; beat = 0; } scene = name; theme = th || null; SPG.music.sync(); }
   };
 
   // A small "icon + number" pill next to the stars, for counting things (fruits sliced, drops caught...).

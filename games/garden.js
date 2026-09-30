@@ -155,7 +155,7 @@
     }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
     pause() { this.running = false; cancelAnimationFrame(this.raf); }
-    destroy() { this.pause(); clearTimeout(this.later); this.canvas.remove(); this.bar.remove(); this.tray.remove(); this.steps.remove(); this.book?.remove(); this.counter.el.remove(); }
+    destroy() { this.pause(); clearTimeout(this.later); this.canvas.remove(); this.bar.remove(); this.tray.remove(); this.steps.remove(); this.book?.remove(); this.dialog?.el.remove(); this.counter.el.remove(); }
 
     save() {
       this.bag.plots = this.plots.map(p => p.kind === 'bare' ? null : p.kind === 'hole' ? { k: 'hole', level: p.level } : { k: 'plant', type: p.type, stage: p.stage, loose: p.loose });
@@ -243,6 +243,31 @@
       cr.goal = i; cr.tx = spot.x; cr.ty = spot.y; cr.wait = 99;
     }
 
+    // Saying goodbye needs a second, clear step so it can never happen by accident.
+    askGoodbye(cr) {
+      if (this.dialog) return;
+      const name = CREATURES[cr.kind].name.toLowerCase();
+      const canvas = el('canvas', 'gd-bye-art'); canvas.width = canvas.height = 240;
+      const c = canvas.getContext('2d'), f = cr.kind in FLIP ? FLIP[cr.kind] : 1;
+      c.translate(120, 165); if (f) c.scale(f, 1); art.creature(c, cr.kind, 140, 0, false);
+      const armed = { t: 0 };
+      const btn = (cls, label, emoji, fn) => {
+        const b = el('button', 'gd-bye-btn ' + cls, el('span', 'gd-bye-emoji', emoji), el('span', '', label)); b.type = 'button';
+        b.addEventListener('pointerdown', () => { armed.b = b; armed.t = performance.now(); });
+        b.addEventListener('click', e => { if ((e.detail === 0 || armed.b === b) && performance.now() - this.dialog.t0 > 400) fn(); armed.b = null; });
+        return b;
+      };
+      const close = () => { this.dialog.el.remove(); this.dialog = null; voice.stop(); };
+      const stay = btn('stay', 'Stay', '\u{1F49A}', () => { sfx.tap(); close(); });
+      const bye = btn('bye', 'Bye-bye', '\u{1F44B}', () => { const target = cr; close(); if (this.creatures.includes(target)) this.sendOff(target); });
+      const sheet = el('div', 'gd-bye-sheet', canvas, el('h2', '', `Say bye-bye to the ${name}?`), el('p', '', 'Tap the soft pink button to say bye-bye. Tap the green one to keep your friend.'), el('div', 'gd-bye-row', stay, bye));
+      const overlay = el('div', 'gd-bye', sheet);
+      this.host.append(overlay);
+      this.dialog = { el: overlay, t0: performance.now() };
+      sfx.tap(); voice.say('confirm-bye');
+    }
+    back() { if (this.dialog) { this.dialog.el.remove(); this.dialog = null; voice.stop(); return true; } return false; }
+
     // Say goodbye: the friend waves, then heads back to the wild off the edge of the screen.
     sendOff(cr) {
       this.stopEating(cr);
@@ -274,7 +299,7 @@
       for (let i = this.creatures.length - 1; i >= 0; i--) {
         const cr = this.creatures[i];
         if (!cr.leaving && Math.hypot(x - cr.x, y - (cr.y - cr.s * .3)) < cr.s * 1.6 + 18) {
-          if (this.tool === 'free') { this.sendOff(cr); return; }
+          if (this.tool === 'free') { this.askGoodbye(cr); return; }
           cr.jump = 1; sfx.boing(); this.fx.burst(cr.x, cr.y - cr.s, 6, { colors: ['#ff7a8a', '#ff9db8'], speed: 120, g: -60, life: .9, size: 7, shape: 'heart' });
           voice.sound('critter/' + cr.kind, 'creature/' + cr.kind); return;
         }
@@ -492,7 +517,9 @@
     /* ---- loop ---- */
     tick(now) {
       if (!this.running) return;
-      const dt = Math.min((now - this.last) / 1000, .05); this.last = now; this.t += dt;
+      const dt = Math.min((now - this.last) / 1000, .05); this.last = now;
+      if (this.dialog) { this.draw(); this.raf = requestAnimationFrame(this.tick); return; } // everything waits while she decides
+      this.t += dt;
       if (this.nudge > 0) this.nudge -= dt;
       this.plots.forEach((p, i) => {
         if (i >= this.slotCount()) return;

@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 30 short lines.
+1. **Cheering** and **Prompts**: about 31 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -65,6 +65,7 @@ Short lines that tell her what to do.
 | `new-friend.mp3` | A new friend! |
 | `new-seeds.mp3` | New seeds to plant! |
 | `bigger-garden.mp3` | Your garden got bigger! |
+| `confirm-bye.mp3` | Do you want to say bye-bye? Tap the soft pink button to say bye-bye, or the green one to stay. |
 | `break-time.mp3` | Time for a little rest! |
 
 ## Letter names (A to Z)

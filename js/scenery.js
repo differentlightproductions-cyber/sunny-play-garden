@@ -114,6 +114,7 @@
     IDS, THEMES,
     // o.sun / o.clouds can be false when a game draws its own; o.weather false skips snow, leaves and fireflies
     draw(c, w, h, t, id, o = {}) {
+      if (SPG.night && SPG.night.on()) id = 'night';   // night mode: every place is under the stars
       const th = THEMES[id] || THEMES.meadow;
       art.scene(c, w, h, t, {
         sky: th.sky, hill: th.hill, showSun: false, clouds: false,

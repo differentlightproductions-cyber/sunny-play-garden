@@ -472,6 +472,7 @@
       voicesSection(),
       timerSection(),
       pinSection(),
+      nightSection(),
       fruitSection(),
       backupSection(),
       safeSection, players,
@@ -564,6 +565,19 @@
   }
 
   // Fruit Splash for older kids: naughty water balloons that shake the screen, spray water and take points away.
+  function nightSection() {
+    const cur = SPG.night.mode();
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Night mode' });
+    for (const [id, label] of [['off', 'Day'], ['on', 'Night'], ['auto', 'Auto']]) {
+      const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === id) }, label);
+      b.addEventListener('click', () => { SPG.night.set(id); renderParent(); });
+      seg.append(b);
+    }
+    return h('section', {}, h('h3', {}, 'Night mode'),
+      h('p', {}, 'Tones everything down for bedtime: a night sky behind the games, softer colors and quieter sounds. Auto switches on from 7 in the evening until 7 in the morning. There is also a moon button on the games page.'),
+      seg);
+  }
+
   function fruitSection() {
     const cur = store.settings.fruitAge === 'big' ? 'big' : 'little';
     const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Fruit Splash age' });
@@ -635,6 +649,11 @@
 
   /* ------------------------------------------------------------ boot */
   safe.init();
+  SPG.night.apply(); setInterval(() => SPG.night.apply(), 60000);
+  const nightBtn = $('hub-night');
+  const syncNight = () => nightBtn.setAttribute('aria-pressed', String(SPG.night.on()));
+  SPG.night.listeners.push(syncNight); syncNight();
+  nightBtn.addEventListener('click', () => { SPG.night.set(SPG.night.on() ? 'off' : 'on'); SPG.sfx.tap(); });
   renderCards();
   if (store.profiles.length) { store.setActive(store.active?.id ?? store.profiles[0].id); renderWho(); } else openSetup(false);
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

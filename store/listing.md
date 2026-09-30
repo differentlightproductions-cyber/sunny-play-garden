@@ -28,7 +28,8 @@ Bunny Band: touch the animal friends to make music, copy little tunes, and recor
 
 Choo-Choo Train: load the train cars with the right colors, shapes and numbers.
 
-Hide and Seek: find the garden friends hiding behind the bushes.
+Hide and Seek: walk around a map and find the garden friends hiding behind the bushes.
+Style Studio: dress up girls and boys in princess gowns, crowns and wings, do their hair and make-up, paint their nails and send them down the runway.
 
 GROW A GARDEN
 Learn how plants grow, step by step: dig the hole with the shovel, drop in a seed, pat the dirt down, then pour water from the can. Watch it grow, unlock new seeds, and meet garden friends like bees, bunnies, frogs and hedgehogs.

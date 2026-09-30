@@ -10,7 +10,7 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { night: 'off', voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
@@ -138,7 +138,7 @@
         if (!C) return;
         A.ctx = new C();
         A.master = A.ctx.createGain();
-        A.master.gain.value = .85;
+        A.master.gain.value = SPG.night && SPG.night.on() ? .6 : .85;
         A.master.connect(A.ctx.destination);
       }
       if (A.ctx.state === 'suspended') A.ctx.resume();
@@ -183,6 +183,21 @@
   }
 
   const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5]; // C major pentatonic-ish
+  // Night mode: 'off', 'on', or 'auto' (dark from 7 in the evening until 7 in the morning). The whole app is toned down:
+  // a dim navy veil over everything, a night-sky backdrop, night scenery in every game and quieter sound.
+  SPG.night = {
+    listeners: [],
+    mode() { const m = SPG.store.settings.night; return m === 'on' || m === 'auto' ? m : 'off'; },
+    on() { const m = SPG.night.mode(); if (m === 'on') return true; if (m === 'auto') { const h = new Date().getHours(); return h >= 19 || h < 7; } return false; },
+    apply() {
+      const on = SPG.night.on();
+      document.body.classList.toggle('night', on);
+      if (A.master) A.master.gain.value = on ? .6 : .85;
+      if (SPG.night._last !== on) { SPG.night._last = on; SPG.night.listeners.forEach(f => f(on)); }
+    },
+    set(m) { SPG.store.settings.night = m; SPG.store.save(); SPG.night.apply(); }
+  };
+
   SPG.sfx = {
     tap() { tone(700, .07, { type: 'triangle', vol: .16 }); },
     pop() { tone(380, .13, { slide: 2.4, type: 'sine', vol: .22 }); },

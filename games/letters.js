@@ -629,7 +629,7 @@
   }
 
   SPG.games.push({
-    id: 'letters', name: 'Letter Garden', order: 1,
+    id: 'letters', name: 'Letter Garden', order: 1, dom: true,
     icon(c, w, h) {
       const s = Math.min(w, h * 1.1);
       [['A', -.36, '#ff7a8a', -.12], ['b', 0, '#4fb3e8', .05], ['C', .36, '#59b96e', -.06]].forEach(([ch, dx, col, rot]) => {

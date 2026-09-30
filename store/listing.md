@@ -4,7 +4,7 @@
 Little Sprout Park
 
 ## Short description (max 80)
-Gentle games for little ones: letters, fruit, rain and a garden to grow.
+Gentle games for little ones: letters, fruit, rain, a garden and coloring.
 
 ## Full description (max 4000)
 Little Sprout Park is a calm, colourful collection of games made for little hands (about ages 2 to 6). No ads, no accounts, no scary bits: just gentle play that a child can enjoy on their own, with big buttons and no reading needed.
@@ -20,6 +20,9 @@ Slide the bucket to catch the raindrops from smiling clouds and make a rainbow. 
 
 GROW A GARDEN
 Learn how plants grow, step by step: dig the hole with the shovel, drop in a seed, pat the dirt down, then pour water from the can. Watch it grow, unlock new seeds, and meet garden friends like bees, bunnies, frogs and hedgehogs.
+
+COLORING BOOK
+Twenty friendly pictures to color: bunnies, bears, flowers, bees and more. Tap to fill a shape, paint with the brush (paint stays inside the lines), rub out mistakes, and undo as many times as you like. Finish a picture to win a golden frame, and save any picture to keep.
 
 FOR GROWN-UPS
 - No ads, no in-app purchases, no accounts, no tracking. Everything stays on the device.

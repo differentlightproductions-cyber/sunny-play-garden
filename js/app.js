@@ -108,9 +108,10 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], garden: ['#dff5d0', '#a9d98f'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'] };
   function renderCards() {
     const games = SPG.games.slice().sort((a, b) => a.order - b.order);
+    $('hub-games').dataset.n = games.length;
     $('hub-games').replaceChildren(...games.map((g, i) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
       const canvas = document.createElement('canvas');
@@ -138,7 +139,7 @@
     $('stage-stars').textContent = store.active.stars;
     const host = $('game-host');
     host.replaceChildren();
-    document.body.classList.toggle('in-canvas', g.id !== 'letters');
+    document.body.classList.toggle('in-canvas', !g.dom);
     running = { game: g, inst: null, paused: false };
     running.inst = g.create(host);
     running.inst.start?.();
@@ -222,7 +223,7 @@
       store.settings[key] = !store.settings[key]; store.save();
       sw.setAttribute('aria-checked', String(store.settings[key]));
       SPG.music.sync();
-      if (store.settings[key] && key !== 'music') { key === 'sound' ? SPG.sfx.chime() : voice.say({ say: 'Hello!' }); }
+      if (store.settings[key] && (key === 'sound' || key === 'voice')) { key === 'sound' ? SPG.sfx.chime() : voice.say({ say: 'Hello!' }); }
     });
     return h('div', { class: 'setting' }, h('span', {}, label), sw);
   }
@@ -272,7 +273,7 @@
     players.append(add);
 
     body.replaceChildren(
-      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music')),
+      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music'), toggle('Coloring Book music', 'colorMusic')),
       voicesSection(),
       timerSection(),
       safeSection, players,
@@ -285,7 +286,7 @@
           h('li', {}, 'To unpin later, hold Back and Recent apps together (or swipe up and hold, depending on the tablet).'))),
       h('section', {}, h('h3', {}, 'About'),
         h('p', {}, `Little Sprout Park version ${SPG.version}. No ads, no accounts, no tracking. Everything stays on this device.`),
-        h('p', { class: 'fine' }, 'Names, stars, gardens and any voice recordings are stored only on this device. Nothing is sent to anyone. The full privacy policy is at /privacy.html on this site.')),
+        h('p', { class: 'fine' }, 'Names, stars, gardens, coloring pictures and any voice recordings are stored only on this device. Nothing is sent to anyone. The full privacy policy is at /privacy.html on this site.')),
       h('section', {}, h('h3', {}, 'Voice recordings'),
         h('p', {}, 'Prompts are spoken by the tablet’s built-in voice until you add recordings. See RECORDING.md in the project for the list of lines and where the files go.')));
   }
@@ -356,7 +357,7 @@
     if (!overlays.studio.classList.contains('hidden')) { closeStudio(); return; }
     if (!overlays.parent.classList.contains('hidden')) { closeParent(); return; }
     if (!overlays.fs.classList.contains('hidden') || !overlays.brk.classList.contains('hidden')) return;
-    if (current === 'stage') closeGame();
+    if (current === 'stage') { if (!running.inst.back || !running.inst.back()) closeGame(); }
     else if (current === 'setup' && store.profiles.length) renderWho();
   };
   safe.onFullscreenLost = () => openOverlay(overlays.fs);
@@ -376,5 +377,5 @@
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
   }
-  SPG.app = { closeGame, show, running: () => running };
+  SPG.app = { closeGame, show, running: () => running, askGate };
 })();

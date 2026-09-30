@@ -10,7 +10,7 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] } });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] } });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
@@ -146,13 +146,21 @@
       }
       return 0;
     },
+    // Coloring Book
+    fill(i = 0) { tone(280 + (i % 7) * 34, .2, { slide: 1.9, vol: .2 }); noise(.14, { freq: 1300, sweep: .45, q: .7, vol: .07 }); },
+    brush() { noise(.09, { freq: 2200 + Math.random() * 900, q: 1.1, vol: .03 }); },
+    erase() { noise(.08, { freq: 800 + Math.random() * 300, q: .7, vol: .035 }); },
+    undo() { tone(540, .09, { slide: .6, vol: .13 }); tone(400, .11, { slide: .6, vol: .11, at: .07 }); },
+    cheer() { [0, 2, 4, 5, 7, 5, 7].forEach((n, k) => tone(NOTES[n], .34, { at: k * .1, vol: .17 })); [5, 6, 7].forEach((n, k) => tone(NOTES[n] * 2, .3, { at: .55 + k * .09, vol: .07 })); tone(NOTES[0] / 2, .9, { type: 'triangle', vol: .1 }); },
     pat() { tone(110, .2, { slide: .55, type: 'sine', vol: .34 }); noise(.14, { freq: 500, vol: .12 }); },
     squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); }
   };
 
-  // Soft, slow, generative background music (off by default; a grown-up turns it on).
+  // Soft, slow, generative background music. The main loop is off until a grown-up turns it on; the
+  // Coloring Book has its own gentler music-box loop that is on by default (and has its own switch).
   const CHORDS = [[261.6, 329.6, 392], [220, 261.6, 329.6], [174.6, 220, 261.6], [196, 246.9, 293.7]];
-  let musicTimer = 0, beat = 0;
+  const BOX = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
+  let musicTimer = 0, musicKey = '', beat = 0, mel = 2, scene = null;
   const musicStep = () => {
     if (!A.ctx || document.hidden) return;
     const ch = CHORDS[Math.floor(beat / 4) % CHORDS.length];
@@ -161,12 +169,31 @@
     if (beat % 4 === 0) tone(ch[0] / 2, 3.4, { type: 'triangle', vol: .03 });
     beat++;
   };
+  const boxStep = () => {
+    if (!A.ctx || document.hidden) return;
+    const ch = CHORDS[Math.floor(beat / 8) % CHORDS.length];
+    if (beat % 8 === 0) ch.forEach((f, i) => tone(f, 4.2, { type: 'sine', vol: .022, at: i * .06 }));
+    if (beat % 8 === 0) tone(ch[0] / 2, 4.6, { type: 'triangle', vol: .026 });
+    if (Math.random() > .22) {                       // a wandering music-box tune, with the odd rest
+      mel = Math.max(0, Math.min(BOX.length - 1, mel + [-1, -1, 0, 1, 1, 2, -2][Math.floor(Math.random() * 7)]));
+      tone(BOX[mel], 1.6, { type: 'sine', vol: .04 }); tone(BOX[mel] * 2, .7, { type: 'sine', vol: .011 });
+    }
+    beat++;
+  };
   SPG.music = {
     sync() {
-      const want = SPG.store.settings.music && SPG.store.settings.sound && !document.hidden;
-      if (want && !musicTimer) { musicStep(); musicTimer = setInterval(musicStep, 950); }
-      else if (!want && musicTimer) { clearInterval(musicTimer); musicTimer = 0; }
-    }
+      const s = SPG.store.settings;
+      const key = scene || 'main';
+      const want = !document.hidden && s.sound && (scene === 'color' ? s.colorMusic !== false : s.music);
+      if (musicTimer && (!want || key !== musicKey)) { clearInterval(musicTimer); musicTimer = 0; }
+      if (want && !musicTimer) {
+        musicKey = key;
+        const step = scene === 'color' ? boxStep : musicStep;
+        step(); musicTimer = setInterval(step, scene === 'color' ? 640 : 950);
+      }
+    },
+    // Switch the music to a named scene ('color') or back to the normal one (null).
+    scene(name) { scene = name; beat = 0; SPG.music.sync(); }
   };
 
   // A small "icon + number" pill next to the stars, for counting things (fruits sliced, drops caught...).

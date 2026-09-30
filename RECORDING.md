@@ -106,6 +106,124 @@ Short lines that tell her what to do.
 | `confirm-bye.mp3` | Do you want to say bye-bye? Tap the soft pink button to say bye-bye, or the green one to stay. |
 | `break-time.mp3` | Time for a little rest! |
 
+## Style Studio names
+
+Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".
+
+| File | Say |
+|---|---|
+| `style-tab-who.mp3` | Pick a friend! |
+| `style-tab-hair.mp3` | Hair salon! |
+| `style-tab-makeup.mp3` | Make-up! |
+| `style-tab-dress.mp3` | Princess dresses! |
+| `style-tab-top.mp3` | Tops! |
+| `style-tab-bottom.mp3` | Skirts and pants! |
+| `style-tab-shoes.mp3` | Shoes! |
+| `style-tab-hat.mp3` | Crowns and hats! |
+| `style-tab-extras.mp3` | Sparkly extras! |
+| `style-tab-nails.mp3` | Nail salon! |
+| `style-tab-places.mp3` | Places to go! |
+| `style-who-0.mp3` | Poppy |
+| `style-who-1.mp3` | Maya |
+| `style-who-2.mp3` | Zoe |
+| `style-who-3.mp3` | Ivy |
+| `style-who-4.mp3` | Leo |
+| `style-who-5.mp3` | Sam |
+| `style-who-6.mp3` | Kai |
+| `style-who-7.mp3` | Theo |
+| `style-hair-long.mp3` | Long hair |
+| `style-hair-wavy.mp3` | Wavy hair |
+| `style-hair-ponytail.mp3` | A ponytail |
+| `style-hair-pigtails.mp3` | Pigtails |
+| `style-hair-buns.mp3` | Two buns |
+| `style-hair-braid.mp3` | A braid |
+| `style-hair-bob.mp3` | A bob |
+| `style-hair-short.mp3` | Short hair |
+| `style-hair-spiky.mp3` | Spiky hair |
+| `style-hair-curly.mp3` | Curly hair |
+| `style-hair-topknot.mp3` | A top knot |
+| `style-hair-none.mp3` | No hair |
+| `style-tool-comb.mp3` | A comb! |
+| `style-tool-dryer.mp3` | A hair dryer! |
+| `style-tool-spray.mp3` | Sparkle spray! |
+| `style-tool-bubbles.mp3` | Bubbles! Wash the hair! |
+| `style-dress-ball.mp3` | A ball gown! |
+| `style-dress-aline.mp3` | A party dress! |
+| `style-dress-tutu.mp3` | A ballet tutu! |
+| `style-dress-mermaid.mp3` | A mermaid gown! |
+| `style-dress-petal.mp3` | A flower fairy dress! |
+| `style-dress-sun.mp3` | A sundress! |
+| `style-top-tee.mp3` | A t-shirt |
+| `style-top-tank.mp3` | A tank top |
+| `style-top-stripes.mp3` | A stripy shirt |
+| `style-top-hoodie.mp3` | A hoodie |
+| `style-top-sweater.mp3` | A cozy sweater |
+| `style-top-star.mp3` | A star shirt |
+| `style-top-vest.mp3` | A fancy vest |
+| `style-bottom-skirt.mp3` | A skirt |
+| `style-bottom-shorts.mp3` | Shorts |
+| `style-bottom-jeans.mp3` | Jeans |
+| `style-bottom-leggings.mp3` | Leggings |
+| `style-bottom-tutuskirt.mp3` | A tutu skirt |
+| `style-shoes-sneakers.mp3` | Sneakers |
+| `style-shoes-boots.mp3` | Boots |
+| `style-shoes-sandals.mp3` | Sandals |
+| `style-shoes-glass.mp3` | Glass slippers! |
+| `style-shoes-flats.mp3` | Ballet shoes |
+| `style-hat-crown.mp3` | A crown! |
+| `style-hat-tiara.mp3` | A tiara! |
+| `style-hat-bow.mp3` | A big bow |
+| `style-hat-flowers.mp3` | A flower crown |
+| `style-hat-cap.mp3` | A cap |
+| `style-hat-beanie.mp3` | A woolly hat |
+| `style-hat-party.mp3` | A party hat! |
+| `style-hat-cowboy.mp3` | A cowboy hat |
+| `style-hat-wizard.mp3` | A wizard hat! |
+| `style-hat-bunny.mp3` | Bunny ears! |
+| `style-hat-kitty.mp3` | Kitty ears! |
+| `style-hat-princess.mp3` | A princess hat! |
+| `style-face-glasses.mp3` | Glasses |
+| `style-face-hearts.mp3` | Heart glasses! |
+| `style-face-stars.mp3` | Star glasses! |
+| `style-face-mask.mp3` | A fancy mask |
+| `style-face-stache.mp3` | A silly mustache! |
+| `style-neck-pearls.mp3` | Pearls |
+| `style-neck-heart.mp3` | A heart necklace |
+| `style-neck-star.mp3` | A star necklace |
+| `style-neck-scarf.mp3` | A scarf |
+| `style-neck-bowtie.mp3` | A bow tie |
+| `style-back-cape.mp3` | A cape! |
+| `style-back-fairy.mp3` | Fairy wings! |
+| `style-back-butterfly.mp3` | Butterfly wings! |
+| `style-back-angel.mp3` | Angel wings! |
+| `style-back-pack.mp3` | A backpack |
+| `style-hand-wand.mp3` | A magic wand! |
+| `style-hand-flower.mp3` | Flowers |
+| `style-hand-balloon.mp3` | A balloon! |
+| `style-hand-purse.mp3` | A purse |
+| `style-hand-teddy.mp3` | A teddy bear |
+| `style-hand-lolly.mp3` | A lollipop! |
+| `style-place-0.mp3` | The castle ballroom |
+| `style-place-1.mp3` | The garden |
+| `style-place-2.mp3` | The beach |
+| `style-place-3.mp3` | The salon |
+| `style-place-4.mp3` | Under the stars |
+| `style-place-5.mp3` | The rainbow meadow |
+| `style-say-start.mp3` | Let's get dressed up! |
+| `style-say-show.mp3` | Ta-da! Look at you! You look amazing! |
+| `style-say-nails.mp3` | Pick a color and touch the nails! |
+| `style-say-hair.mp3` | Touch the hair! |
+| `style-say-lips.mp3` | Lipstick! |
+| `style-say-shadow.mp3` | Sparkly eyes! |
+| `style-say-blush.mp3` | Rosy cheeks! |
+| `style-say-freckles.mp3` | Freckles! |
+| `style-say-gems.mp3` | Face jewels! |
+| `style-say-skin.mp3` | Skin color |
+| `style-say-eyes.mp3` | Eye color |
+| `style-say-glitter.mp3` | Glitter! |
+| `style-say-all.mp3` | All the nails! |
+| `style-say-clear.mp3` | Clean nails. |
+
 ## Letter names (A to Z)
 
 Say the name of the letter: "Bee", "Cee".

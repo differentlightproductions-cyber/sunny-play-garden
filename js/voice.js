@@ -44,6 +44,25 @@
     'confirm-bye': 'Do you want to say bye-bye? Tap the soft pink button to say bye-bye, or the green one to stay.',
     'break-time': 'Time for a little rest!'
   };
+  // Style Studio: every tab, friend and clothing name is said out loud when she touches it (she cannot read yet).
+  const STYLE_NAMES = {
+    'tab-who': 'Pick a friend!', 'tab-hair': 'Hair salon!', 'tab-makeup': 'Make-up!', 'tab-dress': 'Princess dresses!', 'tab-top': 'Tops!', 'tab-bottom': 'Skirts and pants!', 'tab-shoes': 'Shoes!', 'tab-hat': 'Crowns and hats!', 'tab-extras': 'Sparkly extras!', 'tab-nails': 'Nail salon!', 'tab-places': 'Places to go!',
+    'who-0': 'Poppy', 'who-1': 'Maya', 'who-2': 'Zoe', 'who-3': 'Ivy', 'who-4': 'Leo', 'who-5': 'Sam', 'who-6': 'Kai', 'who-7': 'Theo',
+    'hair-long': 'Long hair', 'hair-wavy': 'Wavy hair', 'hair-ponytail': 'A ponytail', 'hair-pigtails': 'Pigtails', 'hair-buns': 'Two buns', 'hair-braid': 'A braid', 'hair-bob': 'A bob', 'hair-short': 'Short hair', 'hair-spiky': 'Spiky hair', 'hair-curly': 'Curly hair', 'hair-topknot': 'A top knot', 'hair-none': 'No hair',
+    'tool-comb': 'A comb!', 'tool-dryer': 'A hair dryer!', 'tool-spray': 'Sparkle spray!', 'tool-bubbles': 'Bubbles! Wash the hair!',
+    'dress-ball': 'A ball gown!', 'dress-aline': 'A party dress!', 'dress-tutu': 'A ballet tutu!', 'dress-mermaid': 'A mermaid gown!', 'dress-petal': 'A flower fairy dress!', 'dress-sun': 'A sundress!',
+    'top-tee': 'A t-shirt', 'top-tank': 'A tank top', 'top-stripes': 'A stripy shirt', 'top-hoodie': 'A hoodie', 'top-sweater': 'A cozy sweater', 'top-star': 'A star shirt', 'top-vest': 'A fancy vest',
+    'bottom-skirt': 'A skirt', 'bottom-shorts': 'Shorts', 'bottom-jeans': 'Jeans', 'bottom-leggings': 'Leggings', 'bottom-tutuskirt': 'A tutu skirt',
+    'shoes-sneakers': 'Sneakers', 'shoes-boots': 'Boots', 'shoes-sandals': 'Sandals', 'shoes-glass': 'Glass slippers!', 'shoes-flats': 'Ballet shoes',
+    'hat-crown': 'A crown!', 'hat-tiara': 'A tiara!', 'hat-bow': 'A big bow', 'hat-flowers': 'A flower crown', 'hat-cap': 'A cap', 'hat-beanie': 'A woolly hat', 'hat-party': 'A party hat!', 'hat-cowboy': 'A cowboy hat', 'hat-wizard': 'A wizard hat!', 'hat-bunny': 'Bunny ears!', 'hat-kitty': 'Kitty ears!', 'hat-princess': 'A princess hat!',
+    'face-glasses': 'Glasses', 'face-hearts': 'Heart glasses!', 'face-stars': 'Star glasses!', 'face-mask': 'A fancy mask', 'face-stache': 'A silly mustache!',
+    'neck-pearls': 'Pearls', 'neck-heart': 'A heart necklace', 'neck-star': 'A star necklace', 'neck-scarf': 'A scarf', 'neck-bowtie': 'A bow tie',
+    'back-cape': 'A cape!', 'back-fairy': 'Fairy wings!', 'back-butterfly': 'Butterfly wings!', 'back-angel': 'Angel wings!', 'back-pack': 'A backpack',
+    'hand-wand': 'A magic wand!', 'hand-flower': 'Flowers', 'hand-balloon': 'A balloon!', 'hand-purse': 'A purse', 'hand-teddy': 'A teddy bear', 'hand-lolly': 'A lollipop!',
+    'place-0': 'The castle ballroom', 'place-1': 'The garden', 'place-2': 'The beach', 'place-3': 'The salon', 'place-4': 'Under the stars', 'place-5': 'The rainbow meadow',
+    'say-start': "Let's get dressed up!", 'say-show': 'Ta-da! Look at you! You look amazing!', 'say-nails': 'Pick a color and touch the nails!', 'say-hair': 'Touch the hair!', 'say-lips': 'Lipstick!', 'say-shadow': 'Sparkly eyes!', 'say-blush': 'Rosy cheeks!', 'say-freckles': 'Freckles!', 'say-gems': 'Face jewels!', 'say-skin': 'Skin color', 'say-eyes': 'Eye color', 'say-glitter': 'Glitter!', 'say-all': 'All the nails!', 'say-clear': 'Clean nails.'
+  };
+  for (const [k, v] of Object.entries(STYLE_NAMES)) LINES['style/' + k] = v;
   for (const [l, t] of Object.entries(NAMES)) LINES['letter/' + l] = t;
   for (const [l, t] of Object.entries(PHONICS)) LINES['sound/' + l] = t;
   for (const [l, [w]] of Object.entries(WORDS)) LINES['word/' + l] = w;
@@ -60,7 +79,8 @@
 
   const GROUPS = [
     { id: 'praise', title: 'Cheering', note: 'Said after she does something well. Turn down how often in the "Praise" setting.', test: k => PRAISE.has(k) },
-    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature)\//.test(k) },
+    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style)\//.test(k) },
+    { id: 'style', title: 'Style Studio names', note: 'Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
     { id: 'letters', title: 'Letter names (A to Z)', note: 'Say the name of the letter: "Bee", "Cee".', test: k => k.startsWith('letter/') },
     { id: 'sounds', title: 'Letter sounds (A to Z)', note: 'Say the sound the letter makes: "buh", "kuh", "sss". Not the name.', test: k => k.startsWith('sound/') },
     { id: 'words', title: 'Picture words', note: 'The word for each letter picture: apple, bear, cat...', test: k => k.startsWith('word/') },

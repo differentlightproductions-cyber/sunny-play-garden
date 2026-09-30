@@ -316,8 +316,9 @@
       for (let k = 0; k < car.need; k++) {
         if (car.slots[k]) continue;
         const s = this.slotPos(car, k);
-        c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 3.5; c.setLineDash([7, 6]); c.beginPath(); c.arc(s.x, s.y, s.r * 1.1, 0, TAU); c.stroke(); c.setLineDash([]);
-        c.fillStyle = 'rgba(255,255,255,.22)'; c.beginPath(); c.arc(s.x, s.y, s.r * 1.1, 0, TAU); c.fill();
+        if (car.type === 'shape') { c.save(); c.translate(s.x, s.y); silhouette(c, car.val, s.r * 1.05, 'rgba(255,255,255,.6)'); c.restore(); }   // a ghost of the shape it wants
+        else { c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 3.5; c.setLineDash([7, 6]); c.beginPath(); c.arc(s.x, s.y, s.r * 1.1, 0, TAU); c.stroke(); c.setLineDash([]);
+          c.fillStyle = 'rgba(255,255,255,.22)'; c.beginPath(); c.arc(s.x, s.y, s.r * 1.1, 0, TAU); c.fill(); }
       }
       if (car.filled >= car.need) { c.fillStyle = '#59b96e'; c.beginPath(); c.arc(b.x + b.w - cw * .1, b.y + cw * .1, cw * .075, 0, TAU); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = cw * .025; c.beginPath(); c.moveTo(b.x + b.w - cw * .135, b.y + cw * .1); c.lineTo(b.x + b.w - cw * .105, b.y + cw * .13); c.lineTo(b.x + b.w - cw * .06, b.y + cw * .07); c.stroke(); }
       this.drawWheels(c, b.cx, this.trackY - this.wr, this.wr);

@@ -5,7 +5,13 @@
   const K = SPG.pictureKit;
   const { r1, P, ell, circ, rect, poly, rpoly, spline, curve, line, polar, leaf, strip, dome, drop, star, compound, ring, crescent, face, eye, nose, sky, ground, cloud, INK } = K;
   const stars = (list, id = 'stars') => ({ id, d: compound(...list.map(([x, y, r]) => star(x, y, r, r * .46))) });
-  const moonFull = (x, y, r, id = 'moon') => ({ id, d: circ(x, y, r), det: [{ d: circ(x - r * .3, y - r * .2, r * .16), w: 7 }, { d: circ(x + r * .25, y + r * .28, r * .2), w: 7 }, { d: circ(x + r * .32, y - r * .36, r * .1), w: 7 }] });
+  // A full moon: the moon itself plus three craters that can each be colored on their own.
+  const moonFull = (x, y, r, id = 'moon') => [
+    { id, d: circ(x, y, r) },
+    { id: id + '-c1', d: circ(x - r * .3, y - r * .22, r * .28) },
+    { id: id + '-c2', d: circ(x + r * .3, y + r * .3, r * .28) },
+    { id: id + '-c3', d: circ(x + r * .36, y - r * .42, r * .26) }
+  ];
   const moonCres = (x, y, r, id = 'moon') => ({ id, d: crescent(x, y, r) });
   const hill = (y, id = 'ground', flip = false) => ({ id, d: flip ? `M0 ${y - 30}C260 ${y + 40} 620 ${y - 70} 1000 ${y + 10}V800H0Z` : `M0 ${y}C240 ${y - 80} 600 ${y + 50} 1000 ${y - 40}V800H0Z` });
   // A five-part pumpkin (like the garden one) centered at (cx, cy), scaled by s.
@@ -53,7 +59,7 @@
   const P1 = [
     {
       id: 'jack', name: 'Jack-o-lantern', group: 'halloween', sections: [
-        sky(), stars([[120, 110, 44], [300, 70, 40], [470, 130, 42], [650, 60, 38], [180, 260, 38]]), moonFull(840, 150, 92), hill(640),
+        sky(), stars([[120, 110, 44], [300, 70, 40], [470, 130, 42], [650, 60, 38], [180, 260, 38]]), ...moonFull(840, 150, 92), hill(640),
         { id: 'stem', d: rect(468, 285, 64, 120, 16) },
         ...pumpkin(500, 545, 1.05),
         { id: 'vine', d: leaf(545, 335, 730, 250, 60) }
@@ -74,7 +80,7 @@
     },
     {
       id: 'blackcat', name: 'Black cat', group: 'halloween', sections: [
-        sky(), stars([[110, 90, 44], [300, 160, 38], [660, 70, 42], [520, 230, 36]]), moonFull(810, 160, 96), hill(600),
+        sky(), stars([[110, 90, 44], [300, 160, 38], [660, 70, 42], [520, 230, 36]]), ...moonFull(810, 160, 96), hill(600),
         { id: 'rails', d: compound(rect(0, 556, 1000, 54, 14), rect(0, 656, 1000, 54, 14)) },
         { id: 'pickets', d: compound(...[60, 250, 640, 830].map(x => `M${x} 760V520Q${x + 45} 460 ${x + 90} 520V760Z`)) },
         { id: 'tail', d: spline([[600, 540], [690, 500], [760, 420], [740, 330], [790, 310], [820, 400], [780, 510], [690, 580]]) },
@@ -99,7 +105,7 @@
     },
     {
       id: 'cauldron', name: 'Cauldron', group: 'halloween', sections: [
-        sky(), stars([[110, 100, 44], [330, 70, 40], [650, 110, 42], [880, 250, 38]]), moonFull(150, 260, 86), hill(650),
+        sky(), stars([[110, 100, 44], [330, 70, 40], [650, 110, 42], [880, 250, 38]]), ...moonFull(150, 260, 86), hill(650),
         { id: 'logs', d: compound(ell(365, 730, 105, 28, 12), ell(635, 730, 105, 28, -12)) },
         { id: 'flames', d: compound(rpoly([[330, 730], [370, 600], [420, 730]], 22), rpoly([[450, 730], [500, 570], [550, 730]], 22), rpoly([[580, 730], [630, 610], [670, 730]], 22)) },
         { id: 'legs', d: compound(rect(310, 660, 60, 60, 14), rect(630, 660, 60, 60, 14), rect(470, 675, 60, 50, 14)) },
@@ -112,16 +118,18 @@
     },
     {
       id: 'hauntedhouse', name: 'Haunted house', group: 'halloween', sections: [
-        sky(), stars([[110, 100, 44], [330, 60, 40], [620, 120, 40], [910, 300, 38]]), moonFull(800, 150, 90), hill(650),
+        sky(), stars([[110, 100, 44], [320, 70, 40], [540, 120, 38], [930, 470, 36]]), ...moonFull(800, 150, 90), hill(650),
         { id: 'tree', d: `M60 700L80 480L40 380L90 400L100 330L140 360L160 300L190 380L170 470L190 700Z` },
-        { id: 'tower', d: rect(590, 260, 110, 300) },
-        { id: 'tower-roof', d: rpoly([[570, 270], [645, 130], [720, 270]], 16) },
-        { id: 'house', d: rect(280, 400, 340, 300) },
-        { id: 'roof', d: rpoly([[240, 410], [450, 240], [660, 410]], 20) },
-        { id: 'door', d: `M400 700V580A50 50 0 0 1 500 580V700Z`, det: [{ d: circ(482, 630, 7), f: INK }] },
-        { id: 'windows', d: compound(rect(320, 450, 70, 80, 12), rect(510, 450, 70, 80, 12), rect(620, 350, 60, 80, 30)), det: [{ d: line(355, 450, 355, 530), w: 6 }, { d: line(320, 490, 390, 490), w: 6 }, { d: line(545, 450, 545, 530), w: 6 }, { d: line(510, 490, 580, 490), w: 6 }] },
-        { id: 'path', d: `M420 700L560 700L720 800L300 800Z` },
-        ...bat(800, 300, .55, 'bat-')
+        { id: 'tower', d: rect(560, 290, 120, 410) },
+        { id: 'tower-roof', d: rpoly([[545, 300], [620, 160], [695, 300]], 10) },
+        { id: 'tower-win', d: `M595 420V375A25 25 0 0 1 645 375V420Z`, det: [{ d: line(620, 352, 620, 420), w: 6 }] },
+        { id: 'house', d: rect(240, 430, 340, 270) },
+        { id: 'roof', d: rpoly([[212, 440], [410, 270], [608, 440]], 10) },
+        { id: 'door', d: `M360 700V610A50 50 0 0 1 460 610V700Z`, det: [{ d: circ(446, 655, 7), f: INK }] },
+        { id: 'windows', d: rect(272, 480, 70, 80, 12), det: [{ d: line(307, 480, 307, 560), w: 6 }, { d: line(272, 520, 342, 520), w: 6 }] },
+        { id: 'window-r', d: rect(478, 480, 70, 80, 12), det: [{ d: line(513, 480, 513, 560), w: 6 }, { d: line(478, 520, 548, 520), w: 6 }] },
+        { id: 'path', d: `M360 700L460 700L620 800L220 800Z` },
+        ...bat(810, 310, .55, 'bat-')
       ]
     },
     {
@@ -461,7 +469,7 @@
     },
     {
       id: 'sleigh', name: 'Sleigh ride', group: 'christmas', sections: [
-        sky(), stars([[110, 90, 44], [340, 60, 40], [620, 130, 40], [900, 260, 40], [130, 300, 38]]), moonFull(820, 130, 88),
+        sky(), stars([[110, 90, 44], [340, 60, 40], [620, 130, 40], [900, 260, 40], [130, 300, 38]]), ...moonFull(820, 130, 88),
         plainCloud(250, 200, 1.3, 'cloud-a'), plainCloud(760, 330, 1.1, 'cloud-b'),
         hill(700),
         { id: 'houses', d: compound(rect(60, 620, 140, 100, 8), rect(800, 640, 150, 90, 8)) },

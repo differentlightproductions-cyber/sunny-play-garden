@@ -185,6 +185,7 @@
     W.tops && W.tops(c, look, t);
     armSleeve(-1, false); armSleeve(1, o.wave);
     W.dress && W.dress(c, look, t);
+    if (look.dress && W.shoes) W.shoes(c, look, t);   // the shoes peek out in front of the hem
     // hands with polish on the fingertips
     const hand = (sd, wave) => { c.save(); c.translate(sd * 11.8, -47.6 + breathe * .2); c.rotate(sd * ((wave ? -2.3 - Math.sin(t * 9) * .3 : 0) - spread)); c.translate(0, 20.6); c.fillStyle = skin; c.beginPath(); c.arc(0, 1, 3.5, 0, TAU); c.fill(); W.handNails && W.handNails(c, look, sd < 0 ? 0 : 5); if (W.handItem && sd > 0) W.handItem(c, look, t); c.restore(); };
     hand(-1, false); hand(1, o.wave);

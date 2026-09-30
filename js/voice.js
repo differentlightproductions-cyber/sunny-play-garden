@@ -36,7 +36,7 @@
     'color/red': 'Red!', 'color/blue': 'Blue!', 'color/yellow': 'Yellow!', 'color/green': 'Green!',
     'shape/circle': 'Circle!', 'shape/square': 'Square!', 'shape/triangle': 'Triangle!', 'shape/star': 'Star!',
     'care-morning': 'Good morning!',
-    'fire-level': 'A new place to help!',
+    'fire-level': 'A new place to help!', 'fire-next': 'Tap the green arrow to go somewhere new!',
     'storm-coming': 'Here comes a big rainy storm!', 'storm-over': 'The storm is over. Look, the sun!',
     'raining-pets': "It's raining cats and dogs!", 'pets-safe': 'You saved them all!',
     'dig-first': 'First, dig a hole with the shovel!', 'dig-one': 'Dig! One!', 'dig-two': 'Two!', 'dig-three': 'Three! A perfect hole!', 'pat-it': 'Now pat the dirt down!', 'bye-bye': 'Bye bye, friend! Have fun!', 'pour-water': 'Hold the can over the plant to water it!', 'seed-in': 'Now drop in a seed!', 'water-me': 'Tap the plant to water it!',

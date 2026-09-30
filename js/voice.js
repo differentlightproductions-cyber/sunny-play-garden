@@ -31,10 +31,12 @@
     'train-start': 'All aboard! Fill up the train!', 'train-go': 'Choo choo! Off we go!', 'train-wrong': 'Try another one!',
     'puzzle-start': 'Put the picture together!', 'puzzle-done': 'You made the picture!',
     'care-start': 'Take care of your friend!', 'care-food': 'Yum! Thank you!', 'care-clean': 'So fresh and clean!', 'care-sleep': 'Shhh... sleepy time.', 'care-hungry': 'Your friend is hungry!', 'care-dirty': 'Your friend needs a bath!', 'care-tired': 'Your friend is sleepy!',
-    'hide-start': 'Who is hiding? Touch a bush!', 'hide-found': 'Found you!', 'hide-done': 'You found everybody!',
+    'hide-start': 'Who is hiding? Walk around and look!', 'hide-found': 'Found you!', 'hide-done': 'You found everybody!',
     'num/1': 'One!', 'num/2': 'Two!', 'num/3': 'Three!', 'num/4': 'Four!', 'num/5': 'Five!',
     'color/red': 'Red!', 'color/blue': 'Blue!', 'color/yellow': 'Yellow!', 'color/green': 'Green!',
     'shape/circle': 'Circle!', 'shape/square': 'Square!', 'shape/triangle': 'Triangle!', 'shape/star': 'Star!',
+    'care-morning': 'Good morning!',
+    'fire-level': 'A new place to help!',
     'storm-coming': 'Here comes a big rainy storm!', 'storm-over': 'The storm is over. Look, the sun!',
     'raining-pets': "It's raining cats and dogs!", 'pets-safe': 'You saved them all!',
     'dig-first': 'First, dig a hole with the shovel!', 'dig-one': 'Dig! One!', 'dig-two': 'Two!', 'dig-three': 'Three! A perfect hole!', 'pat-it': 'Now pat the dirt down!', 'bye-bye': 'Bye bye, friend! Have fun!', 'pour-water': 'Hold the can over the plant to water it!', 'seed-in': 'Now drop in a seed!', 'water-me': 'Tap the plant to water it!',
@@ -42,6 +44,35 @@
     'confirm-bye': 'Do you want to say bye-bye? Tap the soft pink button to say bye-bye, or the green one to stay.',
     'break-time': 'Time for a little rest!'
   };
+  // Style Studio: every tab, friend and clothing name is said out loud when she touches it (she cannot read yet).
+  const STYLE_NAMES = {
+    'tab-who': 'Pick a friend!', 'tab-hair': 'Hair salon!', 'tab-makeup': 'Make-up!', 'tab-dress': 'Princess dresses!', 'tab-top': 'Tops!', 'tab-bottom': 'Skirts and pants!', 'tab-shoes': 'Shoes!', 'tab-hat': 'Crowns and hats!', 'tab-extras': 'Sparkly extras!', 'tab-nails': 'Nail salon!', 'tab-places': 'Places to go!',
+    'who-0': 'Poppy', 'who-1': 'Maya', 'who-2': 'Zoe', 'who-3': 'Ivy', 'who-4': 'Leo', 'who-5': 'Sam', 'who-6': 'Kai', 'who-7': 'Theo',
+    'hair-long': 'Long hair', 'hair-wavy': 'Wavy hair', 'hair-ponytail': 'A ponytail', 'hair-pigtails': 'Pigtails', 'hair-buns': 'Two buns', 'hair-braid': 'A braid', 'hair-bob': 'A bob', 'hair-short': 'Short hair', 'hair-spiky': 'Spiky hair', 'hair-curly': 'Curly hair', 'hair-topknot': 'A top knot', 'hair-none': 'No hair',
+    'tool-comb': 'A comb!', 'tool-dryer': 'A hair dryer!', 'tool-spray': 'Sparkle spray!', 'tool-bubbles': 'Bubbles! Wash the hair!',
+    'dress-ball': 'A ball gown!', 'dress-aline': 'A party dress!', 'dress-tutu': 'A ballet tutu!', 'dress-mermaid': 'A mermaid gown!', 'dress-petal': 'A flower fairy dress!', 'dress-sun': 'A sundress!',
+    'top-tee': 'A t-shirt', 'top-tank': 'A tank top', 'top-stripes': 'A stripy shirt', 'top-hoodie': 'A hoodie', 'top-sweater': 'A cozy sweater', 'top-star': 'A star shirt', 'top-vest': 'A fancy vest',
+    'bottom-skirt': 'A skirt', 'bottom-shorts': 'Shorts', 'bottom-jeans': 'Jeans', 'bottom-leggings': 'Leggings', 'bottom-tutuskirt': 'A tutu skirt',
+    'shoes-sneakers': 'Sneakers', 'shoes-boots': 'Boots', 'shoes-sandals': 'Sandals', 'shoes-glass': 'Glass slippers!', 'shoes-flats': 'Ballet shoes',
+    'hat-crown': 'A crown!', 'hat-tiara': 'A tiara!', 'hat-bow': 'A big bow', 'hat-flowers': 'A flower crown', 'hat-cap': 'A cap', 'hat-beanie': 'A woolly hat', 'hat-party': 'A party hat!', 'hat-cowboy': 'A cowboy hat', 'hat-wizard': 'A wizard hat!', 'hat-bunny': 'Bunny ears!', 'hat-kitty': 'Kitty ears!', 'hat-princess': 'A princess hat!',
+    'face-glasses': 'Glasses', 'face-hearts': 'Heart glasses!', 'face-stars': 'Star glasses!', 'face-mask': 'A fancy mask', 'face-stache': 'A silly mustache!',
+    'neck-pearls': 'Pearls', 'neck-heart': 'A heart necklace', 'neck-star': 'A star necklace', 'neck-scarf': 'A scarf', 'neck-bowtie': 'A bow tie',
+    'back-cape': 'A cape!', 'back-fairy': 'Fairy wings!', 'back-butterfly': 'Butterfly wings!', 'back-angel': 'Angel wings!', 'back-pack': 'A backpack',
+    'hand-wand': 'A magic wand!', 'hand-flower': 'Flowers', 'hand-balloon': 'A balloon!', 'hand-purse': 'A purse', 'hand-teddy': 'A teddy bear', 'hand-lolly': 'A lollipop!',
+    'hair-pixie': 'A pixie cut', 'hair-afro': 'A big afro', 'hair-halfup': 'Half up, half down', 'hair-twinbraids': 'Two braids', 'hair-mohawk': 'A mohawk!', 'hair-bowl': 'A bowl cut', 'hair-longcurly': 'Long curls', 'hair-sidepony': 'A side ponytail', 'hair-locs': 'Long locs', 'hair-crownbraid': 'A crown braid',
+    'dress-royal': 'A royal gown!', 'dress-skater': 'A twirly dress!', 'dress-tiers': 'A ruffle dress', 'dress-pinafore': 'A pinafore', 'dress-snow': 'An ice queen gown!',
+    'top-polo': 'A polo shirt', 'top-jersey': 'A sports shirt', 'top-flannel': 'A checked shirt', 'top-cardigan': 'A cardigan', 'top-puffer': 'A puffy jacket', 'top-blazer': 'A blazer', 'top-hearttee': 'A heart shirt',
+    'bottom-capris': 'Capri pants', 'bottom-cargo': 'Pocket pants', 'bottom-joggers': 'Joggers', 'bottom-longskirt': 'A long skirt', 'bottom-plaid': 'A checked skirt',
+    'shoes-rainboots': 'Rain boots', 'shoes-heels': 'Princess heels!', 'shoes-fuzzy': 'Fuzzy slippers', 'shoes-skates': 'Roller skates!',
+    'hat-sun': 'A sun hat', 'hat-beret': 'A beret', 'hat-santa': 'A Santa hat!', 'hat-pirate': 'A pirate hat!', 'hat-chef': 'A chef hat', 'hat-halo': 'A halo', 'hat-ribbon': 'A ribbon headband',
+    'face-shades': 'Sunglasses', 'face-clown': 'A red nose!', 'face-whiskers': 'Kitty whiskers!', 'face-patch': 'A pirate patch',
+    'neck-lei': 'A flower necklace', 'neck-choker': 'A choker', 'neck-tie': 'A necktie', 'neck-medal': 'A gold medal!',
+    'back-bat': 'Bat wings!', 'back-dragon': 'Dragon wings!', 'back-rainbow': 'Rainbow wings!',
+    'hand-umbrella': 'An umbrella', 'hand-icecream': 'Ice cream!', 'hand-mirror': 'A hand mirror', 'hand-plush': 'A bunny toy', 'hand-starballoon': 'A star balloon!',
+    'place-0': 'The castle ballroom', 'place-1': 'The garden', 'place-2': 'The beach', 'place-3': 'The salon', 'place-4': 'Under the stars', 'place-5': 'The rainbow meadow',
+    'say-start': "Let's get dressed up!", 'say-show': 'Ta-da! Look at you! You look amazing!', 'say-nails': 'Pick a color and touch the nails!', 'say-hair': 'Touch the hair!', 'say-lips': 'Lipstick!', 'say-shadow': 'Sparkly eyes!', 'say-blush': 'Rosy cheeks!', 'say-freckles': 'Freckles!', 'say-gems': 'Face jewels!', 'say-skin': 'Skin color', 'say-eyes': 'Eye color', 'say-glitter': 'Glitter!', 'say-all': 'All the nails!', 'say-clear': 'Clean nails.'
+  };
+  for (const [k, v] of Object.entries(STYLE_NAMES)) LINES['style/' + k] = v;
   for (const [l, t] of Object.entries(NAMES)) LINES['letter/' + l] = t;
   for (const [l, t] of Object.entries(PHONICS)) LINES['sound/' + l] = t;
   for (const [l, [w]] of Object.entries(WORDS)) LINES['word/' + l] = w;
@@ -49,18 +80,23 @@
   // Sound-only keys: no speech fallback. They play only if someone has recorded them.
   const SOUNDS = {};
   for (const k of CRITTERS) SOUNDS['critter/' + k] = CRITTER_NOISE[k];
+  // Purring and happy sounds for the close-up petting in Pet Care. Without a recording the game makes a soft synthesized purr.
+  const PURRS = { cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
+  for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
   const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
 
   const SETS = [{ id: 'male', name: 'Male voice' }, { id: 'female', name: 'Female voice' }];
 
   const GROUPS = [
     { id: 'praise', title: 'Cheering', note: 'Said after she does something well. Turn down how often in the "Praise" setting.', test: k => PRAISE.has(k) },
-    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature)\//.test(k) },
+    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style)\//.test(k) },
+    { id: 'style', title: 'Style Studio names', note: 'Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
     { id: 'letters', title: 'Letter names (A to Z)', note: 'Say the name of the letter: "Bee", "Cee".', test: k => k.startsWith('letter/') },
     { id: 'sounds', title: 'Letter sounds (A to Z)', note: 'Say the sound the letter makes: "buh", "kuh", "sss". Not the name.', test: k => k.startsWith('sound/') },
     { id: 'words', title: 'Picture words', note: 'The word for each letter picture: apple, bear, cat...', test: k => k.startsWith('word/') },
     { id: 'friends', title: 'Garden friend announcements', note: 'Said when a new garden friend appears.', test: k => k.startsWith('creature/') },
     { id: 'critters', title: 'Critter noises (make the sound!)', note: 'Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.', test: k => k.startsWith('critter/') },
+    { id: 'purrs', title: 'Purring and happy sounds', note: 'Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.', test: k => k.startsWith('purr/') },
     { id: 'players', title: 'Player names', note: 'Say each player\'s greeting, like "Hi Charlotte!".', test: k => k.startsWith('player/') }
   ];
 

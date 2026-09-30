@@ -39,6 +39,7 @@
     constructor(host) {
       this.host = host;
       this.bag = store.bag('garden', () => ({ plots: [], seen: {}, blooms: 0 }));
+      this.scenic = SPG.scenery.fader(this.sceneAt(this.bag.blooms));   // the garden moves through the seasons and times of day as it grows
       this.plots = Array.from({ length: SLOTS_MAX }, (_, i) => fromSaved(this.bag.plots[i]));
       this.tool = 'shovel'; this.seed = 'sunflower';
       this.canMode = this.bag.canMode || 'grab'; this.can = null; this.recentKinds = [];
@@ -54,6 +55,7 @@
       this.buildBar();
     }
 
+    sceneAt(blooms) { const L = ['meadow', 'sunset', 'farm', 'autumn', 'snow', 'night', 'beach']; return L[Math.floor((blooms || 0) / 4) % L.length]; }
     slotCount() { return this.bag.blooms >= BIGGER_AT ? SLOTS_MAX : SLOTS_BASE; }
     unlocked(id) { return this.bag.blooms >= art.PLANTS.find(p => p.id === id).unlock; }
 
@@ -502,6 +504,7 @@
     }
     bloom(p, s) {
       this.bag.blooms++; this.counter.set(this.bag.blooms); store.addStars(1); sfx.win(); this.palCheer();
+      this.scenic.set(this.sceneAt(this.bag.blooms));
       this.fx.burst(s.x, s.y - this.ps * .7, 26, { colors: ['#ff7a8a', '#ffd54a', '#59b96e', '#4fb3e8', '#9a7be8'], speed: 380, g: 500, life: 1.1, size: 8, shape: 'confetti', up: 200 });
       const kind = p.type === 'carrot' ? 'bunny' : this.pickCreature(p.type); // a grown carrot always brings a hungry bunny
       this.spawnCreature(kind, s.x, s.y - this.ps * .6);
@@ -551,7 +554,7 @@
       if (!this.running) return;
       const dt = Math.min((now - this.last) / 1000, .05); this.last = now;
       if (this.dialog) { this.draw(); this.raf = requestAnimationFrame(this.tick); return; } // everything waits while she decides
-      this.t += dt;
+      this.t += dt; this.scenic.update(dt);
       if (this.nudge > 0) this.nudge -= dt;
       this.plots.forEach((p, i) => {
         if (i >= this.slotCount()) return;
@@ -625,7 +628,7 @@
     draw() {
       const c = this.ctx, { w, h } = this;
       if (!w || !h) return;
-      art.scene(c, w, h, this.t);
+      this.scenic.draw(c, w, h, this.t);
       const b = this.bed, n = this.slotCount();
       c.fillStyle = 'rgba(90,63,94,.12)'; art.rr(c, b.x - 12, b.y + 26, b.w + 24, b.h + 8, 38); c.fill();
       c.fillStyle = '#c99a6a'; art.rr(c, b.x - 12, b.y + 14, b.w + 24, b.h + 8, 38); c.fill();

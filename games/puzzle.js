@@ -28,6 +28,7 @@
       this.canvas = document.createElement('canvas'); this.canvas.className = 'game-canvas';
       host.append(this.canvas); this.ctx = this.canvas.getContext('2d');
       this.bag = store.bag('puzzle', () => ({ solved: 0 }));
+      this.scenic = SPG.scenery.fader(['meadow', 'beach', 'snow', 'farm', 'sunset', 'night', 'autumn', 'city'][(this.bag.solved || 0) % 8]);   // a new place behind every puzzle
       this.bag.solved = this.bag.solved || 0;
       this.counter = SPG.ui.counter(host, (c, s) => {
         c.translate(s / 2, s / 2); c.fillStyle = '#59b96e'; art.rr(c, -s * .3, -s * .28, s * .6, s * .56, s * .08); c.fill();
@@ -154,6 +155,7 @@
     finish() {
       this.state = 'done'; this.stateT = 0;
       this.bag.solved++; this.counter.set(this.bag.solved); store.addStars(1); store.save();
+      this.scenic.set(['meadow', 'beach', 'snow', 'farm', 'sunset', 'night', 'autumn', 'city'][this.bag.solved % 8]);
       sfx.win(); voice.say('puzzle-done');
       this.fx.burst(this.w / 2, this.by + this.bh / 2, 30, { colors: ['#ff6b81', '#ffd54a', '#7ed957', '#5cc8f2', '#b58cf0'], speed: 340, g: 400, life: 1.3, size: 7 * this.ui, shape: 'confetti', up: 220 });
     }
@@ -165,7 +167,7 @@
     destroy() { this.pause(); this.canvas.remove(); this.counter.el.remove(); }
     tick(now) {
       if (!this.running) return;
-      const dt = Math.min(.05, (now - this.last) / 1000); this.last = now; this.t += dt; this.stateT += dt; this.idle += dt;
+      const dt = Math.min(.05, (now - this.last) / 1000); this.last = now; this.t += dt; this.stateT += dt; this.idle += dt; this.scenic.update(dt);
       if (this.drag) { const d = this.drag; d.p.x = d.x + d.dx; d.p.y = d.y + d.dy; d.p.sc = lerp(d.p.sc, 1, Math.min(1, dt * 14)); }
       for (const p of this.pieces) p.flash = Math.max(0, p.flash - dt * 2);
       if (this.state === 'done' && this.stateT > 4.2) this.newPuzzle();
@@ -176,7 +178,7 @@
     /* ---------------------------------------------------------------- drawing */
     draw() {
       const c = this.ctx, w = this.w, h = this.h; if (!w) return;
-      art.scene(c, w, h, this.t, { clouds: true });
+      this.scenic.draw(c, w, h, this.t);
       const bx = this.bx, by = this.by, bw = this.bw, bh = this.bh;
       // the board: a soft frame with the picture very faint behind, and the shape of every place
       c.fillStyle = 'rgba(90,63,94,.14)'; art.rr(c, bx - 14, by - 8, bw + 28, bh + 34, 28); c.fill();
@@ -210,10 +212,13 @@
     id: 'puzzle', name: 'Puzzle Pond', order: 6,
     icon(c, w, h) {
       const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#d8f0ff'); g.addColorStop(1, '#e6f7ec'); c.fillStyle = g; c.fillRect(0, 0, w, h);
-      const s = Math.min(w * .5, h * 1.6), pw = s * .5, ph = pw * .8;
-      const bunny = SPG.pictures.find(p => p.id === 'bunny') || SPG.pictures[0];
+      const s = Math.min(w, h * 1.2), pw = s * .43, ph = pw * .8;
       const im = document.createElement('canvas'); im.width = Math.round(pw * 2 * 2); im.height = Math.round(ph * 2 * 2);
-      SPG.coloring.draw(im.getContext('2d'), bunny, im.width);
+      { const q = im.getContext('2d'), W2 = im.width, H2 = im.height, sk = q.createLinearGradient(0, 0, 0, H2); sk.addColorStop(0, '#8fd3f8'); sk.addColorStop(1, '#e8f7ff'); q.fillStyle = sk; q.fillRect(0, 0, W2, H2);
+        art.sun(q, W2 * .8, H2 * .22, W2 * .07, 0); art.cloud(q, W2 * .26, H2 * .24, W2 / 500, .95);
+        q.fillStyle = '#9ad97f'; q.beginPath(); q.moveTo(0, H2 * .62); q.quadraticCurveTo(W2 * .4, H2 * .48, W2, H2 * .66); q.lineTo(W2, H2); q.lineTo(0, H2); q.fill();
+        q.fillStyle = '#7fc46f'; q.beginPath(); q.moveTo(0, H2 * .8); q.quadraticCurveTo(W2 * .6, H2 * .68, W2, H2 * .84); q.lineTo(W2, H2); q.lineTo(0, H2); q.fill();
+        for (const [fx, fy, k] of [[.3, .76, '#ff8fc0'], [.55, .86, '#ffd54a'], [.78, .74, '#fff']]) { q.fillStyle = k; for (let a = 0; a < 5; a++) { q.beginPath(); q.arc(W2 * fx + Math.cos(a * 1.257) * W2 * .028, H2 * fy + Math.sin(a * 1.257) * W2 * .028, W2 * .02, 0, 6.3); q.fill(); } q.fillStyle = '#ffe066'; q.beginPath(); q.arc(W2 * fx, H2 * fy, W2 * .015, 0, 6.3); q.fill(); } }
       const ox = w / 2 - pw, oy = h * .5 - ph;
       const cell = [[0, 0, 0, 0], [1, 0, 8, -4], [0, 1, -6, 8]];
       for (const [cx, cy, dx, dy] of cell) {

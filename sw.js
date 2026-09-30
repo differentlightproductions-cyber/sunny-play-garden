@@ -1,10 +1,10 @@
 // Offline support: the whole site is cached so it keeps working with no internet once opened.
 // Network first (so a new deploy shows up right away), cache as the fallback.
-const CACHE = 'spg-v10';
+const CACHE = 'spg-v12';
 const SHELL = [
   './', 'styles.css', 'manifest.webmanifest',
-  'js/glyphs.js', 'js/core.js', 'js/sync.js', 'js/voice.js', 'js/art.js', 'js/art-garden.js', 'js/art-pets.js', 'js/pets.js', 'js/studio.js', 'js/app.js',
-  'games/letters.js', 'games/fruit.js', 'games/rain.js', 'games/firerescue.js', 'games/band.js', 'games/train.js', 'games/puzzle.js', 'games/petcare.js', 'games/hide.js', 'games/garden.js', 'games/color-pictures.js', 'games/color-seasons.js', 'games/color.js', 'games/petshop.js',
+  'js/glyphs.js', 'js/core.js', 'js/sync.js', 'js/voice.js', 'js/art.js', 'js/art-garden.js', 'js/art-pets.js', 'js/scenery.js', 'js/pets.js', 'js/people.js', 'js/people-wear.js', 'js/studio.js', 'js/app.js',
+  'games/letters.js', 'games/fruit.js', 'games/rain.js', 'games/firerescue.js', 'games/band.js', 'games/train.js', 'games/puzzle.js', 'games/petcare.js', 'games/hide.js', 'games/garden.js', 'games/color-pictures.js', 'games/color-seasons.js', 'games/color.js', 'games/petshop.js', 'games/style.js',
   'fonts/fredoka-latin-400-normal.woff2', 'fonts/fredoka-latin-600-normal.woff2', 'fonts/fredoka-latin-700-normal.woff2',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'
 ];

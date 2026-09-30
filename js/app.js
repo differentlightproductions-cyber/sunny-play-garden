@@ -115,7 +115,7 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'] };
   function renderCards() {
     const all = SPG.games.slice().sort((a, b) => a.order - b.order);
     const games = all.filter(g => !g.shop), shops = all.filter(g => g.shop);
@@ -127,14 +127,14 @@
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    // Games come four to a page. Swipe, or use the big arrows and dots underneath.
-    const PER_PAGE = 4, pages = [];
+    // Games look like little app icons, eight to a page. Swipe, or use the big arrows and dots underneath.
+    const PER_PAGE = 8, pages = [];
     for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
     const strip = h('div', { class: 'pages' }, ...pages.map((list, pi) => h('div', { class: 'cards page', 'aria-label': `Page ${pi + 1} of ${pages.length}` }, ...list.map((g, k) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
       const canvas = document.createElement('canvas');
       const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-(pi * PER_PAGE + k) * 1.1}s` },
-        canvas, h('span', { class: 'card-name' }, h('span', {}, g.name), h('span', { class: 'go' }, icon('play'))));
+        canvas, h('span', { class: 'card-name' }, g.name));
       // A swipe must turn the page, not start a game, so a card opens on a short tap (the browser cancels the touch when it becomes a swipe).
       let down = null;
       card.addEventListener('pointerdown', e => { if (e.button > 0) return; down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
@@ -472,6 +472,8 @@
       voicesSection(),
       timerSection(),
       pinSection(),
+      nightSection(),
+      fruitSection(),
       backupSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
@@ -562,6 +564,49 @@
       h('p', { class: 'fine' }, `Recorded so far: male ${n('male')}, female ${n('female')} of ${keys.length} lines.`), b);
   }
 
+  // Fruit Splash for older kids: naughty water balloons that shake the screen, spray water and take points away.
+  function nightSection() {
+    const cur = SPG.night.mode();
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Night mode' });
+    for (const [id, label] of [['off', 'Day'], ['on', 'Night'], ['auto', 'Auto (schedule)']]) {
+      const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === id) }, label);
+      b.addEventListener('click', () => { SPG.night.set(id); renderParent(); });
+      seg.append(b);
+    }
+    const sec = h('section', {}, h('h3', {}, 'Night mode'),
+      h('p', {}, 'Tones everything down for bedtime: a night sky behind the games, softer colors and quieter sounds. Choose Day or Night yourself, or Auto to switch on by a schedule. There is also a moon button on the games page.'),
+      seg);
+    if (cur === 'auto') {
+      const hourLabel = n => (n % 12 || 12) + (n < 12 ? ' am' : ' pm');
+      const picker = (title, key, hours, def) => {
+        const row = h('div', { class: 'seg', role: 'group', 'aria-label': title });
+        const now = key === 'nightFrom' ? SPG.night.from() : SPG.night.to();
+        for (const n of hours) {
+          const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(now === n) }, hourLabel(n));
+          b.addEventListener('click', () => { store.settings[key] = n; store.save(); SPG.night.apply(); renderParent(); });
+          row.append(b);
+        }
+        return h('div', {}, h('p', {}, h('b', {}, title)), row);
+      };
+      sec.append(picker('Night starts at', 'nightFrom', [17, 18, 19, 20, 21], 19), picker('Night ends at', 'nightTo', [5, 6, 7, 8, 9], 7),
+        h('p', {}, `Right now: ${SPG.night.on() ? 'night' : 'day'}. Night runs from ${hourLabel(SPG.night.from())} to ${hourLabel(SPG.night.to())}.`));
+    }
+    return sec;
+  }
+
+  function fruitSection() {
+    const cur = store.settings.fruitAge === 'big' ? 'big' : 'little';
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Fruit Splash age' });
+    for (const [id, label] of [['little', 'Little kids'], ['big', 'Bigger kids']]) {
+      const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === id) }, label);
+      b.addEventListener('click', () => { store.settings.fruitAge = id; store.save(); renderParent(); });
+      seg.append(b);
+    }
+    return h('section', {}, h('h3', {}, 'Fruit Splash age'),
+      h('p', {}, 'Little kids: only happy fruit, nothing is ever lost. Bigger kids: water balloons float up too. Popping one shakes the screen, splashes water everywhere and takes 5 fruit points away (never stars).'),
+      seg);
+  }
+
   function pinSection() {
     const has = !!store.settings.pin;
     const set = h('button', { class: 'btn small go', type: 'button' }, has ? 'Change PIN' : 'Set a PIN');
@@ -620,6 +665,11 @@
 
   /* ------------------------------------------------------------ boot */
   safe.init();
+  SPG.night.apply(); setInterval(() => SPG.night.apply(), 60000);
+  const nightBtn = $('hub-night');
+  const syncNight = () => nightBtn.setAttribute('aria-pressed', String(SPG.night.on()));
+  SPG.night.listeners.push(syncNight); syncNight();
+  nightBtn.addEventListener('click', () => { if (SPG.night.mode() === 'auto') { SPG.night.override = !SPG.night.on(); SPG.night.apply(); } else SPG.night.set(SPG.night.on() ? 'off' : 'on'); SPG.sfx.tap(); });
   renderCards();
   if (store.profiles.length) { store.setActive(store.active?.id ?? store.profiles[0].id); renderWho(); } else openSetup(false);
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

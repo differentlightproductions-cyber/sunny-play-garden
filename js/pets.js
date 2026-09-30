@@ -110,10 +110,53 @@
     c.restore();
   }
 
-  // One pet standing on the line y = 0 (its feet), s = about its height. o: { mood, hop, hat, wave }
+  // Fur: a fuzzy outline, little hair strokes and tufts, so pets look soft up close as well as from far away.
+  // (Frogs have smooth skin with soft spots instead.) detail scales how many strands are drawn.
+  const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  const rnd = i => { const x = Math.sin(i * 91.7 + 13.3) * 43758.5453; return x - Math.floor(x); };
+  function furBody(c, id, sp, s, detail) {
+    if (id === 'frog') {
+      c.fillStyle = 'rgba(70,140,60,.28)';
+      for (let i = 0; i < 9; i++) { const a = rnd(i) * TAU, r = Math.sqrt(rnd(i + 20)); ell(c, Math.cos(a) * s * .17 * r, Math.sin(a) * s * .15 * r - s * .02, s * (.012 + rnd(i + 40) * .018), s * (.01 + rnd(i + 60) * .014)); c.fill(); }
+      return;
+    }
+    const rx = s * .25, ry = s * .23, n = Math.round(cl(s / 3.2 * detail, 24, 96));
+    c.lineCap = 'round';
+    c.strokeStyle = sp.body; c.lineWidth = Math.max(1.2, s * .012);
+    for (let i = 0; i < n; i++) {   // little tufts poking out around the edge
+      const a = i / n * TAU + rnd(i) * .08, ex = Math.cos(a) * rx, ey = Math.sin(a) * ry, len = s * (.009 + rnd(i + 5) * .012);
+      c.beginPath(); c.moveTo(ex - Math.cos(a) * len * .4, ey - Math.sin(a) * len * .4); c.lineTo(ex + Math.cos(a) * len + (rnd(i + 9) - .5) * len * .7, ey + Math.sin(a) * len + (rnd(i + 11) - .5) * len * .7); c.stroke();
+    }
+    c.globalAlpha = .32; c.strokeStyle = art.shade(sp.body, -.3); c.lineWidth = Math.max(.8, s * .006);
+    const m = Math.round(cl(s / 6 * detail, 10, 60));
+    for (let i = 0; i < m; i++) {   // hairs across the coat, leaving the belly clear
+      const x = (rnd(i + 100) - .5) * rx * 1.7, y = (rnd(i + 150) - .5) * ry * 1.6;
+      if ((x * x) / (s * .16 * s * .16) + ((y - s * .03) * (y - s * .03)) / (s * .16 * s * .16) < 1) continue;
+      const len = s * (.035 + rnd(i + 200) * .03), sway = (x > 0 ? 1 : -1) * s * .012;
+      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + sway, y + len * .5, x + sway * .5, y + len); c.stroke();
+    }
+    if (id === 'cat') { c.lineWidth = Math.max(1.5, s * .014); c.globalAlpha = .28; for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(sd * rx * .98, -ry * .35 + k * ry * .3); c.quadraticCurveTo(sd * rx * .62, -ry * .3 + k * ry * .3, sd * rx * .5, -ry * .05 + k * ry * .3); c.stroke(); } }
+    c.globalAlpha = .5; c.strokeStyle = sp.belly; c.lineWidth = Math.max(1, s * .008);
+    for (let i = 0; i < Math.round(m / 2); i++) { const a = rnd(i + 300) * Math.PI, x = Math.cos(a) * s * .15, y = s * .03 + Math.sin(a) * s * .14, len = s * .022; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (rnd(i + 320) - .5) * len, y + len); c.stroke(); }   // soft belly fluff
+    c.globalAlpha = 1;
+  }
+  function furHead(c, id, sp, R, detail) {
+    if (id === 'frog') return;
+    c.fillStyle = sp.body;
+    for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) {   // fluffy cheek tufts
+      c.beginPath(); c.moveTo(sd * R * .86, R * (.1 + .15 * k)); c.lineTo(sd * R * (1.1 + .04 * (k === 1)), R * (.24 + .15 * k)); c.lineTo(sd * R * .84, R * (.32 + .15 * k)); c.closePath(); c.fill();
+    }
+    c.strokeStyle = art.shade(sp.body, -.3); c.lineCap = 'round'; c.globalAlpha = .4; c.lineWidth = Math.max(1, R * .05);
+    const n = detail > 1.4 ? 7 : 5;
+    for (let k = 0; k < n; k++) { const x = (k - (n - 1) / 2) * R * .13; c.beginPath(); c.moveTo(x, -R * .6); c.quadraticCurveTo(x + (x > 0 ? 1 : -1) * R * .05, -R * .72, x * 1.5, -R * .82); c.stroke(); }
+    if (id === 'cat') { c.globalAlpha = .45; c.lineWidth = Math.max(1.2, R * .06); for (const x of [-.18, 0, .18]) { c.beginPath(); c.moveTo(x * R, -R * .5); c.lineTo(x * R * 1.2, -R * .78); c.stroke(); } }
+    c.globalAlpha = 1;
+  }
+
+  // One pet standing on the line y = 0 (its feet), s = about its height. o: { mood, hop, hat, wave, detail }
   function draw(c, id, s, t = 0, o = {}) {
     const sp = SPECIES[id]; if (!sp) return;
-    const R = s * .27, mood = o.mood || 'happy';
+    const R = s * .27, mood = o.mood || 'happy', detail = o.detail || 1;
     const hop = Math.min(1, o.hop || 0), lift = Math.sin(hop * Math.PI) * s * .2;
     const breathe = 1 + Math.sin(t * 2.2) * .014;
     const blink = (t % 4.3) < .13;
@@ -131,6 +174,7 @@
     c.save(); c.translate(0, -s * .22); c.scale(1, breathe);
     c.fillStyle = sp.body; ell(c, 0, 0, s * .25, s * .23); c.fill();
     c.fillStyle = sp.belly; ell(c, 0, s * .03, s * .16, s * .16); c.fill();
+    furBody(c, id, sp, s, detail);
     c.restore();
     // arms (they wave when she is happy)
     for (const side of [-1, 1]) {
@@ -142,6 +186,7 @@
     // head with the face and any hat
     c.save(); c.translate(0, -s * .6 + Math.sin(t * 2.2 + .6) * s * .006); if (mood === 'sleep') c.rotate(.1);
     art.avatar(c, sp.kind || id, R, { mood: mood === 'sleep' ? 'sleep' : mood === 'cheer' ? 'cheer' : 'happy', blink });
+    furHead(c, id, sp, R, detail);
     if (o.hat) hat(c, o.hat, R);
     c.restore();
     if (mood === 'sleep') {

@@ -95,9 +95,16 @@
     return l;
   }
 
-  function scene(c, w, h, t, { sky = ['#a9e1f3', '#e9f8ee', '#fdf6df'], showSun = true, clouds = true, hill = undefined } = {}) {
+  const NIGHT_SKY = ['#1c2559', '#3a4888', '#6b70b2'], NIGHT_HILL = ['#2f4a6b', '#28405f', '#213652'];
+  function scene(c, w, h, t, { sky, showSun = true, clouds = true, hill = undefined, behind = null } = {}) {
+    let moonUp = false;
+    if (!sky) { sky = ['#a9e1f3', '#e9f8ee', '#fdf6df']; if (SPG.night && SPG.night.on()) { sky = NIGHT_SKY; hill = NIGHT_HILL; showSun = false; moonUp = true; } }
     const l = layers(w, h, c.getTransform().a || 1, sky, hill);
     c.drawImage(l.sky, 0, 0, w, h);
+    if (moonUp) {
+      for (let i = 0; i < 36; i++) { const x = ((i * 0.6180339 + .13) % 1) * w, y = ((i * 0.3819 + .07) % 1) * h * .5; c.globalAlpha = .35 + .45 * Math.abs(Math.sin(t * 1.4 + i)); c.fillStyle = '#fff8d8'; c.beginPath(); c.arc(x, y, 1.4 + (i % 3) * .6, 0, TAU); c.fill(); }
+      c.globalAlpha = 1; const mx = w * .84, my = Math.max(70, h * .17), mr = Math.min(w, h) * .055, g = c.createRadialGradient(mx, my, mr * .5, mx, my, mr * 3); g.addColorStop(0, 'rgba(255,246,200,.35)'); g.addColorStop(1, 'rgba(255,246,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(mx, my, mr * 3, 0, TAU); c.fill(); c.fillStyle = '#fff6c9'; c.beginPath(); c.arc(mx, my, mr, 0, TAU); c.fill(); c.fillStyle = 'rgba(200,190,150,.35)'; c.beginPath(); c.arc(mx - mr * .3, my - mr * .1, mr * .22, 0, TAU); c.arc(mx + mr * .25, my + mr * .3, mr * .16, 0, TAU); c.fill();
+    }
     if (showSun) sun(c, w * .86, Math.max(70, h * .17), Math.min(w, h) * .06, t);
     if (clouds) {
       [[.12, .2, 1, 9], [.5, .11, .8, 6], [.72, .32, .65, 12], [.3, .42, .55, 8]].forEach(([fx, fy, s, sp], i) => {
@@ -106,6 +113,7 @@
         cloud(c, x, h * fy, s * Math.min(1.2, w / 700 + .4), .92);
       });
     }
+    if (behind) behind(c, w, h, t);   // things that sit behind the hills (sea, skyline, barns...)
     c.drawImage(l.hills, 0, 0, w, h);
   }
 

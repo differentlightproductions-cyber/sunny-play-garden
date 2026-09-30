@@ -217,6 +217,9 @@
       }
       return 0;
     },
+    // Storm: a soft, low rumble and a tiny crackle (never loud)
+    thunder() { noise(1.6, { freq: 150, sweep: .4, q: .5, vol: .1 }); tone(62, 1.3, { slide: .6, vol: .1 }); tone(48, 1.5, { slide: .7, vol: .07, at: .15 }); },
+    zap() { noise(.14, { freq: 3200, sweep: .5, q: 1, vol: .05 }); tone(900, .12, { slide: .4, type: 'triangle', vol: .04 }); },
     // Coloring Book
     fill(i = 0) { tone(280 + (i % 7) * 34, .2, { slide: 1.9, vol: .2 }); noise(.14, { freq: 1300, sweep: .45, q: .7, vol: .07 }); },
     brush() { noise(.09, { freq: 2200 + Math.random() * 900, q: 1.1, vol: .03 }); },

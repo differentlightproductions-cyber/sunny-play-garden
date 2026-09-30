@@ -26,6 +26,7 @@
     'find': 'Can you find the letter', 'follow-bee': 'Follow the bee!', 'is-for': 'is for',
     'starts-with': 'Which one starts with', 'write-name': "Let's write your name!", 'spell-name': 'Your name is spelled',
     'catch-drops': 'Catch the raindrops!', 'rainbow': 'A rainbow!',
+    'storm-coming': 'Here comes a big rainy storm!', 'storm-over': 'The storm is over. Look, the sun!',
     'raining-pets': "It's raining cats and dogs!", 'pets-safe': 'You saved them all!',
     'dig-first': 'First, dig a hole with the shovel!', 'dig-one': 'Dig! One!', 'dig-two': 'Two!', 'dig-three': 'Three! A perfect hole!', 'pat-it': 'Now pat the dirt down!', 'bye-bye': 'Bye bye, friend! Have fun!', 'pour-water': 'Hold the can over the plant to water it!', 'seed-in': 'Now drop in a seed!', 'water-me': 'Tap the plant to water it!',
     'new-friend': 'A new friend!', 'new-seeds': 'New seeds to plant!', 'bigger-garden': 'Your garden got bigger!',

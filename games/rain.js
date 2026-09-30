@@ -20,6 +20,7 @@
       this.pets = null; this.bucketHide = 0; this.petCounter = null;
       this.queue = []; this.cool = 0; this.card = null;   // special events wait in line, one at a time, each behind its own transition card
       this.scenic = SPG.scenery.fader(sceneFor(this.bag.flowers));
+      this.met = null; this.craters = [];
       this.storm = null; this.flash = 0; this.bolts = []; this.thunders = []; this.sunT = 0;
       this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s * .52); art.drop(c, s * .26); }, this.bag.drops || 0);
       this.fx = new art.Fx();
@@ -86,7 +87,7 @@
     }
 
     celebrate() {
-      this.rainbow = 1; this.fill = 0; this.bag.flowers++; if (this.bag.flowers % 3 === 0) this.queueEvent('pets'); else if (this.bag.flowers % 3 === 2) this.queueEvent('storm'); this.newFlower = 1; store.save(); store.addStars(1);
+      this.rainbow = 1; this.fill = 0; this.bag.flowers++; if (this.bag.flowers % 3 === 0) this.queueEvent('pets'); else if (this.bag.flowers % 3 === 2) this.queueEvent('storm'); if (this.bag.flowers % 4 === 1) this.queueEvent('meteor'); this.newFlower = 1; store.save(); store.addStars(1);
       sfx.win(); voice.say('rainbow', 'wow');
       const b = this.bucket;
       this.fx.burst(b.x, this.rimY, 28, { colors: RAINBOW, speed: 420, g: 400, life: 1.2, size: 8, shape: 'confetti', up: 260 });
@@ -94,7 +95,7 @@
 
     /* ---- a gentle storm: more clouds, soft lightning, soft thunder, lots of rain ---- */
     /* ---- events, one at a time, each behind a transition card ("loading" picture, no words) */
-    queueEvent(kind) { if (!this.queue.includes(kind) && !(kind === 'storm' && this.storm) && !(kind === 'pets' && this.pets)) this.queue.push(kind); }
+    queueEvent(kind) { if (!this.queue.includes(kind) && !(kind === 'storm' && this.storm) && !(kind === 'pets' && this.pets) && !(kind === 'meteor' && this.met)) this.queue.push(kind); }
     // an event just finished: rest for a while, then a calm "all clear" card (with the new place, after the rescue)
     endEvent(changePlace) {
       this.cool = 18;
@@ -110,7 +111,7 @@
     drawCard(c) {
       const k = this.card, w = this.w, h = this.h, t = k.t;
       const a = t < .5 ? t / .5 : t < 2.3 ? 1 : Math.max(0, 1 - (t - 2.3) / .6);
-      const pal = { storm: ['#5b6da8', '#93a6d4'], pets: ['#ffd2bf', '#fff1dc'], clear: ['#b9e4ff', '#fff6d2'] }[k.kind];
+      const pal = { storm: ['#5b6da8', '#93a6d4'], pets: ['#ffd2bf', '#fff1dc'], meteor: ['#35306e', '#ff9d6b'], clear: ['#b9e4ff', '#fff6d2'] }[k.kind];
       c.save(); c.globalAlpha = a;
       const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, pal[0]); g.addColorStop(1, pal[1]); c.fillStyle = g; c.fillRect(0, 0, w, h);
       const s = Math.min(w, h * 1.3) * .3, bob = Math.sin(t * 3) * s * .03;
@@ -119,6 +120,10 @@
         art.cloud(c, -s * .05, -s * .1, s / 70, 1, '#cdd8ea'); c.save(); c.translate(s * .0, -s * .02); art.face(c, s * .3, { mood: 'wow' }); c.restore();
         c.fillStyle = '#ffe066'; c.strokeStyle = '#fff'; c.lineWidth = s * .04; c.beginPath(); c.moveTo(s * .08, s * .3); c.lineTo(-s * .12, s * .72); c.lineTo(s * .02, s * .68); c.lineTo(-s * .08, s * 1.05); c.lineTo(s * .24, s * .55); c.lineTo(s * .1, s * .58); c.lineTo(s * .22, s * .3); c.closePath(); c.fill(); c.stroke();
         for (const [x, y] of [[-.5, .5], [-.35, .85], [.45, .6], [.6, .95]]) { c.save(); c.translate(x * s, y * s + Math.sin(t * 6 + x * 9) * s * .04); art.drop(c, s * .1); c.restore(); }
+      } else if (k.kind === 'meteor') {
+        for (let i = 0; i < 12; i++) { c.fillStyle = `rgba(255,248,200,${.4 + .5 * Math.abs(Math.sin(t * 2 + i))})`; c.beginPath(); c.arc(((i * 137) % 100 / 100 - .5) * s * 3, -s * (.3 + (i * 53 % 100) / 100 * .6), s * .02, 0, TAU); c.fill(); }
+        c.save(); c.translate(s * .4, -s * .25 + Math.sin(t * 4) * s * .04); c.rotate(.6); c.fillStyle = 'rgba(255,200,120,.55)'; c.beginPath(); c.moveTo(-s * .5, -s * .08); c.lineTo(0, -s * .12); c.lineTo(0, s * .12); c.lineTo(-s * .5, s * .08); c.closePath(); c.fill(); c.fillStyle = '#b07850'; c.beginPath(); c.arc(0, 0, s * .15, 0, TAU); c.fill(); art.face(c, s * .12, { mood: 'wow' }); c.restore();
+        c.save(); c.translate(-s * .15, s * .72); SPG.pets.draw(c, 'trike', s * .85, t, { mood: 'cheer', hop: (Math.sin(t * 5) + 1) * .2 }); c.restore();
       } else if (k.kind === 'pets') {
         c.save(); c.translate(0, s * .6); art.fireTruck(c, s * .07, t, {}); c.restore();
         c.save(); c.translate(-s * .38, -s * .1 + Math.sin(t * 5) * s * .05); art.pet(c, 'cat', 0, s * .34, t, 'fall', 1); c.restore();
@@ -159,6 +164,97 @@
           this.storm = null; this.sunT = 5; store.addStars(1); sfx.win(); voice.say('storm-over'); this.endEvent();
           this.fx.burst(this.w * .8, this.h * .2, 22, { colors: ['#ffd54a', '#fff6a8', '#ffffff'], shape: 'star', speed: 260, g: 60, life: 1.3, size: 9 });
         }
+      }
+    }
+
+    /* ---- a meteor shower: dinosaurs wander along the ground while shooting stars fall. She catches them in the bucket;
+       the dinosaurs always run out of the way, so nothing ever hits them and nothing can go wrong ---- */
+    startMeteors() {
+      if (this.met) return;
+      const ids = ['trex', 'trike', 'stego', 'bronto', 'babydino'].sort(() => Math.random() - .5).slice(0, this.w < 560 ? 3 : 4);
+      const s = Math.min(this.h * .22, this.w * .17);
+      this.met = { phase: 'in', t: 0, k: 0, rocks: [], spawned: 0, total: 12, caught: 0, spawnIn: 1.6, s,
+        dinos: ids.map((id, i) => ({ id, x: this.w * (.14 + i * (.72 / Math.max(1, ids.length - 1))), tx: 0, dir: i % 2 ? -1 : 1, pause: Math.random() * 2, bob: Math.random() * 9, flee: 0, cheer: 0 })) };
+      for (const d of this.met.dinos) d.tx = d.x;
+      voice.say('meteor-start');
+    }
+    // the dinosaurs stay well away from every falling rock (a rock falls straight down, so where it lands is known)
+    dinoDanger(M, x) { let worst = null; for (const r of M.rocks) { const dx = x - r.x; if (Math.abs(dx) < M.s * .8 && (!worst || Math.abs(dx) < Math.abs(worst))) worst = dx; } return worst; }
+    updateMeteors(dt) {
+      const M = this.met; M.t += dt;
+      const r0 = Math.max(16, Math.min(40, this.dropR * 1.6));
+      if (M.phase === 'in') { M.k = Math.min(1, M.t / 2.2); if (M.t >= 2.2) { M.phase = 'on'; M.t = 0; } }
+      else if (M.phase === 'on') {
+        M.k = 1;
+        M.spawnIn -= dt;
+        if (M.spawnIn <= 0 && M.spawned < M.total) {
+          M.spawned++; M.spawnIn = 1.7 + Math.random() * 1.1;
+          // choose a column that is not over a dinosaur
+          let x = 0, tries = 0; do { x = this.w * (.08 + Math.random() * .84); tries++; } while (tries < 12 && M.dinos.some(d => Math.abs(d.x - x) < M.s * 1.2));
+          M.rocks.push({ x, y: -r0, vy: this.h * .1, r: r0 * (.9 + Math.random() * .35), spin: Math.random() * 6, face: Math.random() * 3 });
+          sfx.whoosh();
+        }
+        if (M.spawned >= M.total && !M.rocks.length) { M.phase = 'out'; M.t = 0; }
+      } else { M.k = Math.max(0, 1 - M.t / 2.8); if (M.t >= 2.8) { this.endMeteors(); return; } }
+      // rocks
+      const b = this.bucket, g = this.h * .16, vmax = this.h * .3;
+      for (const r of M.rocks) { r.vy = Math.min(vmax, r.vy + g * dt); r.y += r.vy * dt; r.spin += dt * 2; r.face -= dt; if (Math.random() < dt * 30) this.fx.burst(r.x, r.y - r.r * .5, 1, { colors: ['#ffb347', '#ff7a3d', '#ffe27a'], speed: 30, g: -60, life: .5, size: r.r * .3 }); }
+      M.rocks = M.rocks.filter(r => {
+        if (this.bucketHide < .3 && r.y + r.r * .4 >= this.rimY && r.y <= this.rimY + this.bh * .4 && Math.abs(r.x - b.x) < this.bw * .55 - r.r * .2) {
+          M.caught++; this.moodT = .5; sfx.plink(M.caught); this.bag.meteors = (this.bag.meteors || 0) + 1; store.save();
+          this.fx.burst(r.x, this.rimY, 14, { colors: ['#ffe27a', '#fff', '#ffb347', '#9be0ff'], shape: 'star', speed: 240, g: 500, life: .7, size: 8, up: 220 });
+          for (const d of M.dinos) d.cheer = 1; return false;
+        }
+        if (r.y >= this.groundY - r.r * .4) {   // a soft landing: a little glowing stone and a puff of stars
+          this.craters.push({ x: r.x, y: this.groundY, life: 1, r: r.r });
+          this.fx.burst(r.x, this.groundY, 10, { colors: ['#ffe27a', '#ffb347', '#fff'], shape: 'star', speed: 150, g: 300, life: .6, size: 7, up: 120 }); sfx.pop();
+          for (const d of M.dinos) if (Math.abs(d.x - r.x) < M.s * .55) { d.x += (d.x >= r.x ? 1 : -1) * M.s * .6; d.flee = 1; }   // (they were already running; this is only a safety net)
+          return false;
+        }
+        return true;
+      });
+      // dinosaurs: wander, pause, and run away from anything falling near them
+      for (const d of M.dinos) {
+        d.bob += dt * 8; d.cheer = Math.max(0, d.cheer - dt);
+        const danger = this.dinoDanger(M, d.x);
+        if (danger !== null) { d.flee = 1; const away = danger >= 0 ? 1 : -1; d.dir = away; let nx = d.x + away * this.w * .55 * dt; if (nx < M.s * .4 || nx > this.w - M.s * .4) { d.dir = -away; nx = d.x - away * this.w * .55 * dt; } d.x = Math.max(M.s * .4, Math.min(this.w - M.s * .4, nx)); d.tx = d.x; d.pause = .4; }
+        else {
+          d.flee = Math.max(0, d.flee - dt * 3);
+          if (d.pause > 0) d.pause -= dt;
+          else if (Math.abs(d.tx - d.x) < 6) { d.tx = M.s * .5 + Math.random() * (this.w - M.s); d.pause = .3 + Math.random() * 1.6; }
+          else { const dir = Math.sign(d.tx - d.x); d.dir = dir; d.x += dir * this.w * .09 * dt; }
+        }
+      }
+    }
+    endMeteors() {
+      this.met = null; this.craters.length = 0; store.addStars(1); sfx.win(); voice.say('meteor-done'); this.endEvent();
+      this.fx.burst(this.w / 2, this.h * .3, 26, { colors: ['#ffe27a', '#ffb347', '#fff', '#ff9fc8'], shape: 'star', speed: 300, g: 80, life: 1.4, size: 9 });
+    }
+    drawMeteors(c) {
+      const M = this.met, w = this.w, h = this.h, k = M.k;
+      // evening sky with twinkling stars
+      c.fillStyle = `rgba(48,40,100,${(.42 * k).toFixed(3)})`; c.fillRect(0, 0, w, h);
+      for (let i = 0; i < 26; i++) { const x = ((i * 0.6180339 + .11) % 1) * w, y = ((i * 0.3819 + .05) % 1) * h * .6; c.globalAlpha = k * (.35 + .5 * Math.abs(Math.sin(this.t * 1.4 + i))); c.fillStyle = '#fff8d8'; c.beginPath(); c.arc(x, y, 1.6 + (i % 3), 0, TAU); c.fill(); }
+      c.globalAlpha = 1;
+      // glowing stones where rocks landed
+      for (const cr of this.craters) { c.globalAlpha = Math.min(1, cr.life * 1.5); c.fillStyle = '#ffd27a'; c.beginPath(); c.ellipse(cr.x, cr.y, cr.r * .7, cr.r * .35, 0, 0, TAU); c.fill(); c.fillStyle = '#b07850'; c.beginPath(); c.ellipse(cr.x, cr.y - cr.r * .1, cr.r * .5, cr.r * .28, 0, 0, TAU); c.fill(); c.globalAlpha = 1; }
+      // dinosaurs
+      const slide = 1 - Math.pow(1 - Math.min(1, k * 1.4), 3);
+      for (const d of M.dinos) {
+        const walking = Math.abs(d.tx - d.x) > 6 || d.flee > .05, hop = walking ? Math.abs(Math.sin(d.bob * (d.flee > .05 ? 1.6 : 1))) * M.s * .07 : 0;
+        c.save(); c.translate(d.x, this.groundY + (1 - slide) * M.s * 1.2 - hop); if (d.dir < 0) c.scale(-1, 1);
+        SPG.pets.draw(c, d.id, M.s, this.t + d.bob * .1, { mood: d.cheer > 0 || d.flee > .3 ? 'cheer' : 'happy', hop: 0 });
+        c.restore();
+      }
+      // falling meteors: a friendly rock with a flame tail
+      for (const r of M.rocks) {
+        c.save(); c.translate(r.x, r.y);
+        const tail = r.r * 3.2, g = c.createLinearGradient(0, -tail, 0, 0); g.addColorStop(0, 'rgba(255,170,60,0)'); g.addColorStop(1, 'rgba(255,200,90,.85)');
+        c.fillStyle = g; c.beginPath(); c.moveTo(-r.r * .75, 0); c.lineTo(0, -tail); c.lineTo(r.r * .75, 0); c.closePath(); c.fill();
+        c.fillStyle = '#b07850'; c.beginPath(); c.arc(0, 0, r.r, 0, TAU); c.fill(); c.fillStyle = '#8a5a3a'; for (const [x, y, rr] of [[-.4, -.2, .22], [.35, .3, .18], [.2, -.5, .14]]) { c.beginPath(); c.arc(x * r.r, y * r.r, rr * r.r, 0, TAU); c.fill(); }
+        c.fillStyle = 'rgba(255,255,255,.25)'; c.beginPath(); c.ellipse(-r.r * .3, -r.r * .4, r.r * .3, r.r * .14, -.5, 0, TAU); c.fill();
+        art.face(c, r.r * .8, { mood: r.y > this.rimY - this.h * .3 ? 'wow' : 'happy', blink: r.face < .1 && r.face > 0 });
+        c.restore();
       }
     }
 
@@ -293,14 +389,16 @@
       if (this.keys.ArrowLeft) b.tx -= this.w * .9 * dt; if (this.keys.ArrowRight) b.tx += this.w * .9 * dt;
       b.tx = Math.max(this.bw * .4, Math.min(this.w - this.bw * .4, b.tx));
       b.x += (b.tx - b.x) * Math.min(1, dt * 14);
-      this.spawnIn -= dt; if (this.spawnIn <= 0 && !this.pets && !this.card) this.spawn();
+      this.spawnIn -= dt; if (this.spawnIn <= 0 && !this.pets && !this.met && !this.card) this.spawn();
       // events never overlap: one waits until nothing else is going on, the rainbow is gone and a rest has passed
       this.cool = Math.max(0, this.cool - dt); this.updateCard(dt);
-      if (this.queue.length && !this.pets && !this.storm && !this.card && this.rainbow <= .02 && this.cool <= 0) {
+      if (this.queue.length && !this.pets && !this.storm && !this.met && !this.card && this.rainbow <= .02 && this.cool <= 0) {
         const kind = this.queue.shift();
-        this.showCard(kind, () => (kind === 'pets' ? this.startPets() : this.startStorm()));
+        this.showCard(kind, () => (kind === 'pets' ? this.startPets() : kind === 'meteor' ? this.startMeteors() : this.startStorm()));
       }
       if (this.storm) this.updateStorm(dt);
+      if (this.met) this.updateMeteors(dt);
+      for (const cr of this.craters) cr.life -= dt * .7; this.craters = this.craters.filter(cr => cr.life > 0);
       if (this.flash > 0) this.flash = Math.max(0, this.flash - dt * 3);
       for (const b of this.bolts) b.life -= dt * 2.6;
       this.bolts = this.bolts.filter(b => b.life > 0);
@@ -342,7 +440,7 @@
       if (this.sunT > 0) { c.save(); c.globalAlpha = Math.min(1, this.sunT, 1); art.sun(c, w * .84, h * .17, Math.min(48, w * .05), this.t); c.restore(); }
       // soft rain streaks (many more in a storm)
       c.strokeStyle = 'rgba(120,170,215,.28)'; c.lineWidth = 2; c.lineCap = 'round';
-      for (let rep = 0; rep < 1 + Math.round(K * 2); rep++) for (const s of this.streaks) { const y = ((s.y * h + this.t * h * (.5 + K * .3) * s.s + rep * h * .37) % h), x = ((s.x + rep * .31) % 1) * w; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 3, y + 16 * s.s); c.stroke(); }
+      for (let rep = 0; rep < (this.met ? 0 : 1 + Math.round(K * 2)); rep++) for (const s of this.streaks) { const y = ((s.y * h + this.t * h * (.5 + K * .3) * s.s + rep * h * .37) % h), x = ((s.x + rep * .31) % 1) * w; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 3, y + 16 * s.s); c.stroke(); }
       // clouds
       for (let i = 0; i < 6; i++) {
         if (i >= 3 && K <= 0) break;
@@ -371,6 +469,7 @@
       c.lineWidth = 3;
       for (const r of this.ripples) { c.globalAlpha = r.life * .7; c.strokeStyle = '#6fbde8'; c.beginPath(); c.ellipse(r.x, r.y, (1 - r.life) * 46 + 6, (1 - r.life) * 12 + 2, 0, 0, TAU); c.stroke(); }
       c.globalAlpha = 1;
+      if (this.met) this.drawMeteors(c);
       // bucket
       if (this.bucketHide < .98) art.bucket(c, this.bucket.x, this.rimY + this.bucketHide * this.h * .4, this.bw, this.bh, this.fill, this.t, this.moodT > 0 || this.rainbow > .5 ? 'cheer' : 'happy');
       if (this.pets) this.drawPets(c);

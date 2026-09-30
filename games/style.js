@@ -10,6 +10,15 @@
   const icon = id => { const s = document.createElementNS(NS, 'svg'); s.setAttribute('class', 'ico'); s.innerHTML = `<use href="#i-${id}"/>`; return s; };
   const btn = (cls, label, ...kids) => { const b = el('button', cls, ...kids); b.type = 'button'; b.setAttribute('aria-label', label); return b; };
   const rnd = a => a[Math.floor(Math.random() * a.length)];
+  // A tap that still counts when a small finger wobbles: act when the finger lifts within ~22px of where it landed
+  // (a scroll or a long drag does not count). Keyboard and screen-reader activation still work.
+  const onTap = (b, fn) => {
+    let d = null, done = 0;
+    b.addEventListener('pointerdown', e => { if (e.button > 0) return; d = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+    b.addEventListener('pointerup', e => { if (!d) return; const o = d; d = null; if (Math.hypot(e.clientX - o.x, e.clientY - o.y) < 22 && performance.now() - o.t < 1500) { done = performance.now(); fn(e); } });
+    b.addEventListener('pointercancel', () => { d = null; });
+    b.addEventListener('click', e => { if (e.detail === 0 && performance.now() - done > 600) fn(e); });
+  };
   const say = key => { const k = 'style/' + key; if (voice.LINES[k]) voice.say(k); };
 
   /* ---------------------------------------------------------------- the friends */
@@ -222,7 +231,7 @@
           else drawThumb(cv, this.thumbLook(id, id === 'dress' ? 'ball' : id === 'top' ? 'tee' : id === 'bottom' ? 'skirt' : id === 'shoes' ? 'boots' : 'crown'), FOCUS[id]);
         });
         const b = btn('st-tab' + (id === this.tab ? ' on' : ''), TABNAME[id], cv, el('span', 'st-tab-l', TABNAME[id]));
-        b.addEventListener('click', () => { if (this.tab === id) return; this.tab = id; sfx.tap(); say('tab-' + id); if (id === 'nails') this.later(() => say('say-nails'), 900); this.renderPanel(); });
+        onTap(b, () => { if (this.tab === id) return; this.tab = id; sfx.tap(); say('tab-' + id); if (id === 'nails') this.later(() => say('say-nails'), 900); this.renderPanel(); });
         this.tabs.append(b);
       }
       const T = this.tab;
@@ -265,18 +274,19 @@
       if (cat === 'dress') { l.dress = id; l.hat = null; }
       else if (cat === 'top') { l.dress = null; l.top = id; l.bottom = l.bottom || 'jeans'; }
       else if (cat === 'bottom') { l.dress = null; l.bottom = id; l.top = l.top || 'tee'; }
-      else { l[cat] = id; if (cat === 'hat' || cat === 'face') l.dress = l.dress; }
+      else if (cat === 'shoes') { l.shoes = id; l.dress = null; l.bottom = 'shorts'; }
+      else { l[cat] = id; }
       return l;
     }
     tile(draw, on, voiceKey, fn, small, wide) {
       const px = wide ? 92 : 84, cv = thumbCv(px, draw), b = btn('st-tile' + (on ? ' on' : '') + (small ? ' small' : ''), voiceKey, cv);
-      b.addEventListener('click', () => { say(voiceKey); fn(); });
+      onTap(b, () => { say(voiceKey); fn(); });
       return b;
     }
     itemGrid(cat) {
       const g = el('div', 'st-grid'); g.dataset.cat = cat;
       const none = btn('st-tile none' + (!this.look[cat] ? ' on' : ''), 'none', icon('x'));
-      none.addEventListener('click', () => { sfx.whoosh(); this.change({ [cat]: null }, true); });
+      onTap(none, () => { sfx.whoosh(); this.change({ [cat]: null }, true); });
       g.append(none);
       for (const it of P.CATS[cat]) {
         g.append(this.tile(cv => drawThumb(cv, this.thumbLook(cat, it.id), FOCUS[cat]), this.look[cat] === it.id, cat + '-' + it.id, () => { this.change(cat === 'top' || cat === 'bottom' ? { [cat]: it.id, dress: null } : { [cat]: it.id }); this.itemSfx(cat); }));
@@ -296,7 +306,7 @@
         const b = btn('st-sw' + ((this.look[key] | 0) === i && (this.look[key] != null) ? ' on' : '') + (o.kind ? ' pic' : ''), (o.title || 'color') + ' ' + (i + 1));
         if (o.kind && k !== null) { const cv = thumbCv(64, cv => swatchPic(cv.getContext('2d'), o.kind, k, cv.width)); b.append(cv); }
         else if (k === null) { b.classList.add('none'); b.append(icon('x')); } else if (k === 'rainbow') b.style.background = 'conic-gradient(#ff6b81, #ffa64d, #ffe066, #7ed957, #5cc8f2, #8a7cf0, #ff6b81)'; else b.style.background = k;
-        b.addEventListener('click', () => { if (voiceKey) say(voiceKey); this.change({ [key]: i }); sfx.plink(i); });
+        onTap(b, () => { if (voiceKey) say(voiceKey); this.change({ [key]: i }); sfx.plink(i); });
         row.append(b);
       });
       return row;
@@ -305,8 +315,8 @@
     /* -------------------------------------------------------------- nails */
     nailSwatches() {
       const row = el('div', 'st-sw-row');
-      const clean = btn('st-sw none' + (this.nailColor < 0 ? ' on' : ''), 'clean nails', icon('x')); clean.addEventListener('click', () => { this.nailColor = -1; sfx.tap(); this.renderPanel(true); }); row.append(clean);
-      P.NAIL.forEach((k, i) => { const b = btn('st-sw' + (this.nailColor === i ? ' on' : ''), 'polish ' + i); b.style.background = k; b.addEventListener('click', () => { this.nailColor = i; sfx.plink(i); this.renderPanel(true); }); row.append(b); });
+      const clean = btn('st-sw none' + (this.nailColor < 0 ? ' on' : ''), 'clean nails', icon('x')); onTap(clean, () => { this.nailColor = -1; sfx.tap(); this.renderPanel(true); }); row.append(clean);
+      P.NAIL.forEach((k, i) => { const b = btn('st-sw' + (this.nailColor === i ? ' on' : ''), 'polish ' + i); b.style.background = k; onTap(b, () => { this.nailColor = i; sfx.plink(i); this.renderPanel(true); }); row.append(b); });
       return row;
     }
     nailControls() {
@@ -315,9 +325,9 @@
       P.NAILART.forEach((id, i) => {
         g.append(this.tile(cv => { const c = cv.getContext('2d'), s = cv.width; c.fillStyle = P.SKIN[this.look.skin % P.SKIN.length]; art.rr(c, s * .1, s * .1, s * .8, s * .8, s * .2); c.fill(); c.save(); c.translate(0, 0); P.nailDraw(c, { x: s / 2, y: s * .16, w: s * .46, h: s * .66, rot: 0 }, P.NAIL[this.nailColor < 0 ? 3 : this.nailColor], this.glitter, i, 0); c.restore(); }, this.nailArt === i, 'say-nails', () => { this.nailArt = i; sfx.plink(i); this.renderPanel(true); }, false));
       });
-      const gl = btn('st-tile glitter' + (this.glitter ? ' on' : ''), 'glitter', icon('star')); gl.addEventListener('click', () => { this.glitter = !this.glitter; say('say-glitter'); sfx.chime(); this.renderPanel(true); }); g.prepend(gl);
-      const all = btn('st-tile all', 'paint all nails', icon('brush')); all.addEventListener('click', () => { say('say-all'); this.paintAll(); });
-      const clr = btn('st-tile clear', 'clean all nails', icon('again')); clr.addEventListener('click', () => { say('say-clear'); this.change({ nails: new Array(10).fill(-1), nailArt: new Array(10).fill(0), nailGlitter: new Array(10).fill(false) }, true); sfx.whoosh(); });
+      const gl = btn('st-tile glitter' + (this.glitter ? ' on' : ''), 'glitter', icon('star')); onTap(gl, () => { this.glitter = !this.glitter; say('say-glitter'); sfx.chime(); this.renderPanel(true); }); g.prepend(gl);
+      const all = btn('st-tile all', 'paint all nails', icon('brush')); onTap(all, () => { say('say-all'); this.paintAll(); });
+      const clr = btn('st-tile clear', 'clean all nails', icon('again')); onTap(clr, () => { say('say-clear'); this.change({ nails: new Array(10).fill(-1), nailArt: new Array(10).fill(0), nailGlitter: new Array(10).fill(false) }, true); sfx.whoosh(); });
       g.append(all, clr);
       wrap.append(g); return wrap;
     }

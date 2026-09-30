@@ -11,6 +11,7 @@ await page.setContent('<body></body>');
 await page.addScriptTag({ content: 'window.SPG={games:[]};' });
 await page.addScriptTag({ content: readFileSync('games/color-pictures.js', 'utf8') });
 await page.addScriptTag({ content: readFileSync('games/color-seasons.js', 'utf8') });
+await page.addScriptTag({ content: readFileSync('games/color-dinos.js', 'utf8') });
 
 const report = await page.evaluate(() => {
   const NS = 'http://www.w3.org/2000/svg', out = [], ids = new Set();

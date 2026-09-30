@@ -35,9 +35,11 @@
     'num/1': 'One!', 'num/2': 'Two!', 'num/3': 'Three!', 'num/4': 'Four!', 'num/5': 'Five!',
     'color/red': 'Red!', 'color/blue': 'Blue!', 'color/yellow': 'Yellow!', 'color/green': 'Green!',
     'shape/circle': 'Circle!', 'shape/square': 'Square!', 'shape/triangle': 'Triangle!', 'shape/star': 'Star!',
-    'care-morning': 'Good morning!',
+    'aq-start': 'Touch the water to feed the fish!', 'aq-coin': 'A shiny coin! Touch it!', 'aq-grow': 'Your fish is growing!', 'aq-shop': 'Spend your coins!', 'aq-boss': 'A grumpy visitor! Tap it with bubbles!', 'aq-boss-done': 'You made a new friend! Hooray!',
+    'aq/guppy': 'A little guppy', 'aq/clown': 'A clownfish', 'aq/angel': 'An angelfish', 'aq/puffer': 'A pufferfish', 'aq/food': 'Better fish food', 'aq/more': 'More fish food', 'aq/snail': 'A helper snail', 'aq/power': 'Bubble power', 'aq/castle': 'A castle', 'aq/chest': 'A treasure chest', 'aq/weed': 'Seaweed', 'aq/shell': 'A big shell',
+    'care-morning': 'Good morning!', 'room/home': 'A cozy home!', 'room/castle': 'A castle!', 'room/halloween': 'A spooky house!', 'room/christmas': 'A Christmas house!', 'room/dino': 'Dinosaur land!', 'room/space': 'Outer space!', 'room/beach': 'A seaside house!',
     'fire-level': 'A new place to help!', 'fire-next': 'Tap the green arrow to go somewhere new!',
-    'storm-coming': 'Here comes a big rainy storm!', 'storm-over': 'The storm is over. Look, the sun!',
+    'meteor-start': 'Shooting stars! Catch them in your bucket!', 'meteor-done': 'You kept all the dinosaurs safe! Hooray!', 'storm-coming': 'Here comes a big rainy storm!', 'storm-over': 'The storm is over. Look, the sun!',
     'raining-pets': "It's raining cats and dogs!", 'pets-safe': 'You saved them all!',
     'dig-first': 'First, dig a hole with the shovel!', 'dig-one': 'Dig! One!', 'dig-two': 'Two!', 'dig-three': 'Three! A perfect hole!', 'pat-it': 'Now pat the dirt down!', 'bye-bye': 'Bye bye, friend! Have fun!', 'pour-water': 'Hold the can over the plant to water it!', 'seed-in': 'Now drop in a seed!', 'water-me': 'Tap the plant to water it!',
     'new-friend': 'A new friend!', 'new-seeds': 'New seeds to plant!', 'bigger-garden': 'Your garden got bigger!',
@@ -76,7 +78,7 @@
   // The names in the name pickers (players and pets) are real lines too, so they can be recorded in the grown-ups' voice.
   const PICK_NAMES = {
     nicks: ['Sunny', 'Bunny', 'Sprout', 'Star', 'Peanut', 'Buttercup', 'Pumpkin', 'Ladybug', 'Honey', 'Dot', 'Bee', 'Twinkle'],
-    pets: ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle', 'Waddles', 'Nibbles', 'Whiskers', 'Snowball', 'Ginger', 'Bubbles', 'Oreo', 'Pepper', 'Fluffy', 'Sparkle', 'Bean', 'Noodle']
+    pets: ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle', 'Rex', 'Spike', 'Stompy', 'Dino', 'Waddles', 'Nibbles', 'Whiskers', 'Snowball', 'Ginger', 'Bubbles', 'Oreo', 'Pepper', 'Fluffy', 'Sparkle', 'Bean', 'Noodle']
   };
   for (const n of new Set([...PICK_NAMES.nicks, ...PICK_NAMES.pets])) LINES['name/' + n] = n;
   Object.assign(LINES, { 'hello': 'Hello!', 'welcome-home': 'Welcome home,' });
@@ -88,7 +90,7 @@
   const SOUNDS = {};
   for (const k of CRITTERS) SOUNDS['critter/' + k] = CRITTER_NOISE[k];
   // Purring and happy sounds for the close-up petting in Pet Care. Without a recording the game makes a soft synthesized purr.
-  const PURRS = { cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
+  const PURRS = { trex: 'a low, rumbly happy growl', trike: 'a low, happy rumble', stego: 'a deep, sleepy rumble', bronto: 'a slow, deep hum', babydino: 'a squeaky happy chirp', cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
   for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
   const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
 

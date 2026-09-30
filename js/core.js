@@ -231,6 +231,7 @@
         case 'turtle': tone(110, .14, { vol: q }); return .16;
         case 'dragonfly': noise(.1, { freq: 5000, sweep: .5, q: 1.2, vol: q * .6 }); return .12;
         case 'cat': tone(600, .22, { slide: 1.5, type: 'triangle', vol: q }); tone(900, .2, { slide: .6, type: 'triangle', vol: q * .8, at: .2 }); return .42;
+        case 'dino': tone(130, .35, { slide: .5, type: 'sawtooth', vol: q * .7 }); tone(95, .4, { slide: .6, type: 'triangle', vol: q, at: .05 }); noise(.3, { freq: 350, sweep: .5, q: .6, vol: q * .5 }); return .4;
         case 'dog': tone(300, .07, { slide: .7, type: 'triangle', vol: q }); tone(320, .07, { slide: .7, type: 'triangle', vol: q, at: .12 }); return .2;
       }
       return 0;
@@ -275,7 +276,7 @@
     purr(kind = 'cat') {
       const c = A.ctx;
       if (!c || !SPG.store.settings.sound) return { set() {}, off() {} };
-      const P = { cat: { rate: 25, f: 230, q: .8, v: .16, hum: 55 }, dog: { rate: 9, f: 160, q: .7, v: .14, hum: 70 }, bunny: { rate: 38, f: 950, q: 1.4, v: .07, hum: 0 }, bear: { rate: 16, f: 140, q: .6, v: .17, hum: 50 }, fox: { rate: 21, f: 340, q: 1, v: .13, hum: 60 }, panda: { rate: 13, f: 190, q: .7, v: .15, hum: 52 }, frog: { rate: 11, f: 280, q: 2, v: .09, hum: 80 } }[kind] || { rate: 25, f: 230, q: .8, v: .15, hum: 55 };
+      const P = { cat: { rate: 25, f: 230, q: .8, v: .16, hum: 55 }, dog: { rate: 9, f: 160, q: .7, v: .14, hum: 70 }, bunny: { rate: 38, f: 950, q: 1.4, v: .07, hum: 0 }, bear: { rate: 16, f: 140, q: .6, v: .17, hum: 50 }, fox: { rate: 21, f: 340, q: 1, v: .13, hum: 60 }, panda: { rate: 13, f: 190, q: .7, v: .15, hum: 52 }, frog: { rate: 11, f: 280, q: 2, v: .09, hum: 80 }, trex: { rate: 6, f: 95, q: .6, v: .2, hum: 38 }, trike: { rate: 8, f: 110, q: .6, v: .18, hum: 42 }, stego: { rate: 7, f: 105, q: .6, v: .18, hum: 40 }, bronto: { rate: 5, f: 85, q: .5, v: .18, hum: 34 }, babydino: { rate: 15, f: 240, q: .8, v: .14, hum: 70 } }[kind] || { rate: 25, f: 230, q: .8, v: .15, hum: 55 };
       const buf = c.createBuffer(1, c.sampleRate, c.sampleRate), d = buf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
@@ -344,6 +345,17 @@
         if (i === 0 || i === 4) tone(i === 0 ? bass : bass * 1.5, .5, { type: 'triangle', vol: .055 });
         if (i === 2 || i === 6) { ch.forEach((f, k) => tone(f, .3, { type: 'sine', vol: .016, at: k * .02 })); noise(.06, { freq: 6500, q: .5, vol: .012 }); } // soft strum and brush
         if (m) { tone(m, .55, { type: 'triangle', vol: .04 }); tone(m * 2, .4, { type: 'sine', vol: .009 }); }
+      }
+    },
+    // Dinosaurs: a stompy, jolly march with big low thumps and a bouncy marimba tune.
+    dino: {
+      ms: 340, per: 8,
+      bass: [98, 98, 130.81, 98, 110, 110, 146.83, 98], chords: [[196, 246.94, 293.66], [196, 246.94, 293.66], [261.63, 329.63, 392], [196, 246.94, 293.66], [220, 261.63, 329.63], [220, 261.63, 329.63], [293.66, 369.99, 440], [196, 246.94, 293.66]],
+      melody: [[392, 0, 440, 493.88, 0, 392, 0, 0], [523.25, 0, 493.88, 440, 0, 392, 0, 0], [440, 0, 493.88, 523.25, 0, 440, 0, 0], [587.33, 0, 523.25, 493.88, 0, 392, 0, 0], [392, 0, 440, 493.88, 0, 587.33, 0, 0], [523.25, 0, 493.88, 440, 0, 493.88, 0, 0], [440, 523.25, 587.33, 0, 523.25, 440, 0, 0], [392, 0, 0, 0, 392, 0, 0, 0]],
+      play(bar, i, m, ch, bass) {
+        if (i === 0 || i === 4) { tone(bass / 2, .3, { type: 'sine', vol: .07 }); tone(bass, .4, { type: 'triangle', vol: .05 }); }   // stomp!
+        if (i === 2 || i === 6) ch.forEach((f, k) => tone(f, .18, { type: 'triangle', vol: .015, at: k * .015 }));
+        if (m) { tone(m, .28, { type: 'triangle', vol: .045 }); tone(m * 2, .12, { type: 'sine', vol: .012 }); }
       }
     },
     // Christmas: sleigh bells, a glockenspiel tune and warm chords in C major.

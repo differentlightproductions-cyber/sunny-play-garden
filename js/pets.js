@@ -24,7 +24,13 @@
     mouse: { body: '#c9c5d3', belly: '#fff', limb: '#c9c5d3', tail: 'long', tailCol: '#ffb3c6', sound: 'mouse' },
     unicorn: { body: '#fff', belly: '#fff0fa', limb: '#fff', tail: 'bushy', tailCol: '#ff9fd0', sound: 'cat' },
     elephant: { body: '#b8c4d6', belly: '#dbe3ef', limb: '#a4b2c8', tail: 'long', tailCol: '#a4b2c8', sound: 'hedgehog' },
-    owl: { body: '#b98a5a', belly: '#f3d9b0', limb: '#8a6440', feet: '#ff9d3d', tail: null, sound: 'bird', smooth: true }
+    owl: { body: '#b98a5a', belly: '#f3d9b0', limb: '#8a6440', feet: '#ff9d3d', tail: null, sound: 'bird', smooth: true },
+    // dinosaurs: smooth skin, a thick tail, little arms
+    trex: { body: '#6fcf6a', belly: '#e4f7c5', limb: '#58b855', tail: 'dino', tailCol: '#58b855', sound: 'dino', smooth: true, dino: true },
+    trike: { body: '#e9a15e', belly: '#ffe9c4', limb: '#c98b5b', tail: 'dino', tailCol: '#d99250', sound: 'dino', smooth: true, dino: true },
+    stego: { body: '#a78be0', belly: '#ece4ff', limb: '#8a6ac8', tail: 'dino', tailCol: '#8a6ac8', sound: 'dino', smooth: true, dino: true, plates: true },
+    bronto: { body: '#6fb8f2', belly: '#dff0ff', limb: '#4f9ae0', tail: 'dino', tailCol: '#4f9ae0', sound: 'dino', smooth: true, dino: true, tall: true },
+    babydino: { body: '#b8ec8c', belly: '#f4ffe0', limb: '#9adc6a', tail: 'dino', tailCol: '#9adc6a', sound: 'dino', smooth: true, dino: true }
   };
   // Prices are in stars earned by playing. The first friends are cheap.
   const PETS = [
@@ -32,7 +38,8 @@
     { id: 'fox', name: 'Fox pup', price: 20 }, { id: 'frog', name: 'Froggy', price: 25 }, { id: 'panda', name: 'Panda cub', price: 30 },
     { id: 'dog', name: 'Puppy', price: 12 }, { id: 'hamster', name: 'Hamster', price: 10 }, { id: 'duck', name: 'Duckling', price: 12 }, { id: 'pig', name: 'Piglet', price: 15 },
     { id: 'lamb', name: 'Lamb', price: 18 }, { id: 'mouse', name: 'Mouse', price: 10 }, { id: 'penguin', name: 'Penguin', price: 25 }, { id: 'owl', name: 'Owl', price: 28 },
-    { id: 'elephant', name: 'Elephant', price: 35 }, { id: 'unicorn', name: 'Unicorn', price: 40 }
+    { id: 'elephant', name: 'Elephant', price: 35 }, { id: 'unicorn', name: 'Unicorn', price: 40 },
+    { id: 'babydino', name: 'Baby dino', price: 20 }, { id: 'trike', name: 'Triceratops', price: 30 }, { id: 'stego', name: 'Stegosaurus', price: 30 }, { id: 'bronto', name: 'Long-neck dino', price: 35 }, { id: 'trex', name: 'T-Rex', price: 40 }
   ];
   const HATS = [
     { id: 'bow', name: 'Bow', price: 5 }, { id: 'flowers', name: 'Flower crown', price: 8 }, { id: 'party', name: 'Party hat', price: 8 },
@@ -242,9 +249,11 @@
     const wag = Math.sin(t * (mood === 'cheer' ? 9 : 2.4)) * (mood === 'sleep' ? .02 : .18);
     if (sp.tail === 'puff') { c.fillStyle = sp.tailCol; ell(c, s * .25, s * .05, s * .07, s * .07); c.fill(); }
     else if (sp.tail === 'long') { c.strokeStyle = sp.tailCol; c.lineWidth = s * .07; c.beginPath(); c.moveTo(s * .2, s * .1); c.quadraticCurveTo(s * .42, s * .1 + wag * s * .5, s * .38, -s * .12 + wag * s * .3); c.stroke(); }
+    else if (sp.tail === 'dino') { c.fillStyle = sp.tailCol; c.beginPath(); c.moveTo(s * .14, s * .12); c.quadraticCurveTo(s * .42, s * .14 + wag * s * .4, s * .5, -s * .02 + wag * s * .3); c.quadraticCurveTo(s * .34, s * .02, s * .16, -s * .06); c.closePath(); c.fill(); }
     else if (sp.tail === 'curl') { c.strokeStyle = sp.tailCol; c.lineWidth = s * .035; c.beginPath(); c.arc(s * .27, s * .04, s * .05, Math.PI * .8, Math.PI * 2.6); c.stroke(); }
     else if (sp.tail === 'bushy') { c.save(); c.translate(s * .22, s * .06); c.rotate(-.5 + wag); c.fillStyle = sp.tailCol; ell(c, s * .14, 0, s * .17, s * .08); c.fill(); c.fillStyle = '#fff'; ell(c, s * .27, 0, s * .06, s * .06); c.fill(); c.restore(); }
     c.restore();
+    if (sp.plates) { c.save(); c.translate(0, -s * .44); c.fillStyle = '#ffd54a'; for (const [x, h] of [[-.17, .1], [-.06, .14], [.06, .14], [.17, .1]]) { c.beginPath(); c.moveTo(s * (x - .05), s * .03); c.lineTo(s * x, -s * h); c.lineTo(s * (x + .05), s * .03); c.closePath(); c.fill(); } c.restore(); }
     // body
     c.save(); c.translate(0, -s * .22); c.scale(1, breathe);
     c.fillStyle = sp.body; ell(c, 0, 0, s * .25, s * .23); c.fill();
@@ -259,7 +268,9 @@
     // feet
     c.fillStyle = sp.feet || sp.limb; for (const side of [-1, 1]) { ell(c, side * s * .13, -s * .03, s * .09, s * .055); c.fill(); }
     // head with the face and any hat
-    c.save(); c.translate(0, -s * .6 + Math.sin(t * 2.2 + .6) * s * .006); if (mood === 'sleep') c.rotate(.1);
+    const hy = sp.tall ? -s * .8 : -s * .6;
+    if (sp.tall) { c.fillStyle = sp.body; c.beginPath(); c.roundRect ? c.roundRect(-s * .09, hy + R * .5, s * .18, s * .38, s * .09) : c.rect(-s * .09, hy + R * .5, s * .18, s * .38); c.fill(); }
+    c.save(); c.translate(0, hy + Math.sin(t * 2.2 + .6) * s * .006); if (mood === 'sleep') c.rotate(.1);
     art.avatar(c, sp.kind || id, R, { mood: mood === 'sleep' ? 'sleep' : mood === 'cheer' ? 'cheer' : 'happy', blink });
     furHead(c, id, sp, R, detail);
     if (o.face) faceAcc(c, o.face, R);

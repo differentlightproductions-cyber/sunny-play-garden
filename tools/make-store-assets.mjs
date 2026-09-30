@@ -37,7 +37,8 @@ async function freshApp(width, height) {
   return { ctx, p };
 }
 const shot = (p, name) => p.screenshot({ path: `store/screenshots/${name}.png` });
-const openGame = async (p, n) => { await p.click(`.card:nth-child(${n})`, F); await p.waitForTimeout(900); };
+const GAMES = ['Letter Garden', 'Fruit Splash', 'Rain Bucket', 'Fire Rescue', 'Grow a Garden', 'Coloring Book', 'Puzzle Pond', 'Pet Care', 'Bunny Band', 'Choo-Choo Train', 'Hide and Seek'];
+const openGame = async (p, n) => { await p.click(`.card[aria-label="${GAMES[n - 1]}"]`, F); await p.waitForTimeout(900); };
 const home = async p => { await p.click('#btn-home', F); await p.waitForTimeout(400); };
 
 for (const [kind, w, h] of [['phone', 540, 960], ['tablet', 960, 600]]) {
@@ -81,6 +82,9 @@ for (const [kind, w, h] of [['phone', 540, 960], ['tablet', 960, 600]]) {
   await p.waitForTimeout(500);
   await p.evaluate(() => { const g = SPG.app.running().inst; g.ops = [[0, 'sky', 6], [0, 'sun', 2], [0, 'bank', 3], [0, 'pond', 7], [0, 'pad', 3], [0, 'body', 4], [0, 'head', 4], [0, 'eyes', 1]]; g.redraw(); });
   await p.waitForTimeout(300); await shot(p, `${kind}-7-color`); await home(p);
+
+  // The newer games, one picture each
+  for (const [n, tag] of [[9, '9-band'], [10, '9b-train'], [7, '9c-puzzle'], [11, '9d-hide']]) { await openGame(p, n); await p.waitForTimeout(1600); await shot(p, `${kind}-${tag}`); await home(p); }
 
   // Pet Shop: a friend at home with a hat
   await p.evaluate(() => { SPG.store.active.stars = 40; SPG.pets.adopt('bunny'); SPG.pets.rename('bunny', 'Biscuit'); SPG.pets.buyHat('bow'); SPG.pets.wear('bow'); SPG.store.save(); });

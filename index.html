@@ -117,7 +117,7 @@
   <!-- Daily play time is up -->
   <div id="break" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="break-title">
     <div class="break-card">
-      <canvas id="break-art" width="320" height="320"></canvas>
+      <canvas id="break-art" width="800" height="450"></canvas>
       <h2 id="break-title">Time for a little rest</h2>
       <p>Play time is up for today.</p>
       <button id="break-adult" class="btn quiet" type="button"><svg><use href="#i-lock"/></svg> Grown-up</button>
@@ -128,11 +128,12 @@
   <div id="gate" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gate-title">
     <div class="sheet gate">
       <h2 id="gate-title">Grown-ups only</h2>
-      <p class="fine">Answer to continue</p>
+      <p id="gate-hint" class="fine">Answer to continue</p>
       <p id="gate-q" class="gate-q"></p>
       <div id="gate-answer" class="gate-answer" aria-live="polite"></div>
       <div id="numpad" class="numpad"></div>
       <button id="gate-cancel" type="button" class="btn quiet">Cancel</button>
+      <button id="gate-forgot" type="button" class="btn quiet small hidden">Forgot the PIN?</button>
     </div>
   </div>
 
@@ -169,6 +170,11 @@
   <script src="games/fruit.js"></script>
   <script src="games/rain.js"></script>
   <script src="games/firerescue.js"></script>
+  <script src="games/band.js"></script>
+  <script src="games/train.js"></script>
+  <script src="games/puzzle.js"></script>
+  <script src="games/petcare.js"></script>
+  <script src="games/hide.js"></script>
   <script src="games/garden.js"></script>
   <script src="games/color-pictures.js"></script>
   <script src="games/color-seasons.js"></script>

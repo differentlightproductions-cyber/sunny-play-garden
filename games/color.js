@@ -599,5 +599,14 @@
   }
 
   SPG.coloring = { compile, render, compact, PALETTE };
+  // For other games (Puzzle Pond): draw one of her pictures with her own colors, or a bright sample if she has not painted it.
+  SPG.coloring = {
+    hasPaint: id => { const r = (store.bag('color', () => ({ v: 1, pics: {} })).pics || {})[id]; return !!(r && r.ops && hasPaint(r.ops)); },
+    draw(ctx, def, width) {
+      const r = (store.bag('color', () => ({ v: 1, pics: {} })).pics || {})[def.id];
+      let ops = r && r.ops && hasPaint(r.ops) ? r.ops : def.sections.map((s, i) => [FILL, s.id, (i * 5 + def.sections.length) % PALETTE.length]);
+      render(ctx, def, ops, width);
+    }
+  };
   SPG.games.push({ id: 'color', name: 'Coloring Book', order: 5, dom: true, icon: cardIcon, create: host => new ColorGame(host) });
 })();

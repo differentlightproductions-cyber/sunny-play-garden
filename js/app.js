@@ -115,7 +115,7 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'] };
   function renderCards() {
     const all = SPG.games.slice().sort((a, b) => a.order - b.order);
     const games = all.filter(g => !g.shop), shops = all.filter(g => g.shop);
@@ -127,16 +127,44 @@
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    $('hub-games').dataset.n = games.length;
-    $('hub-games').replaceChildren(...games.map((g, i) => {
+    // Games come four to a page. Swipe, or use the big arrows and dots underneath.
+    const PER_PAGE = 4, pages = [];
+    for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
+    const strip = h('div', { class: 'pages' }, ...pages.map((list, pi) => h('div', { class: 'cards page', 'aria-label': `Page ${pi + 1} of ${pages.length}` }, ...list.map((g, k) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
       const canvas = document.createElement('canvas');
-      const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-i * 1.1}s` },
+      const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-(pi * PER_PAGE + k) * 1.1}s` },
         canvas, h('span', { class: 'card-name' }, h('span', {}, g.name), h('span', { class: 'go' }, icon('play'))));
-      SPG.ui.press(card, () => openGame(g));
+      // A swipe must turn the page, not start a game, so a card opens on a short tap (the browser cancels the touch when it becomes a swipe).
+      let down = null;
+      card.addEventListener('pointerdown', e => { if (e.button > 0) return; down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+      card.addEventListener('pointerup', e => {
+        if (!down) return; const d = down; down = null;
+        if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && performance.now() - d.t < 900) openGame(g);
+      });
+      for (const n of ['pointercancel', 'pointerleave']) card.addEventListener(n, () => { down = null; });
+      card.addEventListener('click', e => { if (e.detail === 0) openGame(g); });   // keyboard / assistive tech
       card._draw = paint(canvas, g);
       return card;
-    }));
+    }))));
+    const prev = h('button', { class: 'pg-arrow', type: 'button', 'aria-label': 'Previous page' }, icon('left'));
+    const next = h('button', { class: 'pg-arrow', type: 'button', 'aria-label': 'Next page' }, icon('right'));
+    const dots = h('div', { class: 'pg-dots' }, ...pages.map((_, i) => h('button', { class: 'pg-dot', type: 'button', 'aria-label': `Page ${i + 1}` })));
+    const go = i => { const n = Math.max(0, Math.min(pages.length - 1, i)); strip.scrollTo({ left: n * strip.clientWidth, behavior: 'smooth' }); };
+    const where = () => Math.max(0, Math.min(pages.length - 1, Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth))));
+    const mark = () => {
+      const i = where(); hubPage = i;
+      prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
+      [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+    };
+    SPG.ui.press(prev, () => { SPG.sfx.tap(); go(where() - 1); });
+    SPG.ui.press(next, () => { SPG.sfx.tap(); go(where() + 1); });
+    [...dots.children].forEach((d, k) => SPG.ui.press(d, () => { SPG.sfx.tap(); go(k); }));
+    strip.addEventListener('scroll', () => { clearTimeout(strip._t); strip._t = setTimeout(mark, 60); }, { passive: true });
+    strip._restore = () => { if (!strip.clientWidth) return; strip.scrollLeft = hubPage * strip.clientWidth; mark(); };
+    $('hub-games').classList.toggle('single', pages.length < 2);
+    $('hub-games').replaceChildren(strip, h('div', { class: 'pg-nav' }, prev, dots, next));
+    mark();
     // Shops are not games: they get their own storefront under the games.
     $('hub-shop').replaceChildren(...shops.map(g => {
       const canvas = document.createElement('canvas');
@@ -147,7 +175,10 @@
     }));
     drawCards();
   }
-  function drawCards() { document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
+  let hubPage = 0;
+  function drawCards() {
+    const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
+    document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
 
   /* ------------------------------------------------------------ games */
   function openGame(g) {
@@ -184,10 +215,43 @@
   /* ------------------------------------------------------------ parent gate */
   const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
   let gateState = null;
-  function askGate(onPass) {
-    gateState = { onPass, entry: '' };
-    newQuestion();
+  // The grown-up gate. With no PIN set it is the spelled-out sum; once a grown-up has set a PIN it is the PIN.
+  async function hashPin(pin) {
+    const text = 'spg-pin:' + pin;
+    try { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)); return [...new Uint8Array(d)].map(v => v.toString(16).padStart(2, '0')).join(''); }
+    catch (_) { let x = 5381; for (const ch of text) x = ((x << 5) + x + ch.charCodeAt(0)) >>> 0; return 'h' + x; }
+  }
+  function openGateSheet(title, hint, forgot) {
+    $('gate-title').textContent = title; $('gate-hint').textContent = hint;
+    $('gate-forgot').classList.toggle('hidden', !forgot);
     openOverlay(overlays.gate);
+  }
+  function askGate(onPass) {
+    if (store.settings.pin) { askPin(onPass); return; }
+    gateState = { onPass, entry: '', max: 2, mode: 'math' };
+    newQuestion();
+    openGateSheet('Grown-ups only', 'Answer to continue', false);
+  }
+  // PIN entry. With opts.capture the typed PIN is handed over (setting a new PIN) instead of being checked.
+  function askPin(onPass, opts = {}) {
+    gateState = { onPass, entry: '', max: 4, mode: 'pin', capture: opts.capture, prompt: opts.prompt || 'Type your PIN' };
+    $('gate-q').textContent = gateState.prompt; paintGate();
+    openGateSheet(opts.title || 'Grown-ups only', opts.hint || 'Type the PIN to continue', !opts.capture);
+  }
+  // A harder sum for a grown-up who forgot the PIN (a small child cannot do it). Two right in a row clears the PIN.
+  function forgotPin() {
+    const done = gateState && gateState.onPass; if (!done) return;
+    gateState = { onPass: done, entry: '', max: 3, mode: 'recover', right: 0 };
+    newRecover(); openGateSheet('Forgot the PIN?', 'Two sums in a row clear the PIN', false);
+  }
+  function newRecover() {
+    const a = 21 + Math.floor(Math.random() * 60), b = 21 + Math.floor(Math.random() * 60);
+    gateState.answer = String(a + b); gateState.entry = '';
+    $('gate-q').textContent = `${a} + ${b}`; $('gate-answer').textContent = '';
+  }
+  function paintGate() {
+    const g = gateState; if (!g) return;
+    $('gate-answer').textContent = g.mode === 'pin' ? '●'.repeat(g.entry.length) + '○'.repeat(g.max - g.entry.length) : g.entry;
   }
   function newQuestion() {
     const a = 3 + Math.floor(Math.random() * 7), b = 3 + Math.floor(Math.random() * 7);
@@ -197,25 +261,45 @@
   }
   (() => {
     const pad = $('numpad');
-    const key = (label, cls, fn) => { const b = h('button', { type: 'button', class: cls || '' }, label); SPG.ui.press(b, () => { SPG.sfx.tap(); fn(); }); return b; };
+    const key = (label, cls, fn) => { const b = h('button', { type: 'button', class: cls || '' }, label); SPG.ui.press(b, () => { SPG.sfx.tap(); if (gateState) fn(); }); return b; };
     for (let n = 1; n <= 9; n++) pad.append(key(String(n), '', () => type(String(n))));
-    pad.append(key(icon('back'), '', () => { gateState.entry = gateState.entry.slice(0, -1); paintAnswer(); }));
+    pad.append(key(icon('back'), '', () => { gateState.entry = gateState.entry.slice(0, -1); paintGate(); }));
     pad.append(key('0', '', () => type('0')));
-    pad.append(key(icon('check'), 'ok', submit));
-    function type(d) { if (gateState.entry.length < 2) { gateState.entry += d; paintAnswer(); } }
-    function paintAnswer() { $('gate-answer').textContent = gateState.entry; }
-    function submit() {
-      if (gateState.entry === gateState.answer) {
-        const cb = gateState.onPass; gateState = null;
+    pad.append(key(icon('check'), 'ok', () => submit()));
+    function type(d) {
+      const g = gateState; if (g.entry.length >= g.max || g.busy) return;
+      g.entry += d; paintGate();
+      if (g.mode === 'pin' && g.entry.length === g.max) submit();
+    }
+    function wrong() {
+      const box = $('gate-answer');
+      box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+      SPG.sfx.oops();
+    }
+    async function submit() {
+      const g = gateState; if (!g || g.busy) return;
+      let ok;
+      if (g.mode === 'pin') {
+        if (g.capture) { const cap = g.onPass; gateState = null; closeOverlay(overlays.gate); cap(g.entry); return; }
+        g.busy = true; ok = (await hashPin(g.entry)) === store.settings.pin; g.busy = false; if (gateState !== g) return;
+      } else ok = g.entry === g.answer;
+      if (g.mode === 'recover') {
+        if (!ok) { wrong(); setTimeout(() => { if (gateState === g) { g.right = 0; newRecover(); } }, 350); return; }
+        if (++g.right < 2) { SPG.sfx.chime(); newRecover(); return; }
+        store.settings.pin = ''; store.save(); ok = true;
+      }
+      if (ok) {
+        const cb = g.onPass; gateState = null;
         closeOverlay(overlays.gate);
         cb && cb();
       } else {
-        const box = $('gate-answer');
-        box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
-        SPG.sfx.oops(); setTimeout(newQuestion, 350);
+        wrong();
+        if (g.mode === 'pin') setTimeout(() => { if (gateState === g) { g.entry = ''; paintGate(); } }, 350);
+        else setTimeout(newQuestion, 350);
       }
     }
   })();
+  SPG.ui.press($('gate-forgot'), forgotPin);
   SPG.ui.press($('gate-cancel'), () => { gateState = null; closeOverlay(overlays.gate); });
 
   /* ------------------------------------------------------------ grown-ups panel */
@@ -387,6 +471,7 @@
       h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music'), toggle('Coloring Book music', 'colorMusic')),
       voicesSection(),
       timerSection(),
+      pinSection(),
       backupSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
@@ -412,25 +497,55 @@
   };
   const limitReached = () => { const m = store.settings.timer || 0; return m > 0 && playLog().sec >= m * 60; };
 
-  function drawBreakArt() {
-    const cv = $('break-art'), c = cv.getContext('2d'), w = cv.width;
-    c.clearRect(0, 0, w, w);
-    for (const [x, y, r] of [[.15, .2, 6], [.82, .16, 8], [.9, .55, 5], [.1, .7, 7], [.7, .9, 5]]) art.star(c, x * w, y * w, r * 1.6, '#fff3b0');
-    c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(w / 2, w / 2, w * .32, 0, Math.PI * 2); c.fill();
-    c.fillStyle = 'rgba(255,214,120,.5)'; for (const [x, y, r] of [[-.12, -.1, .06], [.14, .08, .045], [-.05, .17, .035]]) { c.beginPath(); c.arc(w / 2 + x * w, w / 2 + y * w, r * w, 0, Math.PI * 2); c.fill(); }
-    c.save(); c.translate(w / 2, w / 2 + w * .02); art.face(c, w * .26, { mood: 'sleep' }); c.restore();
-    c.fillStyle = '#fff'; c.font = '700 44px Fredoka, system-ui'; c.fillText('z', w * .72, w * .32); c.font = '700 32px Fredoka, system-ui'; c.fillText('z', w * .82, w * .22);
+  // The rest screen: the pets she owns dance under the moon while a soft lullaby plays (no owned pets: three friends dance).
+  let restRaf = 0, restT = 0;
+  function restCast() {
+    const P = SPG.pets, own = P.PETS.filter(p => P.owns(p.id));
+    const act = P.active();
+    let list = own.map(p => ({ id: p.id, hat: (store.bag('pets', () => ({ owned: {} })).owned[p.id] || {}).hat || null }));
+    if (!list.length) list = ['bunny', 'cat', 'bear'].map(id => ({ id, hat: null }));
+    return list.slice(0, 6);
   }
+  function drawRest(t, cast) {
+    const cv = $('break-art'), c = cv.getContext('2d'), w = cv.width, h = cv.height;
+    c.clearRect(0, 0, w, h);
+    for (let i = 0; i < 18; i++) { const x = ((i * 137) % 100) / 100 * w, y = ((i * 71) % 60) / 100 * h, tw = .5 + Math.sin(t * 2 + i) * .5; c.globalAlpha = .35 + tw * .65; art.star(c, x, y, (3 + (i % 3) * 2) * (w / 700), '#fff3b0'); }
+    c.globalAlpha = 1;
+    { const cx = w * .84, cy = h * .2, r = h * .12;   // a crescent moon
+      c.save(); c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.clip();
+      c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.arc(cx + r * .45, cy - r * .2, r * .85, 0, Math.PI * 2);
+      c.fillStyle = '#fff3c4'; c.fill('evenodd'); c.restore(); }
+    const n = cast.length, s = Math.min(h * .55, w / (n + .6) * 1.05);
+    cast.forEach((p, i) => {
+      const x = w * (.5 + (i - (n - 1) / 2) * (1 / (n + .5))), ph = (t * .8 + i * .17) % 1;
+      c.fillStyle = 'rgba(20,20,60,.25)'; c.beginPath(); c.ellipse(x, h * .885, s * .3, s * .04, 0, 0, Math.PI * 2); c.fill();
+      c.save(); c.translate(x, h * .88);
+      c.rotate(Math.sin(t * 2.4 + i * 1.3) * .07);
+      SPG.pets.draw(c, p.id, s, t + i * .7, { mood: ph < .5 ? 'cheer' : 'happy', hop: ph < .5 ? ph * 2 : 0, hat: p.hat });
+      c.restore();
+    });
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (let k = 0; k < 4; k++) { const u = ((t * .35 + k * .25) % 1); c.globalAlpha = Math.sin(u * Math.PI); c.fillStyle = ['#ffb3c6', '#b8e6ff', '#fff3b0', '#d9c2f2'][k]; c.font = `700 ${h * .09}px Fredoka, system-ui`; c.fillText(k % 2 ? '\u266b' : '\u266a', w * (.2 + k * .2) + Math.sin(t + k) * 10, h * (.55 - u * .3)); }
+    c.globalAlpha = 1;
+  }
+  function startRest() {
+    const cast = restCast(), cv = $('break-art');
+    cancelAnimationFrame(restRaf);
+    const frame = () => { restT += 1 / 60; drawRest(restT, cast); restRaf = requestAnimationFrame(frame); };
+    frame();
+    SPG.music.rest(true);
+  }
+  function stopRest() { cancelAnimationFrame(restRaf); restRaf = 0; SPG.music.rest(false); }
   function showBreak() {
     if (!overlays.brk.classList.contains('hidden')) return;
-    drawBreakArt(); voice.say('break-time'); openOverlay(overlays.brk);
+    voice.say('break-time'); openOverlay(overlays.brk); startRest();
   }
   // Returns true if the rest screen is now showing.
   function checkLimit() {
     if (!limitReached() || (current !== 'hub' && current !== 'stage')) return false;
     showBreak(); return true;
   }
-  SPG.ui.press($('break-adult'), () => askGate(() => { closeOverlay(overlays.brk); openParent(); }));
+  SPG.ui.press($('break-adult'), () => askGate(() => { stopRest(); closeOverlay(overlays.brk); openParent(); }));
   setInterval(() => {
     if (document.hidden || (current !== 'hub' && current !== 'stage') || anyOverlay()) return;
     playLog().sec++; store.save();
@@ -446,6 +561,27 @@
       h('p', {}, 'Record your own voice for the games (a male and a female voice can be mixed), switch off lines you don\u2019t want, and choose how often the games cheer.'),
       h('p', { class: 'fine' }, `Recorded so far: male ${n('male')}, female ${n('female')} of ${keys.length} lines.`), b);
   }
+
+  function pinSection() {
+    const has = !!store.settings.pin;
+    const set = h('button', { class: 'btn small go', type: 'button' }, has ? 'Change PIN' : 'Set a PIN');
+    const setNew = () => askPin(first => askPin(again => {
+      if (again !== first) { SPG.sfx.oops(); pinNote = 'Those two did not match. Please try again.'; renderParent(); return; }
+      hashPin(first).then(hx => { store.settings.pin = hx; store.save(); pinNote = 'PIN saved. Remember it: it opens the rest screen and this panel.'; renderParent(); });
+    }, { capture: true, title: 'Type it again', prompt: 'Type the same PIN again', hint: 'Just to be sure' }), { capture: true, title: has ? 'New PIN' : 'Choose a PIN', prompt: 'Choose 4 numbers', hint: 'Pick numbers only you know' });
+    set.addEventListener('click', () => { if (has) askPin(setNew); else setNew(); });
+    const kids = [set];
+    if (has) {
+      const off = h('button', { class: 'btn small quiet', type: 'button' }, 'Remove PIN');
+      off.addEventListener('click', () => askPin(() => { store.settings.pin = ''; store.save(); pinNote = 'PIN removed. The grown-up question is used again.'; renderParent(); }));
+      kids.push(off);
+    }
+    const note = pinNote; pinNote = '';
+    return h('section', {}, h('h3', {}, 'Grown-up PIN'),
+      h('p', {}, has ? 'A PIN is set. It is needed to close the rest screen and to open this panel.' : 'No PIN yet: a spelled-out sum is used to keep little fingers out. Set a 4-number PIN for a stronger lock on the rest screen and this panel.'),
+      h('div', { class: 'row' }, ...kids), note ? h('p', { class: 'fine' }, note) : null);
+  }
+  let pinNote = '';
 
   function timerSection() {
     const cur = store.settings.timer || 0;
@@ -489,5 +625,5 @@
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
   }
-  SPG.app = { closeGame, show, running: () => running, askGate };
+  SPG.app = { closeGame, show, running: () => running, askGate, askPin };
 })();

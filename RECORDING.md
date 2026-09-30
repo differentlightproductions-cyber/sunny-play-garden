@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 36 short lines.
+1. **Cheering** and **Prompts**: about 67 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -54,6 +54,37 @@ Short lines that tell her what to do.
 | `fire-start.mp3` | Some little fires! Spray them with water! |
 | `fire-pet.mp3` | Tap the pet to help them down! |
 | `fire-done.mp3` | Everyone is safe! Hooray! |
+| `band-start.mp3` | Touch the friends to make music! |
+| `band-copy.mp3` | Listen... now you play! |
+| `band-song.mp3` | Play some notes, then touch the red button! |
+| `train-start.mp3` | All aboard! Fill up the train! |
+| `train-go.mp3` | Choo choo! Off we go! |
+| `train-wrong.mp3` | Try another one! |
+| `puzzle-start.mp3` | Put the picture together! |
+| `puzzle-done.mp3` | You made the picture! |
+| `care-start.mp3` | Take care of your friend! |
+| `care-food.mp3` | Yum! Thank you! |
+| `care-clean.mp3` | So fresh and clean! |
+| `care-sleep.mp3` | Shhh... sleepy time. |
+| `care-hungry.mp3` | Your friend is hungry! |
+| `care-dirty.mp3` | Your friend needs a bath! |
+| `care-tired.mp3` | Your friend is sleepy! |
+| `hide-start.mp3` | Who is hiding? Touch a bush! |
+| `hide-found.mp3` | Found you! |
+| `hide-done.mp3` | You found everybody! |
+| `num-1.mp3` | One! |
+| `num-2.mp3` | Two! |
+| `num-3.mp3` | Three! |
+| `num-4.mp3` | Four! |
+| `num-5.mp3` | Five! |
+| `color-red.mp3` | Red! |
+| `color-blue.mp3` | Blue! |
+| `color-yellow.mp3` | Yellow! |
+| `color-green.mp3` | Green! |
+| `shape-circle.mp3` | Circle! |
+| `shape-square.mp3` | Square! |
+| `shape-triangle.mp3` | Triangle! |
+| `shape-star.mp3` | Star! |
 | `storm-coming.mp3` | Here comes a big rainy storm! |
 | `storm-over.mp3` | The storm is over. Look, the sun! |
 | `raining-pets.mp3` | It's raining cats and dogs! |

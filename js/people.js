@@ -176,7 +176,7 @@
     W.shoes && W.shoes(c, look, t);
     // arms (skin), then the body and clothes (then sleeves over the shoulders), then the hands
     const spread = W.armSpread ? W.armSpread(look) : .22;
-    const armT = (sd, wave, fn) => { c.save(); c.translate(sd * 11.8, -47.6 + breathe * .2); c.rotate(sd * (spread + (wave ? -2.3 - Math.sin(t * 9) * .3 : 0))); fn(); c.restore(); };
+    const armT = (sd, wave, fn) => { c.save(); c.translate(sd * 11.8, -47.6 + breathe * .2); c.rotate(sd * ((wave ? -2.3 - Math.sin(t * 9) * .3 : 0) - spread)); fn(); c.restore(); };
     const armSkin = (sd, wave) => armT(sd, wave, () => { c.fillStyle = skin; c.beginPath(); c.moveTo(-3.3, 0); c.lineTo(-2.7, 19.4); c.quadraticCurveTo(0, 22.6, 2.7, 19.4); c.lineTo(3.3, 0); c.closePath(); c.fill(); });
     const armSleeve = (sd, wave) => armT(sd, wave, () => { W.sleeve && W.sleeve(c, look, sd); });
     armSkin(-1, false); armSkin(1, o.wave);
@@ -186,7 +186,7 @@
     armSleeve(-1, false); armSleeve(1, o.wave);
     W.dress && W.dress(c, look, t);
     // hands with polish on the fingertips
-    const hand = (sd, wave) => { c.save(); c.translate(sd * 11.8, -47.6 + breathe * .2); c.rotate(sd * (spread + (wave ? -2.3 - Math.sin(t * 9) * .3 : 0))); c.translate(0, 20.6); c.fillStyle = skin; c.beginPath(); c.arc(0, 1, 3.5, 0, TAU); c.fill(); W.handNails && W.handNails(c, look, sd < 0 ? 0 : 5); if (W.handItem && sd > 0) W.handItem(c, look, t); c.restore(); };
+    const hand = (sd, wave) => { c.save(); c.translate(sd * 11.8, -47.6 + breathe * .2); c.rotate(sd * ((wave ? -2.3 - Math.sin(t * 9) * .3 : 0) - spread)); c.translate(0, 20.6); c.fillStyle = skin; c.beginPath(); c.arc(0, 1, 3.5, 0, TAU); c.fill(); W.handNails && W.handNails(c, look, sd < 0 ? 0 : 5); if (W.handItem && sd > 0) W.handItem(c, look, t); c.restore(); };
     hand(-1, false); hand(1, o.wave);
     // neck and head
     c.fillStyle = skinD; rr(c, -4.2, -55, 8.4, 7, 2); c.fill();

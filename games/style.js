@@ -100,6 +100,7 @@
   const thumbCv = (px, fn) => { const cv = el('canvas'); const d = SPG.ui.dpr(); cv.width = cv.height = Math.round(px * d); fn(cv); return cv; };
 
   /* ---------------------------------------------------------------- tabs */
+  const TABNAME = { who: 'Friend', hair: 'Hair', makeup: 'Make-up', dress: 'Dresses', top: 'Tops', bottom: 'Bottoms', shoes: 'Shoes', hat: 'Hats', extras: 'Extras', nails: 'Nails', places: 'Places' };
   const TABS = ['who', 'hair', 'makeup', 'dress', 'top', 'bottom', 'shoes', 'hat', 'extras', 'nails', 'places'];
   const CLOTHCAT = { dress: 1, top: 1, bottom: 1, shoes: 1, hat: 1 };
   const TOOLS = ['comb', 'dryer', 'spray', 'bubbles'];
@@ -110,6 +111,25 @@
     else if (id === 'spray') { c.fillStyle = '#c9a8f0'; art.rr(c, -16, -8, 32, 50, 9); c.fill(); c.fillStyle = '#fff'; art.rr(c, -12, 8, 24, 18, 5); c.fill(); art.star(c, 0, 17, 6, '#ffd54a', 0); c.fillStyle = '#ff8fc0'; art.rr(c, -10, -22, 24, 14, 5); c.fill(); c.fillRect(-2, -30, 6, 8); for (const [x, y] of [[-26, -20], [-34, -10], [-24, -34], [-38, -26]]) art.star(c, x, y, 5, '#ffe066', 0); }
     else { c.fillStyle = 'rgba(180,225,255,.9)'; c.strokeStyle = '#7fc8f8'; c.lineWidth = 4; for (const [x, y, r] of [[-8, 6, 24], [22, -14, 14], [18, 24, 10], [-26, -20, 9]]) { c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.arc(x - r * .3, y - r * .3, r * .22, 0, TAU); c.fill(); c.fillStyle = 'rgba(180,225,255,.9)'; } }
     c.restore();
+  }
+
+  // Little pictures for the swatches, so a child can see what each row is for (a face for skin, an eye for eye color...).
+  function eyeShape(c, cx, cy, w) { c.beginPath(); c.moveTo(cx - w, cy); c.quadraticCurveTo(cx, cy - w * .95, cx + w, cy); c.quadraticCurveTo(cx, cy + w * .85, cx - w, cy); c.closePath(); }
+  function swatchPic(c, kind, col, s) {
+    c.clearRect(0, 0, s, s); const m = s / 2;
+    if (kind === 'skin') { c.fillStyle = col; c.beginPath(); c.arc(m, m, s * .46, 0, TAU); c.fill(); c.fillStyle = 'rgba(58,42,48,.75)'; for (const dx of [-1, 1]) { c.beginPath(); c.arc(m + dx * s * .16, m - s * .04, s * .045, 0, TAU); c.fill(); } c.strokeStyle = 'rgba(160,70,80,.8)'; c.lineWidth = s * .045; c.lineCap = 'round'; c.beginPath(); c.arc(m, m + s * .06, s * .14, .3, Math.PI - .3); c.stroke(); c.fillStyle = 'rgba(255,120,130,.3)'; for (const dx of [-1, 1]) { c.beginPath(); c.arc(m + dx * s * .28, m + s * .1, s * .07, 0, TAU); c.fill(); } }
+    else if (kind === 'eyes') { c.fillStyle = '#fff'; c.strokeStyle = 'rgba(58,42,48,.8)'; c.lineWidth = s * .05; eyeShape(c, m, m, s * .44); c.fill(); c.stroke(); c.save(); eyeShape(c, m, m, s * .44); c.clip(); c.fillStyle = col; c.beginPath(); c.arc(m, m, s * .25, 0, TAU); c.fill(); c.fillStyle = '#20141a'; c.beginPath(); c.arc(m, m, s * .12, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(m - s * .07, m - s * .08, s * .06, 0, TAU); c.fill(); c.restore(); }
+    else if (kind === 'lips') { c.fillStyle = col; c.beginPath(); c.moveTo(m - s * .4, m); c.quadraticCurveTo(m - s * .18, m - s * .34, m, m - s * .12); c.quadraticCurveTo(m + s * .18, m - s * .34, m + s * .4, m); c.quadraticCurveTo(m, m + s * .42, m - s * .4, m); c.fill(); c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = s * .04; c.beginPath(); c.moveTo(m - s * .3, m); c.quadraticCurveTo(m, m + s * .08, m + s * .3, m); c.stroke(); }
+    else if (kind === 'shadow') { c.fillStyle = '#fbe0cf'; c.beginPath(); c.arc(m, m, s * .46, 0, TAU); c.fill(); c.fillStyle = col; c.globalAlpha = .9; c.beginPath(); c.ellipse(m, m - s * .04, s * .36, s * .2, 0, Math.PI, TAU); c.fill(); c.globalAlpha = 1; c.strokeStyle = 'rgba(58,42,48,.85)'; c.lineWidth = s * .05; c.lineCap = 'round'; c.beginPath(); c.arc(m, m - s * .04, s * .3, .3, Math.PI - .3); c.stroke(); }
+    else if (kind === 'blush') { c.fillStyle = '#fbe0cf'; c.beginPath(); c.arc(m, m, s * .46, 0, TAU); c.fill(); c.fillStyle = col; c.globalAlpha = .8; c.beginPath(); c.ellipse(m, m + s * .04, s * .3, s * .2, 0, 0, TAU); c.fill(); c.globalAlpha = 1; }
+  }
+  function secIcon(c, kind, s, look) {
+    c.clearRect(0, 0, s, s);
+    if (kind === 'skin') swatchPic(c, 'skin', P.SKIN[look.skin % P.SKIN.length], s);
+    else if (kind === 'eyes') swatchPic(c, 'eyes', P.EYES[look.eyes % P.EYES.length], s);
+    else if (kind === 'lips') swatchPic(c, 'lips', P.LIPS[look.lips || 0] || '#ef4a6a', s);
+    else if (kind === 'shadow') swatchPic(c, 'shadow', P.SHADOW[look.shadow || 0] || '#c9a8f0', s);
+    else swatchPic(c, 'blush', P.BLUSH[look.blush || 0] || '#ff9fb0', s);
   }
 
   /* ---------------------------------------------------------------- the game */
@@ -162,7 +182,11 @@
       this.stage.append(this.toolBar, this.diceBtn, this.showBtn);
       this.tabs = el('div', 'st-tabs'); this.body = el('div', 'st-body'); this.colors = el('div', 'st-colors');
       this.body.setAttribute('data-scroll', '');
-      this.panel = el('section', 'st-panel', this.tabs, this.body, this.colors);
+      this.more = btn('st-more', 'See more', icon('left'));
+      this.more.addEventListener('click', () => { this.body.scrollBy({ top: Math.max(120, this.body.clientHeight * .8), behavior: 'smooth' }); sfx.tap(); });
+      this.body.addEventListener('scroll', () => this.updateMore(), { passive: true });
+      this.bodyWrap = el('div', 'st-bodywrap', this.body, this.more);
+      this.panel = el('section', 'st-panel', this.tabs, this.bodyWrap, this.colors);
       this.root.append(this.stage, this.panel);
       this.cv.addEventListener('pointerdown', e => this.pDown(e));
       this.cv.addEventListener('pointermove', e => this.pMove(e));
@@ -197,15 +221,15 @@
           else if (id === 'hair') drawThumb(cv, Object.assign({}, look, { hat: null }), FOCUS.hair);
           else drawThumb(cv, this.thumbLook(id, id === 'dress' ? 'ball' : id === 'top' ? 'tee' : id === 'bottom' ? 'skirt' : id === 'shoes' ? 'boots' : 'crown'), FOCUS[id]);
         });
-        const b = btn('st-tab' + (id === this.tab ? ' on' : ''), id, cv);
+        const b = btn('st-tab' + (id === this.tab ? ' on' : ''), TABNAME[id], cv, el('span', 'st-tab-l', TABNAME[id]));
         b.addEventListener('click', () => { if (this.tab === id) return; this.tab = id; sfx.tap(); say('tab-' + id); if (id === 'nails') this.later(() => say('say-nails'), 900); this.renderPanel(); });
         this.tabs.append(b);
       }
       const T = this.tab;
       if (T === 'who') {
-        const g = el('div', 'st-grid');
+        const g = el('div', 'st-grid st-friends');
         PRESETS.forEach((_, i) => { g.append(this.tile(cv => drawThumb(cv, this.bag.cur === i ? look : (this.bag.kids[i] ? Object.assign(baseLook(i), this.bag.kids[i]) : baseLook(i)), FOCUS.who), this.bag.cur === i, 'who-' + i, () => { this.saveNow(); this.loadKid(i); this.hop = .8; sfx.chime(); this.renderPanel(); })); });
-        this.body.append(g, this.swatchRow('skin', P.SKIN, 'say-skin', { title: 'skin' }), this.swatchRow('eyes', P.EYES, 'say-eyes', { title: 'eyes' }));
+        this.body.append(g, this.section('skin', 'Skin', this.swatchRow('skin', P.SKIN, 'say-skin', { title: 'skin', kind: 'skin', big: true })), this.section('eyes', 'Eyes', this.swatchRow('eyes', P.EYES, 'say-eyes', { title: 'eyes', kind: 'eyes', big: true })));
       } else if (T === 'hair') {
         const g = el('div', 'st-grid');
         for (const id of P.HAIR) g.append(this.tile(cv => drawThumb(cv, Object.assign({}, look, { hair: id, hat: null }), FOCUS.hair), look.hair === id, 'hair-' + id, () => { this.change({ hair: id }); sfx.rustle(); }));
@@ -213,9 +237,9 @@
       } else if (T === 'makeup') {
         const face = (o) => cv => drawThumb(cv, Object.assign({}, look, o), FOCUS.makeup);
         this.body.append(
-          this.swatchRow('lips', P.LIPS, 'say-lips', { none: true, title: 'lips' }),
-          this.swatchRow('shadow', P.SHADOW, 'say-shadow', { none: true, title: 'shadow' }),
-          this.swatchRow('blush', P.BLUSH, 'say-blush', { none: true, title: 'blush' }));
+          this.section('lips', 'Lips', this.swatchRow('lips', P.LIPS, 'say-lips', { none: true, title: 'lips', kind: 'lips', big: true })),
+          this.section('shadow', 'Eyeshadow', this.swatchRow('shadow', P.SHADOW, 'say-shadow', { none: true, title: 'shadow', kind: 'shadow', big: true })),
+          this.section('blush', 'Cheeks', this.swatchRow('blush', P.BLUSH, 'say-blush', { none: true, title: 'blush', kind: 'blush', big: true })));
         const g = el('div', 'st-grid'); g.dataset.title = 'gems';
         g.append(this.tile(cv => drawThumb(cv, Object.assign({}, look, { freckles: !look.freckles }), FOCUS.makeup), !!look.freckles, 'say-freckles', () => { this.change({ freckles: !look.freckles }); sfx.plink(2); }, true));
         P.GEMS.forEach((gm, i) => g.append(this.tile(face({ gems: i }), (look.gems | 0) === i, 'say-gems', () => { this.change({ gems: i }); sfx.plink(i); }, true)));
@@ -233,7 +257,9 @@
         this.body.append(g);
       }
       if (keep) this.body.scrollTop = top;
+      requestAnimationFrame(() => this.updateMore());
     }
+    updateMore() { const b = this.body; this.more.classList.toggle('show', b.scrollHeight - b.clientHeight - b.scrollTop > 24); }
     thumbLook(cat, id) {
       const l = Object.assign({}, this.look);
       if (cat === 'dress') { l.dress = id; l.hat = null; }
@@ -253,16 +279,23 @@
       none.addEventListener('click', () => { sfx.whoosh(); this.change({ [cat]: null }, true); });
       g.append(none);
       for (const it of P.CATS[cat]) {
-        g.append(this.tile(cv => drawThumb(cv, this.thumbLook(cat, it.id), FOCUS[cat]), this.look[cat] === it.id, cat + '-' + it.id, () => { this.change({ [cat]: it.id }); this.itemSfx(cat); }));
+        g.append(this.tile(cv => drawThumb(cv, this.thumbLook(cat, it.id), FOCUS[cat]), this.look[cat] === it.id, cat + '-' + it.id, () => { this.change(cat === 'top' || cat === 'bottom' ? { [cat]: it.id, dress: null } : { [cat]: it.id }); this.itemSfx(cat); }));
       }
       return g;
     }
     itemSfx(cat) { if (cat === 'shoes') sfx.snap(); else if (cat === 'hat') sfx.plink(3); else if (cat === 'back' || cat === 'dress') sfx.chime(); else sfx.rustle(); }
+    // A titled section of picture swatches: a face for skin, an eye for eye color, lips, and so on.
+    section(kind, title, row) {
+      const ic = thumbCv(56, cv => secIcon(cv.getContext('2d'), kind, cv.width, this.look));
+      ic.className = 'st-sec-ico';
+      return el('section', 'st-sec', el('div', 'st-sec-head', ic, el('b', '', title)), row);
+    }
     swatchRow(key, list, voiceKey, o) {
-      const row = el('div', 'st-sw-row' + (o.small ? ' small' : '')); if (o.title) row.dataset.title = o.title;
+      const row = el('div', 'st-sw-row' + (o.small ? ' small' : '') + (o.big ? ' big' : '')); if (o.title) row.dataset.title = o.title;
       list.forEach((k, i) => {
-        const b = btn('st-sw' + ((this.look[key] | 0) === i && (this.look[key] != null) ? ' on' : ''), 'color ' + i);
-        if (k === null) { b.classList.add('none'); b.append(icon('x')); } else if (k === 'rainbow') b.style.background = 'conic-gradient(#ff6b81, #ffa64d, #ffe066, #7ed957, #5cc8f2, #8a7cf0, #ff6b81)'; else b.style.background = k;
+        const b = btn('st-sw' + ((this.look[key] | 0) === i && (this.look[key] != null) ? ' on' : '') + (o.kind ? ' pic' : ''), (o.title || 'color') + ' ' + (i + 1));
+        if (o.kind && k !== null) { const cv = thumbCv(64, cv => swatchPic(cv.getContext('2d'), o.kind, k, cv.width)); b.append(cv); }
+        else if (k === null) { b.classList.add('none'); b.append(icon('x')); } else if (k === 'rainbow') b.style.background = 'conic-gradient(#ff6b81, #ffa64d, #ffe066, #7ed957, #5cc8f2, #8a7cf0, #ff6b81)'; else b.style.background = k;
         b.addEventListener('click', () => { if (voiceKey) say(voiceKey); this.change({ [key]: i }); sfx.plink(i); });
         row.append(b);
       });

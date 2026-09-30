@@ -62,16 +62,37 @@
       const pool = (mine.length && Math.random() < .8 ? mine : all).filter(p => p !== this.def);
       return pool[Math.floor(Math.random() * pool.length)] || all[0];
     }
+    gridFor(solved) { return GRIDS[solved < 2 ? 0 : solved < 5 ? 1 : solved < 9 ? 2 : 3]; }
+    // The size of the board for a grid on this screen (shared by build and the next-puzzle preparation).
+    boardDims(C, R) {
+      const w = this.w, h = this.h, wide = w >= h * 1.1;
+      const maxW = wide ? Math.min(w * .6, h * .6 * 1.25) : w * .86, maxH = wide ? h * .64 : h * .42;
+      let bw = maxW, bh = bw * .8; if (bh > maxH) { bh = maxH; bw = bh * 1.25; }
+      return { bw, bh, d: Math.min(2, SPG.ui.dpr() * 1.2) };
+    }
+    // While she plays, the next puzzle (its picture, its piece shapes and its painted image) is made ahead of time,
+    // so tapping the arrow after a puzzle starts the next one at once.
+    prepareNext() {
+      if (!this.w) return;
+      const def = this.pickPicture(), [C, R] = this.gridFor(this.bag.solved + 1), rnd = () => (Math.random() < .5 ? 1 : -1);
+      const { bw, bh, d } = this.boardDims(C, R);
+      const img = document.createElement('canvas'); img.width = Math.round(bw * d); img.height = Math.round(bh * d);
+      const ic = img.getContext('2d'); ic.fillStyle = '#fffdf6'; ic.fillRect(0, 0, img.width, img.height); SPG.coloring.draw(ic, def, img.width);
+      this.pre = { def, cols: C, rows: R, img, w: this.w, h: this.h, hTab: Array.from({ length: R }, () => Array.from({ length: C - 1 }, rnd)), vTab: Array.from({ length: R - 1 }, () => Array.from({ length: C }, rnd)) };
+    }
     newPuzzle() {
-      this.def = this.pickPicture();
-      const gi = this.bag.solved < 2 ? 0 : this.bag.solved < 5 ? 1 : this.bag.solved < 9 ? 2 : 3;
-      [this.cols, this.rows] = GRIDS[gi];
+      const pre = this.pre && this.pre.w === this.w && this.pre.h === this.h && this.pre.cols === this.gridFor(this.bag.solved)[0] && this.pre.rows === this.gridFor(this.bag.solved)[1] ? this.pre : null;
+      this.pre = null;
+      this.def = pre ? pre.def : this.pickPicture();
+      [this.cols, this.rows] = this.gridFor(this.bag.solved);
       this.state = 'play'; this.stateT = 0; this.idle = 0;
       // tabs: +1 sticks out, -1 goes in; matching neighbours agree
       const C = this.cols, R = this.rows, rnd = () => (Math.random() < .5 ? 1 : -1);
-      this.hTab = Array.from({ length: R }, () => Array.from({ length: C - 1 }, rnd));
-      this.vTab = Array.from({ length: R - 1 }, () => Array.from({ length: C }, rnd));
+      this.hTab = pre ? pre.hTab : Array.from({ length: R }, () => Array.from({ length: C - 1 }, rnd));
+      this.vTab = pre ? pre.vTab : Array.from({ length: R - 1 }, () => Array.from({ length: C }, rnd));
+      this._preImg = pre ? pre.img : null;
       this.build(false);
+      clearTimeout(this._pt); this._pt = setTimeout(() => { if (this.state === 'play') this.prepareNext(); }, 900);   // get the next one ready while she plays
     }
     // Lay out the board and tray for the current screen and (re)draw the picture and the pieces.
     build(keep) {
@@ -81,9 +102,11 @@
       this.bw = bw; this.bh = bh; this.bx = (w - bw) / 2; this.by = wide ? h * .05 : h * .09;
       this.pw = bw / C; this.ph = bh / R; this.m = Math.min(this.pw, this.ph) * .26;
       const d = Math.min(2, SPG.ui.dpr() * 1.2); this.pd = d;
-      this.img = document.createElement('canvas'); this.img.width = Math.round(bw * d); this.img.height = Math.round(bh * d);
-      const ic = this.img.getContext('2d'); ic.fillStyle = '#fffdf6'; ic.fillRect(0, 0, this.img.width, this.img.height);
-      SPG.coloring.draw(ic, this.def, this.img.width);
+      if (this._preImg && this._preImg.width === Math.round(bw * d)) this.img = this._preImg;
+      else { this.img = document.createElement('canvas'); this.img.width = Math.round(bw * d); this.img.height = Math.round(bh * d);
+        const ic = this.img.getContext('2d'); ic.fillStyle = '#fffdf6'; ic.fillRect(0, 0, this.img.width, this.img.height);
+        SPG.coloring.draw(ic, this.def, this.img.width); }
+      this._preImg = null;
       // tray
       const tx = w * .04, tw = w * .92, ty = wide ? h * .72 : this.by + bh + h * .04, th = wide ? h * .26 : h - (this.by + bh) - h * .07;
       let ts = 0, best = 1; const n = C * R;
@@ -108,6 +131,14 @@
         else { p.x = clamp(p.x, this.pw * .5, w - this.pw * .5); p.y = clamp(p.y, this.ph * .5, h - this.ph * .5); }
       });
     }
+    drawNext(c) {
+      const n = this.nextBtn(), k = 1 + Math.sin(this.t * 3) * .05, a = Math.min(1, (this.stateT - 1.2) / .6);
+      c.save(); c.globalAlpha = a; c.translate(n.x, n.y); c.scale(k, k);
+      c.fillStyle = 'rgba(0,0,0,.14)'; c.beginPath(); c.arc(0, n.r * .12, n.r, 0, TAU); c.fill();
+      c.fillStyle = '#59b96e'; c.beginPath(); c.arc(0, 0, n.r, 0, TAU); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = n.r * .1; c.stroke();
+      c.strokeStyle = '#fff'; c.lineWidth = n.r * .22; c.lineCap = c.lineJoin = 'round'; c.beginPath(); c.moveTo(-n.r * .22, -n.r * .42); c.lineTo(n.r * .26, 0); c.lineTo(-n.r * .22, n.r * .42); c.stroke();
+      c.restore();
+    }
     // Draw the outline of piece p with its body's top-left corner at (ox, oy).
     tracePath(c, p, ox, oy) {
       const pw = this.pw, ph = this.ph, C = this.cols, R = this.rows, r = p.r, c0 = p.c, x0 = ox, y0 = oy, x1 = ox + pw, y1 = oy + ph;
@@ -128,7 +159,9 @@
     }
 
     /* ---------------------------------------------------------------- dragging */
+    nextBtn() { const r = Math.max(42, Math.min(this.w, this.h) * .09); return { x: this.w - r * 1.6, y: this.by + this.bh / 2, r }; }
     grab(x, y, id) {
+      if (this.state === 'done') { const n = this.nextBtn(); if (Math.hypot(x - n.x, y - n.y) < n.r * 1.4 && this.stateT > .8) { sfx.pop(); this.newPuzzle(); } return; }
       if (this.state !== 'play' || this.drag) return;
       for (let i = this.pieces.length - 1; i >= 0; i--) {
         const p = this.pieces[i]; if (p.locked) continue;
@@ -156,7 +189,8 @@
       this.state = 'done'; this.stateT = 0;
       this.bag.solved++; this.counter.set(this.bag.solved); store.addStars(1); store.save();
       this.scenic.set(['meadow', 'beach', 'snow', 'farm', 'sunset', 'night', 'autumn', 'city'][this.bag.solved % 8]);
-      sfx.win(); voice.say('puzzle-done');
+      sfx.win(); voice.say('puzzle-done'); clearTimeout(this._nt); this._nt = setTimeout(() => { if (this.state === 'done' && this.running) voice.say('puzzle-next'); }, 3500);
+      if (!this.pre) this.prepareNext();
       this.fx.burst(this.w / 2, this.by + this.bh / 2, 30, { colors: ['#ff6b81', '#ffd54a', '#7ed957', '#5cc8f2', '#b58cf0'], speed: 340, g: 400, life: 1.3, size: 7 * this.ui, shape: 'confetti', up: 220 });
     }
 
@@ -164,13 +198,12 @@
     start() { this.resize(); this.resume(); voice.say('puzzle-start'); }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
     pause() { this.running = false; cancelAnimationFrame(this.raf); if (this.drag) { this.drag.p.lift = 0; this.drag = null; } }
-    destroy() { this.pause(); this.canvas.remove(); this.counter.el.remove(); }
+    destroy() { this.pause(); clearTimeout(this._pt); clearTimeout(this._nt); this.canvas.remove(); this.counter.el.remove(); }
     tick(now) {
       if (!this.running) return;
       const dt = Math.min(.05, (now - this.last) / 1000); this.last = now; this.t += dt; this.stateT += dt; this.idle += dt; this.scenic.update(dt);
       if (this.drag) { const d = this.drag; d.p.x = d.x + d.dx; d.p.y = d.y + d.dy; d.p.sc = lerp(d.p.sc, 1, Math.min(1, dt * 14)); }
       for (const p of this.pieces) p.flash = Math.max(0, p.flash - dt * 2);
-      if (this.state === 'done' && this.stateT > 4.2) this.newPuzzle();
       this.fx.update(dt);
       this.draw(); this.raf = requestAnimationFrame(this.tick);
     }
@@ -205,6 +238,7 @@
       }
       // tidy tray shelf under loose pieces is not drawn: they sit right on the meadow
       this.fx.draw(c);
+      if (this.state === 'done' && this.stateT > 1.2) this.drawNext(c);
     }
   }
 

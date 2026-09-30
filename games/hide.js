@@ -238,7 +238,7 @@
     /* ---------------------------------------------------------------- drawing */
     friendArt(c, f, S, hop) {
       c.save();
-      if (f.kind === 'mypet') { const a = SPG.pets.active(); SPG.pets.draw(c, a.id, S * .5, this.t, { mood: hop ? 'cheer' : 'happy', hop, hat: a.hat }); }
+      if (f.kind === 'mypet') { const a = SPG.pets.active(); SPG.pets.draw(c, a.id, S * .5, this.t, { mood: hop ? 'cheer' : 'happy', hop, hat: a.hat, face: a.face, neck: a.neck }); }
       else art.creature(c, f.kind, S * 1.7 * (SZ[f.kind] || .22), this.t, false);
       c.restore();
     }
@@ -291,7 +291,7 @@
           const a = SPG.pets.active(); c.save(); c.translate(me.x - cx, me.y - cy - (me.moving ? Math.abs(Math.sin(me.walk)) * S * .05 : 0));
           c.fillStyle = 'rgba(40,60,40,.22)'; c.beginPath(); c.ellipse(0, 3 + (me.moving ? Math.abs(Math.sin(me.walk)) * S * .05 : 0), S * .2, S * .04, 0, 0, TAU); c.fill();
           c.rotate(me.moving ? Math.sin(me.walk) * .06 : 0); c.scale(me.dir < 0 ? -1 : 1, 1);
-          SPG.pets.draw(c, a ? a.id : 'bunny', S * .62, this.t, { mood: this.state === 'won' ? 'cheer' : 'happy', hat: a ? a.hat : null, hop: 0 });
+          SPG.pets.draw(c, a ? a.id : 'bunny', S * .62, this.t, { mood: this.state === 'won' ? 'cheer' : 'happy', hat: a ? a.hat : null, face: a ? a.face : null, neck: a ? a.neck : null, hop: 0 });
           c.restore();
         }
       }

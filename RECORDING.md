@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 69 short lines.
+1. **Cheering** and **Prompts**: about 73 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -62,6 +62,7 @@ Short lines that tell her what to do.
 | `train-wrong.mp3` | Try another one! |
 | `puzzle-start.mp3` | Put the picture together! |
 | `puzzle-done.mp3` | You made the picture! |
+| `puzzle-next.mp3` | Tap the green arrow for another puzzle! |
 | `care-start.mp3` | Take care of your friend! |
 | `care-food.mp3` | Yum! Thank you! |
 | `care-clean.mp3` | So fresh and clean! |
@@ -87,6 +88,7 @@ Short lines that tell her what to do.
 | `shape-star.mp3` | Star! |
 | `care-morning.mp3` | Good morning! |
 | `fire-level.mp3` | A new place to help! |
+| `fire-next.mp3` | Tap the green arrow to go somewhere new! |
 | `storm-coming.mp3` | Here comes a big rainy storm! |
 | `storm-over.mp3` | The storm is over. Look, the sun! |
 | `raining-pets.mp3` | It's raining cats and dogs! |
@@ -105,6 +107,53 @@ Short lines that tell her what to do.
 | `bigger-garden.mp3` | Your garden got bigger! |
 | `confirm-bye.mp3` | Do you want to say bye-bye? Tap the soft pink button to say bye-bye, or the green one to stay. |
 | `break-time.mp3` | Time for a little rest! |
+| `hello.mp3` | Hello! |
+| `welcome-home.mp3` | Welcome home, |
+
+## Names in the name pickers
+
+Said when a name button is touched (player nicknames and pet names) and in "Welcome home, ...".
+
+| File | Say |
+|---|---|
+| `name-Sunny.mp3` | Sunny |
+| `name-Bunny.mp3` | Bunny |
+| `name-Sprout.mp3` | Sprout |
+| `name-Star.mp3` | Star |
+| `name-Peanut.mp3` | Peanut |
+| `name-Buttercup.mp3` | Buttercup |
+| `name-Pumpkin.mp3` | Pumpkin |
+| `name-Ladybug.mp3` | Ladybug |
+| `name-Honey.mp3` | Honey |
+| `name-Dot.mp3` | Dot |
+| `name-Bee.mp3` | Bee |
+| `name-Twinkle.mp3` | Twinkle |
+| `name-Biscuit.mp3` | Biscuit |
+| `name-Pip.mp3` | Pip |
+| `name-Mochi.mp3` | Mochi |
+| `name-Nugget.mp3` | Nugget |
+| `name-Clover.mp3` | Clover |
+| `name-Peaches.mp3` | Peaches |
+| `name-Maple.mp3` | Maple |
+| `name-Button.mp3` | Button |
+| `name-Pebble.mp3` | Pebble |
+| `name-Waffles.mp3` | Waffles |
+| `name-Poppy.mp3` | Poppy |
+| `name-Cocoa.mp3` | Cocoa |
+| `name-Daisy.mp3` | Daisy |
+| `name-Muffin.mp3` | Muffin |
+| `name-Waddles.mp3` | Waddles |
+| `name-Nibbles.mp3` | Nibbles |
+| `name-Whiskers.mp3` | Whiskers |
+| `name-Snowball.mp3` | Snowball |
+| `name-Ginger.mp3` | Ginger |
+| `name-Bubbles.mp3` | Bubbles |
+| `name-Oreo.mp3` | Oreo |
+| `name-Pepper.mp3` | Pepper |
+| `name-Fluffy.mp3` | Fluffy |
+| `name-Sparkle.mp3` | Sparkle |
+| `name-Bean.mp3` | Bean |
+| `name-Noodle.mp3` | Noodle |
 
 ## Style Studio names
 

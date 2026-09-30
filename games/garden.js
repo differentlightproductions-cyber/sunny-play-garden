@@ -171,7 +171,7 @@
     drawPal(c) {
       const a = this.pal, st = SPG.pets.active(); if (!a || !st) return;
       c.save(); c.translate(a.x, a.y - (a.moving ? Math.abs(Math.sin(a.t * 9)) * a.size * .04 : 0));
-      SPG.pets.draw(c, st.id, a.size, a.t, { mood: a.cheer > 0 ? 'cheer' : a.idle > 25 ? 'sleep' : 'happy', hop: a.hop > 0 ? 1 - a.hop : 0, hat: st.hat });
+      SPG.pets.draw(c, st.id, a.size, a.t, { mood: a.cheer > 0 ? 'cheer' : a.idle > 25 ? 'sleep' : 'happy', hop: a.hop > 0 ? 1 - a.hop : 0, hat: st.hat, face: st.face, neck: st.neck });
       c.restore();
     }
     slot(i) { const col = i % this.cols, row = Math.floor(i / this.cols); return { x: this.bed.x + (col + .5) * this.cw, y: this.bed.y + (row + .5) * this.ch + this.ch * .22 }; }

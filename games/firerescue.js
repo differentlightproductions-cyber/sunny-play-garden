@@ -235,12 +235,14 @@
     touch() {
       sfx.unlock && sfx.unlock();
       if (this.state === 'rest') { this.newRound(false); return; }
+      // the big arrow after a finished round starts the next place
+      if (this.state === 'won') { const n = this.nextBtn(); if (Math.hypot(this.aim.x - n.x, this.aim.y - n.y) < n.r * 1.35) { sfx.pop(); this.newRound(false); } return; }
       // a tap on a pet that is ready to come down calls the ladder
       if (this.state !== 'play') return;
       for (const b of this.blds) {
         const p = b.pet; if (p.state !== 'ready') continue;
         const wp = b.geo.wins[p.win];
-        if (Math.hypot(this.aim.x - wp.x, this.aim.y - wp.y) < Math.max(b.geo.ww * 1.4, 46)) { this.claim(b); }
+        if (Math.hypot(this.aim.x - wp.x, this.aim.y - wp.y) < Math.max(b.geo.ww * 1.9, 78 * this.ui)) { this.claim(b); }
       }
     }
     claim(b) { if (this.queue.includes(b)) return; this.queue.push(b); sfx.pop(); }
@@ -261,7 +263,7 @@
     start() { this.resize(); this.resume(); }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
     pause() { this.running = false; cancelAnimationFrame(this.raf); this.aim.down = false; }
-    destroy() { this.pause(); this.canvas.remove(); this.counter.el.remove(); }
+    destroy() { this.pause(); clearTimeout(this._nt); this.canvas.remove(); this.counter.el.remove(); }
 
     tick(now) {
       if (!this.running) return;
@@ -310,7 +312,7 @@
         // pets
         const pt = b.pet;
         if (pt.state === 'wait' && b.flames.every(f => f.lit && f.out)) { pt.state = 'ready'; pt.readyT = 0; sfx.chime(); if (!this.saidPet) { this.saidPet = true; voice.say('fire-pet'); } }
-        if (pt.state === 'ready') { pt.readyT += dt; if (pt.readyT > 5.5 || fade) this.claim(b); }
+        if (pt.state === 'ready') pt.readyT += dt;   // the pet waits, bouncing, until she taps it: the firefighters never rescue on their own
       }
       this.burn = clamp(burning / 8, 0, 1);
       this.stepRescue(dt);
@@ -319,8 +321,8 @@
       if (this.state === 'play' && this.blds.every(b => b.done)) this.win();
       if (this.state === 'won') {
         this.wonK = Math.min(1, this.wonK + dt * .7);
-        if ((this.smokeIn -= dt) <= 0) { this.smokeIn = .35; this.fx.burst(this.w * (.2 + Math.random() * .6), this.h * .3, 8, { colors: RAINBOW, speed: 200, g: 350, life: 1, size: 6 * this.ui, shape: 'confetti', up: 120 }); }
-        if (this.stateT > 6) { if (this.t - this.lastTouch < 22) this.newRound(false); else { this.state = 'rest'; this.stateT = 0; } }
+        if (this.stateT < 6 && (this.smokeIn -= dt) <= 0) { this.smokeIn = .35; this.fx.burst(this.w * (.2 + Math.random() * .6), this.h * .3, 8, { colors: RAINBOW, speed: 200, g: 350, life: 1, size: 6 * this.ui, shape: 'confetti', up: 120 }); }
+        // the round is over and stays calm: nothing catches fire again until she taps the arrow for a new place (or leaves and comes back)
       }
       this.fx.update(dt);
       this.bear.dir = this.aim.x >= this.bearX ? 1 : -1;
@@ -385,7 +387,7 @@
       this.state = 'won'; this.stateT = 0; this.wonK = 0;
       this.bag.level++; store.save();   // the next round is somewhere new
       if (this.sprayT > 2) store.addStars(1);
-      sfx.win(); voice.say('fire-done');
+      sfx.win(); voice.say('fire-done'); clearTimeout(this._nt); this._nt = setTimeout(() => { if (this.state === 'won' && this.running) voice.say('fire-next'); }, 3800);
       this.fx.burst(this.w / 2, this.h * .35, 26, { colors: RAINBOW, speed: 320, g: 400, life: 1.2, size: 7 * this.ui, shape: 'star', up: 200 });
     }
 
@@ -409,6 +411,7 @@
       this.fx.draw(c);
       if (this.burn > 0) { c.fillStyle = `rgba(130,105,115,${(this.burn * .1).toFixed(3)})`; c.fillRect(0, 0, w, h); }
       if (this.state === 'rest') this.drawRestHint(c);
+      if (this.state === 'won' && this.stateT > 1.4) this.drawNext(c);
       // which place she is in: a little row of dots, the current one big
       const n = LEVELS.length, r = 6 * this.ui, gap = r * 3.2, x0 = w / 2 - (n - 1) * gap / 2, y0 = 22 * this.ui + 6;
       for (let i = 0; i < n; i++) { c.fillStyle = i === this.level ? '#59b96e' : 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(x0 + i * gap, y0, i === this.level ? r * 1.4 : r, 0, TAU); c.fill(); if (i === this.level) { c.strokeStyle = '#fff'; c.lineWidth = 3; c.stroke(); } }
@@ -513,6 +516,15 @@
       c.save(); c.translate(f.x, f.y); art.firefighter(c, 'fox', sc, this.t + 1.3, { dir: f.dir, walk: f.walk ? .8 : 0, wave: f.wave }); c.restore();
     }
 
+    nextBtn() { const r = Math.max(40, Math.min(this.w, this.h) * .085); return { x: this.w - r * 1.7, y: this.h * .5, r }; }
+    drawNext(c) {
+      const n = this.nextBtn(), k = 1 + Math.sin(this.t * 3) * .05, a = Math.min(1, this.stateT / 1.2);
+      c.save(); c.globalAlpha = a; c.translate(n.x, n.y); c.scale(k, k);
+      c.fillStyle = 'rgba(0,0,0,.14)'; c.beginPath(); c.arc(0, n.r * .12, n.r, 0, TAU); c.fill();
+      c.fillStyle = '#59b96e'; c.beginPath(); c.arc(0, 0, n.r, 0, TAU); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = n.r * .1; c.stroke();
+      c.strokeStyle = '#fff'; c.lineWidth = n.r * .22; c.lineCap = c.lineJoin = 'round'; c.beginPath(); c.moveTo(-n.r * .22, -n.r * .42); c.lineTo(n.r * .26, 0); c.lineTo(-n.r * .22, n.r * .42); c.stroke();
+      c.restore();
+    }
     drawRestHint(c) {
       // calm and quiet: a soft pulsing water drop in the middle says "touch to play again"
       const s = Math.min(this.w, this.h) * .075, k = 1 + Math.sin(this.t * 2.4) * .08;

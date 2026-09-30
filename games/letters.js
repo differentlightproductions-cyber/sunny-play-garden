@@ -432,7 +432,8 @@
 
     spellName(list) {
       const n = list.join('');
-      voice.say('spell-name', ...list.map(ch => 'letter/' + ch.toLowerCase()), { say: n });
+      voice.custom['pname/' + store.active.id] = n;
+      voice.say('spell-name', ...list.map(ch => 'letter/' + ch.toLowerCase()), voice.LINES['name/' + n] ? 'name/' + n : 'pname/' + store.active.id);
     }
 
     nameMode() {

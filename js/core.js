@@ -421,7 +421,7 @@
       });
       el.pick = (name, speak) => {
         el.value = name; btns.forEach(x => x.setAttribute('aria-pressed', String(x.textContent === name)));
-        if (speak) { SPG.sfx.pop(); SPG.voice && SPG.voice.say({ say: name }); }
+        if (speak) { SPG.sfx.pop(); if (SPG.voice) SPG.voice.say(SPG.voice.LINES['name/' + name] ? 'name/' + name : { say: name }); }
         onPick && onPick(name);
       };
       el.clear = () => { el.value = ''; btns.forEach(x => x.setAttribute('aria-pressed', 'false')); };
@@ -488,7 +488,7 @@
       ['contextmenu', 'selectstart', 'dragstart', 'gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, block));
       document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
       document.addEventListener('touchmove', e => {
-        if (e.touches.length > 1 || !e.target.closest?.('[data-scroll]')) e.preventDefault();
+        if (e.touches.length > 1 || !e.target.closest?.('[data-scroll], #hub-games .pages')) e.preventDefault();   // the games strip swipes natively
       }, { passive: false });
       document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 

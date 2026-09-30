@@ -101,7 +101,6 @@
       <h1 class="hub-title">Little Sprout Park</h1>
       <div class="hub-right">
         <div class="chip stars" aria-label="Stars"><svg class="ico"><use href="#i-star"/></svg><b id="hub-stars">0</b></div>
-        <button id="hub-night" class="chip round" type="button" aria-label="Night mode" aria-pressed="false"><svg class="ico"><use href="#i-moon"/></svg></button>
         <button id="hub-lock" class="chip round" type="button" aria-label="Grown-ups"><svg class="ico"><use href="#i-lock"/></svg></button>
       </div>
     </header>
@@ -129,12 +128,12 @@
   <!-- Parent gate -->
   <div id="gate" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gate-title">
     <div class="sheet gate">
+      <button id="gate-back" type="button" class="btn go gate-back"><svg class="ico"><use href="#i-house"/></svg><span>Back to the games</span></button>
       <h2 id="gate-title">Grown-ups only</h2>
       <p id="gate-hint" class="fine">Answer to continue</p>
       <p id="gate-q" class="gate-q"></p>
       <div id="gate-answer" class="gate-answer" aria-live="polite"></div>
       <div id="numpad" class="numpad"></div>
-      <button id="gate-cancel" type="button" class="btn quiet">Cancel</button>
       <button id="gate-forgot" type="button" class="btn quiet small hidden">Forgot the PIN?</button>
     </div>
   </div>

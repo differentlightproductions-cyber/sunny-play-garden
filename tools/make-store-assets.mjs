@@ -67,7 +67,14 @@ for (const [kind, w, h] of [['phone', 540, 960], ['tablet', 960, 600]]) {
   // Garden with plants and friends
   await openGame(p, 4);
   await p.evaluate(() => { const g = SPG.app.running().inst; g.bag.blooms = 12; g.resize(); const types = ['sunflower', 'tulip', 'daisy', 'strawberry', 'pumpkin', 'carrot', 'lavender', 'rose']; for (let i = 0; i < g.slotCount(); i++) g.plots[i] = Object.assign(g.plots[i], i === 9 ? { kind: 'hole', level: 2 } : { kind: 'plant', type: types[i % 8], stage: i % 5 === 4 ? 1 : 3, loose: false }); ['bee', 'bird', 'bunny', 'hedgehog', 'butterfly', 'dragonfly'].forEach((k, i) => { const s = g.slot(i * 2 % g.slotCount()); g.spawnCreature(k, s.x + 30, s.y - 20); }); g.ambientUntil = 1e15; });
-  await p.waitForTimeout(900); await shot(p, `${kind}-6-garden`);
+  await p.waitForTimeout(900); await shot(p, `${kind}-6-garden`); await home(p);
+
+  // Coloring Book: a picture part way through
+  await openGame(p, 5); await p.waitForTimeout(500);
+  await p.evaluate(() => { const g = SPG.app.running().inst; g.open(SPG.pictures[4]); });
+  await p.waitForTimeout(500);
+  await p.evaluate(() => { const g = SPG.app.running().inst; g.ops = [[0, 'sky', 6], [0, 'sun', 2], [0, 'bank', 3], [0, 'pond', 7], [0, 'pad', 3], [0, 'body', 4], [0, 'head', 4], [0, 'eyes', 1]]; g.redraw(); });
+  await p.waitForTimeout(300); await shot(p, `${kind}-7-color`);
   await ctx.close();
 }
 

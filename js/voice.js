@@ -170,7 +170,7 @@
   }
 
   async function playOne(item) {
-    if (!settings().voice || !item) return;
+    if (!settings().voice || !item || SPG.voice.hushed) return;
     if (typeof item !== 'string') return item.say ? speak(item.say) : undefined;
     if (skip(item)) return;
     await ready;
@@ -214,6 +214,7 @@
   }
 
   SPG.voice = {
+    hushed: false, // true inside the Coloring Book: no spoken voices at all
     LINES, SOUNDS, PHONICS, NAMES, WORDS, PRAISE, GROUPS, SETS, custom, ready,
     fileFor, allKeys, textFor, hasClip, hasDeviceClip,
     groupOf: key => GROUPS.find(g => g.test(key)),
@@ -235,7 +236,7 @@
     },
     // Quietly play a recorded critter noise if there is one. Never interrupts speech. Resolves to its length in seconds (0 = none).
     async ambient(key, gain = .2) {
-      if (!settings().voice || skip(key) || !A.ctx) return 0;
+      if (!settings().voice || SPG.voice.hushed || skip(key) || !A.ctx) return 0;
       await ready;
       const set = chooseSet(key); if (!set) return 0;
       const buf = await loadBuffer(set, key); if (!buf) return 0;

@@ -70,7 +70,9 @@
   }
 
   /* ------------------------------------------------------------ setup */
+  const NICKS = ['Sunny', 'Bunny', 'Sprout', 'Star', 'Peanut', 'Buttercup', 'Pumpkin', 'Ladybug', 'Honey', 'Dot', 'Bee', 'Twinkle'];
   let pickedAvatar = art.AVATARS[0];
+  let nickGrid = null;
   function openSetup(canCancel) {
     const pick = $('avatar-pick');
     const used = new Set(store.profiles.map(p => p.avatar));
@@ -81,18 +83,21 @@
       return b;
     }));
     $('setup-restore').classList.toggle('hidden', store.profiles.length > 0);
-    $('name-input').value = '';
+    $('name-input').value = ''; $('name-field').classList.add('hidden'); $('type-name').classList.remove('hidden');
+    nickGrid = SPG.ui.nameGrid(NICKS, () => { $('name-input').value = ''; });
+    $('nick-pick').replaceChildren(nickGrid);
     $('setup-cancel').classList.toggle('hidden', !canCancel);
     show('setup');
-    setTimeout(() => $('name-input').focus(), 60);
   }
+  // Typing needs the keyboard, which is for grown-ups: the maths question comes first.
+  SPG.ui.press($('type-name'), () => askGate(() => { $('type-name').classList.add('hidden'); $('name-field').classList.remove('hidden'); nickGrid && nickGrid.clear(); setTimeout(() => $('name-input').focus(), 80); }));
   $('setup-cancel').addEventListener('click', renderWho);
   $('setup-restore').addEventListener('click', () => askGate(openParent));
   $('setup-form').addEventListener('submit', e => {
     e.preventDefault();
     const input = $('name-input');
-    const name = input.value.trim();
-    if (!name) { input.focus(); input.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'none' }], { duration: 250 }); return; }
+    const name = input.value.trim() || (nickGrid && nickGrid.value) || '';
+    if (!name) { const t = $('nick-pick'); t.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'none' }], { duration: 250 }); SPG.sfx.oops(); return; }
     input.blur();
     choose(store.addProfile(name, pickedAvatar));
   });
@@ -110,7 +115,7 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'] };
   function renderCards() {
     const all = SPG.games.slice().sort((a, b) => a.order - b.order);
     const games = all.filter(g => !g.shop), shops = all.filter(g => g.shop);

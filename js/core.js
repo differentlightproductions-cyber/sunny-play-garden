@@ -331,6 +331,24 @@
       el.addEventListener('click', e => { if (e.detail === 0) fn(e); });
       return el;
     },
+    // A grid of big name buttons for a child who cannot type. Touching one says the name out loud and selects it.
+    // Returns the element; `el.value` is the chosen name ('' if none) and `el.clear()` unselects.
+    nameGrid(names, onPick) {
+      const el = document.createElement('div'); el.className = 'name-grid'; el.value = '';
+      const btns = names.map(name => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'name-btn'; b.textContent = name; b.setAttribute('aria-pressed', 'false');
+        SPG.ui.press(b, () => { el.pick(name, true); });
+        return b;
+      });
+      el.pick = (name, speak) => {
+        el.value = name; btns.forEach(x => x.setAttribute('aria-pressed', String(x.textContent === name)));
+        if (speak) { SPG.sfx.pop(); SPG.voice && SPG.voice.say({ say: name }); }
+        onPick && onPick(name);
+      };
+      el.clear = () => { el.value = ''; btns.forEach(x => x.setAttribute('aria-pressed', 'false')); };
+      el.append(...btns);
+      return el;
+    },
     counter(host, draw, value = 0) {
       const el = document.createElement('div'); el.className = 'hud-count';
       const cv = document.createElement('canvas'); cv.width = cv.height = 72;

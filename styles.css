@@ -299,7 +299,7 @@ button.chip:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(90, 63
 /* ================= rest screen & panel controls ================= */
 #break { background: linear-gradient(#2c3566, #5d55a0); backdrop-filter: none; -webkit-backdrop-filter: none; z-index: 60; }
 .break-card { text-align: center; color: #fff8e8; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.break-card canvas { width: min(60vmin, 320px); height: min(60vmin, 320px); }
+.break-card canvas { width: min(92vw, 640px, 120vh); height: auto; aspect-ratio: 16 / 9; }
 .break-card h2 { font-size: clamp(2rem, 6vmin, 3.4rem); font-weight: 700; }
 .break-card p { font-size: 1.2rem; opacity: .8; margin-bottom: 10px; }
 .seg { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }

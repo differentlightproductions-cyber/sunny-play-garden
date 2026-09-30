@@ -10,7 +10,7 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
@@ -228,7 +228,28 @@
     cheer() { [0, 2, 4, 5, 7, 5, 7].forEach((n, k) => tone(NOTES[n], .34, { at: k * .1, vol: .17 })); [5, 6, 7].forEach((n, k) => tone(NOTES[n] * 2, .3, { at: .55 + k * .09, vol: .07 })); tone(NOTES[0] / 2, .9, { type: 'triangle', vol: .1 }); },
     crunch() { noise(.07, { freq: 1900, q: 1.3, vol: .17 }); noise(.06, { freq: 950, q: 1, vol: .1, at: .06 }); tone(190, .06, { type: 'triangle', vol: .06 }); },
     pat() { tone(110, .2, { slide: .55, type: 'sine', vol: .34 }); noise(.14, { freq: 500, vol: .12 }); },
-    squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); }
+    squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); },
+    // Band instruments: i picks a note of the scale (all of them sound good together).
+    instrument(kind, i = 0, vol = .2) {
+      const f = NOTES[i % NOTES.length];
+      switch (kind) {
+        case 'drum': noise(.14, { freq: 200, q: .5, vol: vol * 1.1 }); tone(150 + (i % 4) * 14, .2, { slide: .5, vol }); break;
+        case 'xylo': tone(f, .55, { type: 'triangle', vol }); tone(f * 3, .14, { vol: vol * .25 }); break;
+        case 'bell': tone(f * 2, .9, { vol: vol * .8 }); tone(f * 3.01, .6, { vol: vol * .3 }); tone(f * 4.2, .3, { vol: vol * .12 }); break;
+        case 'flute': tone(f, .55, { vol: vol * .85, slide: 1.01 }); tone(f * 2, .4, { vol: vol * .12 }); break;
+        case 'horn': tone(f / 2, .5, { type: 'triangle', vol }); tone(f, .4, { type: 'square', vol: vol * .1 }); break;
+        default: tone(f, .8, { vol }); tone(f * 2, .4, { vol: vol * .25 }); tone(f * 3, .2, { vol: vol * .08 });
+      }
+    },
+    toot() { tone(392, .32, { type: 'triangle', vol: .2 }); tone(494, .32, { type: 'triangle', vol: .16 }); tone(392, .4, { type: 'triangle', vol: .2, at: .36 }); },
+    chug() { noise(.09, { freq: 320, q: .6, vol: .14 }); },
+    snap() { tone(640, .05, { type: 'triangle', vol: .2 }); tone(960, .07, { type: 'triangle', vol: .12, at: .04 }); },
+    rustle() { noise(.22, { freq: 3000, q: .8, vol: .1 }); noise(.2, { freq: 2200, q: .8, vol: .07, at: .1 }); },
+    // warmth 0..1: a rising little chirp says "getting warmer" without any words
+    warm(k = 0) { tone(300 + k * 700, .2, { type: 'triangle', vol: .13 }); if (k > .6) tone(300 + k * 1000, .18, { vol: .08, at: .12 }); },
+    bubble() { tone(520 + Math.random() * 500, .1, { slide: 1.8, vol: .07 }); },
+    lullaby() { [4, 2, 0].forEach((n, k) => tone(NOTES[n] * .75, .6, { at: k * .5, vol: .09 })); },
+    munch() { noise(.06, { freq: 1500, q: 1.2, vol: .13 }); noise(.05, { freq: 900, q: 1, vol: .1, at: .08 }); }
   };
 
   // Soft, slow, generative background music. The main loop is off until a grown-up turns it on; the
@@ -303,11 +324,27 @@
     th.play(tbar, tstep, m, th.chords[bar], th.bass[bar], tpass);
     if (++tstep >= th.per) { tstep = 0; tbar++; if (tbar % th.melody.length === 0) tpass++; }
   };
+  // The rest screen's lullaby: a slow, tiny music-box tune (instrumental, quiet), even if the other music is switched off.
+  const LULLABY = [[392, 329.63, 392, 440, 392, 329.63, 261.63, 0], [349.23, 329.63, 293.66, 261.63, 293.66, 329.63, 349.23, 0], [392, 329.63, 392, 440, 392, 329.63, 261.63, 0], [293.66, 329.63, 293.66, 246.94, 261.63, 0, 0, 0]];
+  const LULLABY_BASS = [130.81, 174.61, 130.81, 196];
+  let restTimer = 0, restStep = 0, resting = false;
+  const lullStep = () => {
+    if (!A.ctx || document.hidden) return;
+    const bar = Math.floor(restStep / 8) % LULLABY.length, i = restStep % 8, m = LULLABY[bar][i];
+    if (i === 0) { tone(LULLABY_BASS[bar], 3.2, { type: 'triangle', vol: .035 }); tone(LULLABY_BASS[bar] * 2.5, 3, { vol: .012, at: .05 }); }
+    if (m) { tone(m, 1.4, { vol: .042 }); tone(m * 2, .6, { vol: .011 }); }
+    restStep++;
+  };
   SPG.music = {
+    rest(on) {
+      resting = !!on; clearInterval(restTimer); restTimer = 0; restStep = 0;
+      if (resting && SPG.store.settings.sound) { lullStep(); restTimer = setInterval(lullStep, 560); }
+      SPG.music.sync();
+    },
     sync() {
       const s = SPG.store.settings;
       const key = scene ? scene + ':' + (theme || '') : 'main';
-      const want = !document.hidden && s.sound && (scene === 'color' ? s.colorMusic !== false : s.music);
+      const want = !resting && !document.hidden && s.sound && (scene === 'color' ? s.colorMusic !== false : s.music);
       if (musicTimer && (!want || key !== musicKey)) { clearInterval(musicTimer); musicTimer = 0; }
       if (want && !musicTimer) {
         musicKey = key;

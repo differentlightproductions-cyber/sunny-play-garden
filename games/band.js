@@ -229,7 +229,7 @@
         c.save(); c.translate(p.x + Math.sin(m.shake * 30) * m.shake * s * .04, p.y);
         if (m.glow > 0) { const gl = c.createRadialGradient(0, -s * .5, 0, 0, -s * .5, s * .8); gl.addColorStop(0, b.col + 'cc'); gl.addColorStop(1, b.col + '00'); c.fillStyle = gl; c.globalAlpha = m.glow; c.beginPath(); c.arc(0, -s * .5, s * .8, 0, TAU); c.fill(); c.globalAlpha = 1; }
         const own = act && act.id === b.sp;
-        SPG.pets.draw(c, b.sp, s, this.t + i, { mood: m.hit > .1 || m.glow > .2 ? 'cheer' : 'happy', hop: m.hop > 0 ? 1 - m.hop : 0, hat: own ? act.hat : null });
+        SPG.pets.draw(c, b.sp, s, this.t + i, { mood: m.hit > .1 || m.glow > .2 ? 'cheer' : 'happy', hop: m.hop > 0 ? 1 - m.hop : 0, hat: own ? act.hat : null, face: own ? act.face : null, neck: own ? act.neck : null });
         instrument(c, b.inst, s / 10, m.hit);
         if (own) { c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(0, s * .1, s * .08, 0, TAU); c.fill(); art.star(c, 0, s * .1, s * .06, '#ffd54a', 0); }
         c.restore();

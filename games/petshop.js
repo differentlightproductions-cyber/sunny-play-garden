@@ -31,85 +31,159 @@
 
     /* -------------------------------------------------------------- layout */
     build() {
+      this.tab = 'pets';
+      // the dress-up corner: a mirror, a little podium, and three wardrobe rows (hats, glasses, necks)
       this.roomCv = el('canvas', 'ps-pet');
       this.nameEl = el('b', 'ps-nameText');
       this.pencil = btn('ps-pencil', 'Change name', icon('pencil')); tap(this.pencil, () => this.askName(P.active().id, false));
       this.nameRow = el('div', 'ps-name', this.nameEl, this.pencil);
-      this.hatRow = el('div', 'ps-hatrow');
+      this.wardrobe = el('div', 'ps-wardrobe');
       this.hint = el('p', 'ps-hint');
-      this.room = el('section', 'ps-room', this.roomCv, this.nameRow, this.hatRow, this.hint);
-      this.shelf = el('section', 'ps-shelf'); this.shelf.setAttribute('data-scroll', '');
-      this.root.append(this.room, this.shelf);
+      this.room = el('section', 'ps-room', this.roomCv, this.nameRow, this.wardrobe, this.hint);
+      // the store: a sign row at the top, then shelves of pens or a pegboard of accessories
+      this.signs = el('div', 'ps-signs');
+      this.shelf = el('div', 'ps-aisle'); this.shelf.setAttribute('data-scroll', '');
+      this.more = btn('st-more ps-more', 'See more', icon('left'));
+      this.more.addEventListener('click', () => { this.shelf.scrollBy({ top: Math.max(140, this.shelf.clientHeight * .8), behavior: 'smooth' }); sfx.tap(); });
+      this.shelf.addEventListener('scroll', () => this.updateMore(), { passive: true });
+      this.store = el('section', 'ps-shelf ps-store', this.signs, el('div', 'ps-aislewrap', this.shelf, this.more));
+      this.root.append(this.room, this.store);
       this.roomCv.addEventListener('pointerdown', e => {
         e.preventDefault(); const a = P.active(); if (!a) { sfx.oops(); return; }
         this.hop = 1; P.noise(a.id); const r = this.roomCv.getBoundingClientRect();
         this.fx.burst(e.clientX - r.left, e.clientY - r.top - 20, 6, { colors: ['#ff7a8a', '#ff9db8'], speed: 110, g: -60, life: 1, size: 8, shape: 'heart' });
       });
     }
+    updateMore() { const b = this.shelf; this.more.classList.toggle('show', b.scrollHeight - b.clientHeight - b.scrollTop > 24); }
     render() {
-      const a = P.active();
+      const a = P.active(), keep = this.shelf.scrollTop;
       this.nameEl.textContent = a ? a.name : '';
       this.nameRow.classList.toggle('hidden', !a);
-      this.hint.textContent = a ? '' : 'Pick a friend from the shelf to take home!';
-      // hats she owns
-      this.hatRow.replaceChildren();
-      const own = P.HATS.filter(h => P.ownsHat(h.id));
-      if (a && own.length) {
-        const none = btn('ps-hatbtn' + (a.hat ? '' : ' on'), 'No hat', icon('x')); tap(none, () => { P.wear(null); sfx.tap(); this.render(); });
-        this.hatRow.append(none);
+      this.hint.textContent = a ? '' : 'Pick a friend from the shelves to take home!';
+      // wardrobe: one row per place on the body, showing only what she owns
+      this.wardrobe.replaceChildren();
+      if (a) for (const slot of P.SLOTS) {
+        const own = P.HATS.filter(h => h.slot === slot && P.ownsHat(h.id)); if (!own.length) continue;
+        const cur = slot === 'head' ? a.hat : a[slot], row = el('div', 'ps-wrow');
+        const none = btn('ps-hatbtn' + (cur ? '' : ' on'), 'Take it off', icon('x')); tap(none, () => { P.unwear(slot); sfx.tap(); this.hop = .6; this.render(); });
+        row.append(none);
         for (const h of own) {
-          const cv = el('canvas'), b = btn('ps-hatbtn' + (a.hat === h.id ? ' on' : ''), h.name, cv); b._hat = h.id; b._cv = cv;
+          const cv = el('canvas'), b = btn('ps-hatbtn' + (cur === h.id ? ' on' : ''), h.name, cv); b._hat = h.id; b._cv = cv;
           tap(b, () => { P.wear(h.id); sfx.pop(); this.hop = 1; this.render(); });
-          this.hatRow.append(b);
+          row.append(b);
         }
+        this.wardrobe.append(row);
       }
-      // shelf
-      this.shelf.replaceChildren(el('h3', '', 'Friends'), this.grid(P.PETS, 'pet'), el('h3', '', 'Hats'), this.grid(P.HATS, 'hat'));
-      requestAnimationFrame(() => { this.paintRoom(); this.paintCards(); });
+      // the sign row: what you can look at in the shop
+      this.signs.replaceChildren();
+      for (const [id, label] of [['pets', 'Pets'], ['head', 'Hats'], ['face', 'Glasses'], ['neck', 'Bows and collars']]) {
+        const cv = el('canvas'), b = btn('ps-sign' + (this.tab === id ? ' on' : ''), label, cv, el('span', '', label)); b._sign = id; b._cv = cv;
+        tap(b, () => { this.tab = id; sfx.tap(); this.shelf.scrollTop = 0; this.render(); });
+        this.signs.append(b);
+      }
+      this.shelf.replaceChildren(this.tab === 'pets' ? this.pens() : this.pegboard(this.tab));
+      if (keep && this._lastTab === this.tab) this.shelf.scrollTop = keep; this._lastTab = this.tab;
+      requestAnimationFrame(() => { this.paintRoom(); this.paintCards(); this.updateMore(); });
     }
-    grid(list, type) {
-      const g = el('div', 'ps-grid'), a = P.active();
-      for (const item of list) {
-        const owned = type === 'pet' ? P.owns(item.id) : P.ownsHat(item.id), cant = !owned && !P.canAfford(item.price);
-        const cv = el('canvas');
-        const b = btn(`ps-card${owned ? ' owned' : ''}${cant ? ' cant' : ''}${type === 'pet' && a && a.id === item.id ? ' active' : ''}${type === 'hat' && a && a.hat === item.id ? ' active' : ''}`,
-          owned ? item.name : `${item.name}, ${item.price} stars`, cv, el('span', 'ps-label', owned && type === 'pet' ? P.nameOf(item.id) : item.name), owned ? el('span', 'ps-own', icon('check')) : price(item.price));
-        b._cv = cv; b._item = item; b._type = type;
-        tap(b, () => this.tapCard(item, type, b));
-        g.append(b);
+    // Shelves of pens: every pet lives in its own little glass-fronted home, with a star price tag.
+    pens() {
+      const wrap = el('div', 'ps-shelves'), a = P.active();
+      const perRow = 3;
+      for (let r = 0; r < P.PETS.length; r += perRow) {
+        const row = el('div', 'ps-shelfrow');
+        for (const item of P.PETS.slice(r, r + perRow)) {
+          const owned = P.owns(item.id), cant = !owned && !P.canAfford(item.price), cv = el('canvas');
+          const b = btn(`ps-card ps-pen${owned ? ' owned' : ''}${cant ? ' cant' : ''}${a && a.id === item.id ? ' active' : ''}`, owned ? P.nameOf(item.id) : `${item.name}, ${item.price} stars`, cv,
+            el('span', 'ps-label', owned ? P.nameOf(item.id) : item.name), owned ? el('span', 'ps-own', icon('check')) : el('span', 'ps-tag', price(item.price)));
+          b._cv = cv; b._item = item; b._type = 'pet'; tap(b, () => this.tapCard(item, 'pet', b)); row.append(b);
+        }
+        wrap.append(row);
       }
-      return g;
+      return wrap;
+    }
+    // Accessories hang on a pegboard wall.
+    pegboard(slot) {
+      const wrap = el('div', 'ps-peg'), a = P.active(), list = P.HATS.filter(h => h.slot === slot);
+      for (const item of list) {
+        const owned = P.ownsHat(item.id), cant = !owned && !P.canAfford(item.price), cv = el('canvas');
+        const on = a && (slot === 'head' ? a.hat : a[slot]) === item.id;
+        const b = btn(`ps-card ps-hook${owned ? ' owned' : ''}${cant ? ' cant' : ''}${on ? ' active' : ''}`, owned ? item.name : `${item.name}, ${item.price} stars`, cv,
+          el('span', 'ps-label', item.name), owned ? el('span', 'ps-own', icon('check')) : el('span', 'ps-tag', price(item.price)));
+        b._cv = cv; b._item = item; b._type = 'hat'; tap(b, () => this.tapCard(item, 'hat', b)); wrap.append(b);
+      }
+      return wrap;
+    }
+    penKind(id) { return { bunny: 'cage', hamster: 'cage', mouse: 'cage', cat: 'basket', dog: 'basket', pig: 'pasture', lamb: 'pasture', elephant: 'pasture', unicorn: 'cloud', frog: 'pond', duck: 'pond', penguin: 'ice', owl: 'perch', bear: 'forest', fox: 'forest', panda: 'forest' }[id] || 'cage'; }
+    // The home behind (and the bars or glass in front of) each pet.
+    drawPen(c, w, h, kind) {
+      const R = (x, y, ww, hh, col) => { c.fillStyle = col; c.fillRect(x, y, ww, hh); };
+      const sky = { cage: ['#fdf1dc', '#f8e2bd'], basket: ['#ffe9ef', '#ffd6e2'], pasture: ['#e4f4d6', '#cfe9b8'], cloud: ['#e6ddff', '#fbe3f5'], pond: ['#cfeefb', '#a8def2'], ice: ['#dff3ff', '#c4e6fa'], perch: ['#efe0c8', '#e0c9a5'], forest: ['#d9efd0', '#bfe3b0'] }[kind];
+      const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]); c.fillStyle = g; c.fillRect(0, 0, w, h);
+      if (kind === 'cage') { R(0, h * .84, w, h * .16, '#e9c47a'); c.strokeStyle = 'rgba(190,140,60,.6)'; c.lineWidth = 2; for (let i = 0; i < 16; i++) { const x = (i * 37 % 100) / 100 * w; c.beginPath(); c.moveTo(x, h * .98); c.lineTo(x + 7, h * .86); c.stroke(); } }
+      else if (kind === 'basket') { c.fillStyle = '#c99a6a'; c.beginPath(); c.ellipse(w / 2, h * .86, w * .46, h * .12, 0, 0, TAU); c.fill(); c.fillStyle = '#ffb3c8'; c.beginPath(); c.ellipse(w / 2, h * .84, w * .38, h * .085, 0, 0, TAU); c.fill(); }
+      else if (kind === 'pasture') { R(0, h * .82, w, h * .18, '#a9d98f'); c.fillStyle = '#e8c96a'; for (let i = 0; i < 9; i++) { c.beginPath(); c.ellipse(w * (.08 + i * .11), h * .9, w * .06, h * .022, .2, 0, TAU); c.fill(); } }
+      else if (kind === 'cloud') { c.fillStyle = 'rgba(255,255,255,.85)'; for (const [x, y, r] of [[.2, .84, .16], [.42, .88, .2], [.7, .86, .18], [.9, .9, .14]]) { c.beginPath(); c.arc(w * x, h * y, h * r, 0, TAU); c.fill(); } ['#ff9fa8', '#ffd27a', '#9fe0b8', '#8fcaf5', '#c9a8f0'].forEach((k, i) => { c.strokeStyle = k; c.lineWidth = h * .03; c.beginPath(); c.arc(w * .5, h * .95, h * (.64 - i * .04), Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }); }
+      else if (kind === 'pond') { c.fillStyle = '#5cc0ea'; c.fillRect(0, h * .74, w, h * .26); c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(w * (.05 + i * .2), h * .79); c.quadraticCurveTo(w * (.1 + i * .2), h * .76, w * (.15 + i * .2), h * .79); c.stroke(); } c.fillStyle = '#7ed957'; for (const x of [.18, .78]) { c.beginPath(); c.ellipse(w * x, h * .88, w * .1, h * .035, 0, 0, TAU); c.fill(); } }
+      else if (kind === 'ice') { R(0, h * .84, w, h * .16, '#fff'); c.fillStyle = '#bfe6ff'; for (const [x, y, s] of [[.14, .86, .1], [.82, .9, .12]]) { c.beginPath(); c.roundRect ? c.roundRect(w * x - w * s / 2, h * y - w * s / 2, w * s, w * s, 6) : c.rect(w * x, h * y, w * s, w * s); c.fill(); } c.fillStyle = 'rgba(255,255,255,.9)'; for (let i = 0; i < 10; i++) { c.beginPath(); c.arc((i * 61 % 100) / 100 * w, (i * 37 % 60) / 100 * h, 2 + i % 2, 0, TAU); c.fill(); } }
+      else if (kind === 'perch') { c.strokeStyle = '#8a6440'; c.lineWidth = h * .07; c.lineCap = 'round'; c.beginPath(); c.moveTo(0, h * .8); c.lineTo(w, h * .76); c.stroke(); c.fillStyle = '#4fa86b'; for (const x of [.15, .86]) { c.beginPath(); c.ellipse(w * x, h * .74, w * .07, h * .03, .5, 0, TAU); c.fill(); } }
+      else if (kind === 'forest') { R(0, h * .84, w, h * .16, '#9ad97f'); c.fillStyle = '#5aa86b'; for (const [x, s] of [[.12, .3], [.88, .34], [.3, .2], [.7, .22]]) { c.beginPath(); c.moveTo(w * x, h * .84); c.lineTo(w * x - w * s * .3, h * .84); c.lineTo(w * x, h * (.84 - s)); c.lineTo(w * x + w * s * .3, h * .84); c.fill(); } }
+    }
+    drawPenFront(c, w, h, kind) {
+      if (kind === 'cage') { c.strokeStyle = 'rgba(150,150,170,.75)'; c.lineWidth = 2.5; for (let i = 1; i < 9; i++) { c.beginPath(); c.moveTo(w * i / 9, 0); c.lineTo(w * i / 9, h); c.stroke(); } c.strokeStyle = 'rgba(150,150,170,.8)'; c.beginPath(); c.moveTo(0, h * .06); c.lineTo(w, h * .06); c.stroke(); }
+      else if (kind === 'pasture') { c.strokeStyle = '#c99a6a'; c.lineWidth = h * .035; c.lineCap = 'round'; for (const y of [.7, .85]) { c.beginPath(); c.moveTo(0, h * y); c.lineTo(w, h * y); c.stroke(); } for (const x of [.04, .96]) { c.beginPath(); c.moveTo(w * x, h * .62); c.lineTo(w * x, h); c.stroke(); } }
+      // glass sheen on every pen
+      c.fillStyle = 'rgba(255,255,255,.22)'; c.beginPath(); c.moveTo(w * .06, h); c.lineTo(w * .3, 0); c.lineTo(w * .42, 0); c.lineTo(w * .18, h); c.closePath(); c.fill();
+    }
+    paintSignIcon(c, id, w) {
+      c.clearRect(0, 0, w, w); c.save(); c.translate(w / 2, w * .58);
+      if (id === 'pets') { P.drawHead(c, 'cat', w * .3, null); }
+      else if (id === 'head') { P.drawHead(c, 'bunny', w * .3, 'crown'); }
+      else if (id === 'face') { P.drawHead(c, 'dog', w * .3, 'hearts'); }
+      else { P.drawHead(c, 'panda', w * .3, 'bowtie'); }
+      c.restore();
     }
     paintCards() {
       const dpr = SPG.ui.dpr();
       for (const b of this.root.querySelectorAll('.ps-card')) {
         const cv = b._cv, w = cv.clientWidth; if (!w) continue;
         cv.width = Math.round(w * dpr); cv.height = Math.round(w * dpr * .9);
-        const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-        if (b._type === 'pet') { c.translate(w / 2, w * .86); P.draw(c, b._item.id, w * .78, 1.3, { hat: null }); }
-        else { const base = (P.active() || { id: 'bunny' }).id; c.translate(w / 2, w * .58); P.drawHead(c, base, w * .27, b._item.id); }
+        const c = cv.getContext('2d'), h = w * .9; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (b._type === 'pet') {
+          const kind = this.penKind(b._item.id); c.save(); art.rr(c, 0, 0, w, h, 14); c.clip();
+          this.drawPen(c, w, h, kind); c.save(); c.translate(w / 2, h * .93); P.draw(c, b._item.id, h * .8, 1.3, { hat: null }); c.restore(); this.drawPenFront(c, w, h, kind); c.restore();
+        } else {
+          c.save(); art.rr(c, 0, 0, w, h, 14); c.clip(); const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#fbeedd'); g.addColorStop(1, '#f3dcc0'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+          c.fillStyle = 'rgba(190,140,90,.3)'; for (let yy = h * .12; yy < h; yy += h * .2) for (let xx = w * .1; xx < w; xx += w * .2) { c.beginPath(); c.arc(xx, yy, 2, 0, TAU); c.fill(); }
+          c.restore();
+          const base = (P.active() || { id: 'bunny' }).id; c.save(); c.translate(w / 2, h * .62); P.drawHead(c, base, w * .27, b._item.id); c.restore();
+        }
       }
-      for (const b of this.hatRow.querySelectorAll('button')) {
+      for (const b of this.wardrobe.querySelectorAll('button')) {
         if (!b._cv) continue; const w = b._cv.clientWidth; if (!w) continue; const dpr2 = SPG.ui.dpr();
         b._cv.width = b._cv.height = Math.round(w * dpr2); const c = b._cv.getContext('2d'); c.setTransform(dpr2, 0, 0, dpr2, 0, 0);
         c.translate(w / 2, w * .58); P.drawHead(c, (P.active() || { id: 'bunny' }).id, w * .27, b._hat);
       }
+      for (const b of this.signs.querySelectorAll('button')) { const cv = b._cv, w = cv.clientWidth; if (!w) continue; cv.width = cv.height = Math.round(w * dpr); const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); this.paintSignIcon(c, b._sign, w); }
     }
     paintRoom() {
       const cv = this.roomCv, r = cv.getBoundingClientRect(); if (!r.width) return;
       const dpr = SPG.ui.dpr(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); this.rw = r.width; this.rh = r.height;
       this.drawRoom();
     }
+    // The dress-up corner: a big mirror on the wall, a round podium, and a little spotlight.
     drawRoom() {
       const cv = this.roomCv; if (!this.rw) return;
       const c = cv.getContext('2d'), dpr = cv.width / this.rw, w = this.rw, h = this.rh;
       c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
-      // a cosy rug
-      c.fillStyle = 'rgba(255, 190, 210, .55)'; c.beginPath(); c.ellipse(w / 2, h * .9, w * .42, h * .085, 0, 0, TAU); c.fill();
-      c.fillStyle = 'rgba(255, 255, 255, .6)'; c.beginPath(); c.ellipse(w / 2, h * .9, w * .34, h * .06, 0, 0, TAU); c.fill();
+      const mw = Math.min(w * .8, h * .8), mx = w / 2, my = h * .46;
+      c.fillStyle = '#e6b988'; c.beginPath(); c.ellipse(mx, my, mw * .5, h * .46, 0, 0, TAU); c.fill();
+      const mg = c.createLinearGradient(mx - mw * .4, my - h * .4, mx + mw * .4, my + h * .4); mg.addColorStop(0, '#f2fbff'); mg.addColorStop(1, '#d4ecf8'); c.fillStyle = mg; c.beginPath(); c.ellipse(mx, my, mw * .45, h * .42, 0, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.ellipse(mx - mw * .2, my - h * .18, mw * .05, h * .16, .5, 0, TAU); c.fill();
+      c.fillStyle = 'rgba(255, 190, 210, .8)'; c.beginPath(); c.ellipse(w / 2, h * .92, w * .34, h * .07, 0, 0, TAU); c.fill();
+      c.fillStyle = '#fff'; c.beginPath(); c.ellipse(w / 2, h * .9, w * .34, h * .07, 0, 0, TAU); c.fill();
       const a = P.active();
       if (a) {
-        c.save(); c.translate(w / 2, h * .9); P.draw(c, a.id, Math.min(w * .78, h * .9), this.t, { hat: a.hat, mood: this.cheer > 0 ? 'cheer' : 'happy', hop: this.hop > 0 ? 1 - this.hop : 0 }); c.restore();
+        c.save(); c.translate(w / 2, h * .9); P.draw(c, a.id, Math.min(w * .72, h * .82), this.t, { hat: a.hat, face: a.face, neck: a.neck, mood: this.cheer > 0 ? 'cheer' : 'happy', hop: this.hop > 0 ? 1 - this.hop : 0 }); c.restore();
       } else {
         c.font = `${Math.min(w, h) * .45}px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('\u{1F9FA}', w / 2, h * .62);
       }
@@ -134,8 +208,8 @@
         if (!P.canAfford(item.price)) return this.nope(b, `${item.name} costs ${item.price} stars. Keep playing to collect more!`);
         this.confirm(item, 'pet');
       } else {
-        if (!a) return this.nope(b, 'Take a friend home first, then pick a hat!');
-        if (P.ownsHat(item.id)) { P.wear(a.hat === item.id ? null : item.id); sfx.pop(); this.hop = 1; this.render(); return; }
+        if (!a) return this.nope(b, 'Take a friend home first, then pick something to wear!');
+        if (P.ownsHat(item.id)) { const cur = item.slot === 'head' ? a.hat : a[item.slot]; if (cur === item.id) P.unwear(item.slot); else P.wear(item.id); sfx.pop(); this.hop = 1; this.render(); return; }
         if (!P.canAfford(item.price)) return this.nope(b, `${item.name} costs ${item.price} stars. Keep playing to collect more!`);
         this.confirm(item, 'hat');
       }

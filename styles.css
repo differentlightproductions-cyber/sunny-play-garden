@@ -949,3 +949,31 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
   .shopfront { height: 54px; }
 }
 @media (max-height: 520px) and (orientation: landscape) { #hub-games .card-name { margin-top: -1.05em; font-size: .78rem; } }
+
+/* ================= Pet Shop as a real store: awning, wooden shelves with glass pens, a pegboard for accessories ================= */
+.ps-store { overflow: hidden !important; display: flex; flex-direction: column; gap: 8px; padding: 0 !important; position: relative;
+  background: repeating-linear-gradient(90deg, #ffeedd 0 26px, #ffe3cb 26px 52px); border: 5px solid #d9a877; }
+.ps-store::before { content: ''; flex: none; height: clamp(20px, 4vmin, 34px); background: repeating-linear-gradient(90deg, #ff8fb0 0 30px, #fff 30px 60px); border-bottom: 5px solid rgba(90, 63, 94, .12); border-radius: 0 0 20px 20px; }
+.ps-signs { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(6px, 1.4vmin, 14px); padding: 0 clamp(8px, 1.6vmin, 16px); }
+.ps-sign { border: 0; border-radius: 16px; background: #c99a6a; color: #fff; padding: 4px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; box-shadow: 0 4px 0 #a57a4c; font-weight: 700; font-size: clamp(.72rem, 2vmin, 1.1rem); line-height: 1.05; text-align: center; }
+.ps-sign canvas { width: min(100%, clamp(44px, 9vmin, 84px)); aspect-ratio: 1; background: #fff6ea; border-radius: 12px; }
+.ps-sign.on { background: #59b96e; box-shadow: 0 4px 0 #3f9a5a; transform: translateY(-2px); }
+.ps-aislewrap { position: relative; flex: 1; min-height: 0; display: flex; }
+.ps-aisle { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px clamp(8px, 1.6vmin, 16px) 14px; min-height: 0; }
+.ps-more { display: none; }
+.ps-more.show { display: grid; }
+.ps-shelves { display: grid; gap: clamp(10px, 2vmin, 20px); }
+.ps-shelfrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 1.8vmin, 18px); padding: 8px 8px 0; position: relative; border-radius: 6px; background: rgba(120, 80, 40, .08); }
+.ps-shelfrow::after { content: ''; grid-column: 1 / -1; height: clamp(10px, 2vmin, 18px); margin: 0 -8px; background: linear-gradient(#d9a877, #b98455); border-radius: 4px; box-shadow: 0 5px 8px rgba(90, 63, 94, .25); }
+.ps-pen { background: #fff; border: 4px solid #d9a877; border-radius: 20px; padding: 0 0 6px; overflow: visible; }
+.ps-pen canvas { border-radius: 14px 14px 4px 4px; }
+.ps-tag { position: absolute; top: -8px; right: -4px; background: #fff3c4; border: 2px solid #f0c94a; border-radius: 10px; padding: 0 4px; transform: rotate(6deg); box-shadow: 0 3px 0 rgba(90, 63, 94, .18); }
+.ps-tag .ps-price { background: none; padding: 0; }
+.ps-peg { display: grid; gap: clamp(8px, 1.6vmin, 16px); grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 20vmin, 150px), 1fr)); padding: 10px; border-radius: 16px; background: #f6d7b0; background-image: radial-gradient(rgba(150, 100, 60, .35) 2px, transparent 2.5px); background-size: 22px 22px; border: 4px solid #d9a877; }
+.ps-hook { border: 3px solid #fff; }
+.ps-hook::before { content: ''; position: absolute; top: -12px; left: 50%; width: 3px; height: 14px; background: #8a7190; }
+.ps-wardrobe { display: grid; gap: 6px; width: 100%; }
+.ps-wrow { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; padding: 4px 6px; border-radius: 18px; background: rgba(255, 255, 255, .6); }
+.ps-hatbtn { width: clamp(46px, 8.6vmin, 76px) !important; height: clamp(46px, 8.6vmin, 76px) !important; }
+@media (orientation: landscape) { .ps { grid-template-columns: minmax(250px, 40%) minmax(0, 1fr); } }
+@media (max-height: 520px) { .ps-sign span { display: none; } .ps-sign canvas { width: 38px; } .ps-shelfrow { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

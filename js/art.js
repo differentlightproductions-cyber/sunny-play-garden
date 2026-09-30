@@ -422,21 +422,42 @@
   const AVATARS = ['bunny', 'bear', 'cat', 'fox', 'frog', 'panda'];
   function avatar(c, kind, r, o = {}) {
     c.save(); c.lineCap = 'round';
-    const head = { bunny: '#fff', bear: '#c98b5b', cat: '#ffb45e', fox: '#ff8a4c', frog: '#84d96a', panda: '#fff' }[kind];
+    const head = { bunny: '#fff', bear: '#c98b5b', cat: '#ffb45e', fox: '#ff8a4c', frog: '#84d96a', panda: '#fff', dog: '#d9a26c', hamster: '#f4c98f', duck: '#ffe066', pig: '#ffb3c6', lamb: '#fdfdfd', penguin: '#3d2c44', mouse: '#c9c5d3', unicorn: '#fff', elephant: '#b8c4d6', owl: '#b98a5a' }[kind];
     const ear = (x, y, rad, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, rad, 0, TAU); c.fill(); };
     if (kind === 'bunny') for (const s of [-1, 1]) { c.save(); c.translate(s * r * .38, -r * .72); c.rotate(s * .15); c.fillStyle = '#fff'; c.beginPath(); c.ellipse(0, -r * .28, r * .2, r * .52, 0, 0, TAU); c.fill(); c.fillStyle = '#ffc4d6'; c.beginPath(); c.ellipse(0, -r * .26, r * .09, r * .38, 0, 0, TAU); c.fill(); c.restore(); }
     if (kind === 'bear') for (const s of [-1, 1]) { ear(s * r * .68, -r * .66, r * .28, head); ear(s * r * .68, -r * .66, r * .14, '#f3c9a0'); }
     if (kind === 'panda') for (const s of [-1, 1]) ear(s * r * .7, -r * .7, r * .27, '#3d2c44');
     if (kind === 'cat' || kind === 'fox') for (const s of [-1, 1]) { c.fillStyle = head; c.beginPath(); c.moveTo(s * r * .85, -r * .3); c.lineTo(s * r * .6, -r * 1.05); c.lineTo(s * r * .15, -r * .75); c.closePath(); c.fill(); c.fillStyle = kind === 'cat' ? '#ffc4d6' : '#3d2c44'; c.beginPath(); c.moveTo(s * r * .7, -r * .5); c.lineTo(s * r * .6, -r * .88); c.lineTo(s * r * .33, -r * .7); c.closePath(); c.fill(); }
     if (kind === 'frog') for (const s of [-1, 1]) { ear(s * r * .5, -r * .78, r * .3, head); ear(s * r * .5, -r * .78, r * .2, '#fff'); ear(s * r * .5, -r * .78, r * .1, '#3d2c44'); }
+    const ell2 = (x, y, rx, ry, rot, col) => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, TAU); c.fill(); };
+    if (kind === 'dog') for (const s of [-1, 1]) ell2(s * r * .86, -r * .1, r * .3, r * .56, s * .3, '#a8744f');
+    if (kind === 'hamster') for (const s of [-1, 1]) { ear(s * r * .62, -r * .7, r * .22, head); ear(s * r * .62, -r * .7, r * .12, '#ffc4d6'); }
+    if (kind === 'pig') for (const s of [-1, 1]) { c.fillStyle = '#ff9db5'; c.beginPath(); c.moveTo(s * r * .3, -r * .85); c.lineTo(s * r * .95, -r * .72); c.lineTo(s * r * .72, -r * .2); c.closePath(); c.fill(); }
+    if (kind === 'lamb') for (const s of [-1, 1]) ell2(s * r * 1.0, -r * .08, r * .3, r * .15, s * -.4, '#5a4a4a');
+    if (kind === 'mouse') for (const s of [-1, 1]) { ear(s * r * .74, -r * .66, r * .4, head); ear(s * r * .74, -r * .66, r * .26, '#ffc4d6'); }
+    if (kind === 'elephant') for (const s of [-1, 1]) { ell2(s * r * .98, -r * .05, r * .55, r * .64, s * .15, '#a4b2c8'); ell2(s * r * .98, -r * .03, r * .36, r * .44, s * .15, '#ffc4d6'); }
+    if (kind === 'owl') for (const s of [-1, 1]) { c.fillStyle = '#8a6440'; c.beginPath(); c.moveTo(s * r * .3, -r * .9); c.lineTo(s * r * .82, -r * 1.2); c.lineTo(s * r * .86, -r * .5); c.closePath(); c.fill(); }
+    if (kind === 'unicorn') {
+      for (const [x, y, rad, col] of [[-.9, -.5, .3, '#ff9fd0'], [-1.0, -.1, .3, '#c9a8f0'], [-.9, .3, .28, '#8fd0ff'], [.9, -.5, .3, '#ff9fd0'], [1.0, -.1, .3, '#c9a8f0']]) ear(x * r, y * r, rad * r, col);
+      for (const s of [-1, 1]) { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(s * r * .7, -r * .5); c.lineTo(s * r * .5, -r * 1.05); c.lineTo(s * r * .2, -r * .8); c.closePath(); c.fill(); c.fillStyle = '#ffc4d6'; c.beginPath(); c.moveTo(s * r * .58, -r * .62); c.lineTo(s * r * .5, -r * .9); c.lineTo(s * r * .34, -r * .78); c.closePath(); c.fill(); }
+    }
     c.fillStyle = head; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
     c.fillStyle = 'rgba(255,255,255,.25)'; c.beginPath(); c.ellipse(-r * .4, -r * .5, r * .3, r * .13, -.5, 0, TAU); c.fill();
+    if (kind === 'lamb') { c.fillStyle = '#fff'; for (let i = 0; i < 7; i++) { const an = Math.PI * (1.08 + i * .14); c.beginPath(); c.arc(Math.cos(an) * r * .78, Math.sin(an) * r * .8 - r * .1, r * .3, 0, TAU); c.fill(); } c.fillStyle = 'rgba(90,74,74,.14)'; c.beginPath(); c.ellipse(0, r * .18, r * .74, r * .7, 0, 0, TAU); c.fill(); }
+    if (kind === 'penguin') { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(0, -r * .1); c.bezierCurveTo(r * .9, -r * .75, r * 1.0, r * .7, 0, r * .96); c.bezierCurveTo(-r * 1.0, r * .7, -r * .9, -r * .75, 0, -r * .1); c.fill(); }
+    if (kind === 'dog') { c.fillStyle = '#fff2df'; c.beginPath(); c.ellipse(0, r * .32, r * .5, r * .42, 0, 0, TAU); c.fill(); ell2(-r * .42, -r * .28, r * .3, r * .28, 0, '#a8744f'); }
+    if (kind === 'hamster') { c.fillStyle = '#fff'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * r * .5, r * .3, r * .38, r * .34, 0, 0, TAU); c.fill(); } }
+    if (kind === 'pig') { c.fillStyle = '#ff9db5'; c.beginPath(); c.ellipse(0, r * .28, r * .34, r * .26, 0, 0, TAU); c.fill(); c.fillStyle = '#e0688a'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * r * .12, r * .28, r * .05, r * .08, 0, 0, TAU); c.fill(); } }
+    if (kind === 'owl') { c.fillStyle = '#f3d9b0'; c.beginPath(); c.ellipse(0, r * .3, r * .55, r * .6, 0, 0, TAU); c.fill(); for (const s of [-1, 1]) { c.fillStyle = '#fff'; c.beginPath(); c.arc(s * r * .34, -r * .06, r * .34, 0, TAU); c.fill(); c.strokeStyle = '#8a6440'; c.lineWidth = r * .06; c.stroke(); } }
+    if (kind === 'elephant') { c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.ellipse(0, r * .2, r * .55, r * .5, 0, 0, TAU); c.fill(); }
+    if (kind === 'unicorn') { c.fillStyle = '#ffe680'; c.beginPath(); c.moveTo(-r * .24, -r * .84); c.lineTo(0, -r * 1.9); c.lineTo(r * .24, -r * .84); c.closePath(); c.fill(); c.strokeStyle = '#f0b429'; c.lineWidth = r * .05; for (const y of [-1.0, -1.18, -1.36]) { c.beginPath(); c.moveTo(-r * (.13 - (y + 1) * -.06), r * y); c.lineTo(r * (.13 - (y + 1) * -.06), r * y + r * .06); c.stroke(); } }
     if (kind === 'fox') { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(-r * 1, r * .1); c.quadraticCurveTo(0, r * .3, r * 1, r * .1); c.quadraticCurveTo(r * .7, r * .95, 0, r * .98); c.quadraticCurveTo(-r * .7, r * .95, -r * 1, r * .1); c.fill(); }
     if (kind === 'panda') { c.fillStyle = '#3d2c44'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * r * .34, -r * .05, r * .19, r * .25, s * .4, 0, TAU); c.fill(); } }
     face(c, r * .9, { mood: o.mood || 'happy', blink: !!o.blink, cheeks: kind !== 'panda' });
     if (kind === 'panda' && !o.blink && (o.mood || 'happy') === 'happy') { c.fillStyle = '#fff'; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * r * .31, -r * .08, r * .06, 0, TAU); c.fill(); } }
-    c.fillStyle = kind === 'cat' || kind === 'fox' || kind === 'bear' ? '#5a3f5e' : '#ff8aa3';
-    c.beginPath(); c.ellipse(0, r * .16, r * .07, r * .05, 0, 0, TAU); c.fill();
+    if (kind === 'duck' || kind === 'penguin' || kind === 'owl') { c.fillStyle = '#ff9d3d'; c.beginPath(); if (kind === 'owl') { c.moveTo(-r * .1, r * .1); c.lineTo(r * .1, r * .1); c.lineTo(0, r * .34); } else { c.ellipse(0, r * .2, r * .24, r * .12, 0, 0, TAU); } c.fill(); c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(-r * .06, r * .16, r * .08, r * .03, 0, 0, TAU); c.fill(); }
+    else if (kind === 'elephant') { c.fillStyle = '#a4b2c8'; c.beginPath(); c.roundRect ? c.roundRect(-r * .17, r * .1, r * .34, r * .78, r * .17) : c.rect(-r * .17, r * .1, r * .34, r * .78); c.fill(); c.strokeStyle = 'rgba(0,0,0,.12)'; c.lineWidth = r * .03; for (const y of [.3, .45, .6]) { c.beginPath(); c.moveTo(-r * .15, r * y); c.lineTo(r * .15, r * y); c.stroke(); } }
+    else if (kind !== 'pig') { c.fillStyle = kind === 'cat' || kind === 'fox' || kind === 'bear' || kind === 'dog' ? '#5a3f5e' : '#ff8aa3'; c.beginPath(); c.ellipse(0, r * .16, r * .07, r * .05, 0, 0, TAU); c.fill(); }
     c.restore();
   }
 

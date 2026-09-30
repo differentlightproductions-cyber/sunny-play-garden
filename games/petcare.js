@@ -75,7 +75,7 @@
       cv.addEventListener('pointermove', e => { if (this.hold && this.hold.id === e.pointerId) { e.preventDefault(); const p = at(e); this.hold.x = p.x; this.hold.y = p.y; } });
       for (const n of ['pointerup', 'pointercancel']) cv.addEventListener(n, e => { if (this.hold && this.hold.id === e.pointerId) this.letGo(); });
     }
-    who() { const a = SPG.pets.active(); return a ? { id: a.id, name: a.name, hat: a.hat } : { id: 'bunny', name: 'Pip', hat: null }; }
+    who() { const a = SPG.pets.active(); return a ? { id: a.id, name: a.name, hat: a.hat, face: a.face, neck: a.neck } : { id: 'bunny', name: 'Pip', hat: null }; }
     wallsOpen() { return clamp(3 + Math.floor(this.bag.cares / UNLOCK_EVERY), 3, WALLS.length); }
 
     /* ---------------------------------------------------------------- layout */
@@ -420,7 +420,7 @@
       c.rotate(this.lean.x * .0012 * e);
       c.fillStyle = 'rgba(90,63,94,.14)'; c.beginPath(); c.ellipse(0, 3, s * .32, s * .05, 0, 0, TAU); c.fill();
       const mood = sleepAtBed ? 'sleep' : p.cheer > 0 || p.eat > 0 || this.purrLevel > .18 ? 'cheer' : 'happy';
-      SPG.pets.draw(c, who.id, s, this.t, { mood, hop: p.hop > 0 ? 1 - p.hop : 0, hat: who.hat, detail: 1 + e * 1.3 });
+      SPG.pets.draw(c, who.id, s, this.t, { mood, hop: p.hop > 0 ? 1 - p.hop : 0, hat: who.hat, face: who.face, neck: who.neck, detail: 1 + e * 1.3 });
       // mud on a dirty pet, foam while it is being washed
       if (this.bag.dirt > 0.02) { c.fillStyle = 'rgba(120,84,56,.55)'; const n = Math.ceil(this.bag.dirt * 6); for (let i = 0; i < n; i++) { const a = i * 2.4, rr = s * (.04 + (i % 3) * .02); c.beginPath(); c.ellipse(Math.cos(a) * s * .17, -s * (.16 + (i % 4) * .08), rr * .8, rr * .55, a, 0, TAU); c.fill(); } }
       c.restore();

@@ -514,7 +514,7 @@
   function restCast() {
     const P = SPG.pets, own = P.PETS.filter(p => P.owns(p.id));
     const act = P.active();
-    let list = own.map(p => ({ id: p.id, hat: (store.bag('pets', () => ({ owned: {} })).owned[p.id] || {}).hat || null }));
+    let list = own.map(p => ({ id: p.id, hat: (store.bag('pets', () => ({ owned: {} })).owned[p.id] || {}).hat || null, face: (store.bag('pets', () => ({ owned: {} })).owned[p.id] || {}).face || null, neck: (store.bag('pets', () => ({ owned: {} })).owned[p.id] || {}).neck || null }));
     if (!list.length) list = ['bunny', 'cat', 'bear'].map(id => ({ id, hat: null }));
     return list.slice(0, 6);
   }
@@ -533,7 +533,7 @@
       c.fillStyle = 'rgba(20,20,60,.25)'; c.beginPath(); c.ellipse(x, h * .885, s * .3, s * .04, 0, 0, Math.PI * 2); c.fill();
       c.save(); c.translate(x, h * .88);
       c.rotate(Math.sin(t * 2.4 + i * 1.3) * .07);
-      SPG.pets.draw(c, p.id, s, t + i * .7, { mood: ph < .5 ? 'cheer' : 'happy', hop: ph < .5 ? ph * 2 : 0, hat: p.hat });
+      SPG.pets.draw(c, p.id, s, t + i * .7, { mood: ph < .5 ? 'cheer' : 'happy', hop: ph < .5 ? ph * 2 : 0, hat: p.hat, face: p.face, neck: p.neck });
       c.restore();
     });
     c.textAlign = 'center'; c.textBaseline = 'middle';

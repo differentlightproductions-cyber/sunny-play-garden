@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 71 short lines.
+1. **Cheering** and **Prompts**: about 73 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -62,6 +62,7 @@ Short lines that tell her what to do.
 | `train-wrong.mp3` | Try another one! |
 | `puzzle-start.mp3` | Put the picture together! |
 | `puzzle-done.mp3` | You made the picture! |
+| `puzzle-next.mp3` | Tap the green arrow for another puzzle! |
 | `care-start.mp3` | Take care of your friend! |
 | `care-food.mp3` | Yum! Thank you! |
 | `care-clean.mp3` | So fresh and clean! |
@@ -87,6 +88,7 @@ Short lines that tell her what to do.
 | `shape-star.mp3` | Star! |
 | `care-morning.mp3` | Good morning! |
 | `fire-level.mp3` | A new place to help! |
+| `fire-next.mp3` | Tap the green arrow to go somewhere new! |
 | `storm-coming.mp3` | Here comes a big rainy storm! |
 | `storm-over.mp3` | The storm is over. Look, the sun! |
 | `raining-pets.mp3` | It's raining cats and dogs! |

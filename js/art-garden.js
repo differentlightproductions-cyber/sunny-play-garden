@@ -7,7 +7,7 @@
   /* ------------------------------------------------------------ more plants */
   art.PLANTS.push(
     { id: 'pumpkin', name: 'Pumpkin', creatures: ['hedgehog', 'mouse'], unlock: 3 },
-    { id: 'carrot', name: 'Carrot', creatures: ['mouse', 'bunny'], unlock: 6 },
+    { id: 'carrot', name: 'Carrot', creatures: ['bunny'], unlock: 2 },
     { id: 'lavender', name: 'Lavender', creatures: ['dragonfly', 'bee', 'butterfly'], unlock: 10 },
     { id: 'rose', name: 'Rose', creatures: ['bird', 'ladybug', 'dragonfly'], unlock: 15 }
   );

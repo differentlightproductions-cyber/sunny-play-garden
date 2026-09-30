@@ -68,6 +68,13 @@ else {
   /^[A-F0-9]{2}(:[A-F0-9]{2}){31}$/.test((t.sha256_cert_fingerprints || [])[0] || '') ? pass(`assetlinks for ${t.package_name}`) : fail('assetlinks fingerprint is not a valid SHA-256');
 }
 
+console.log('Cloud backup');
+const wr = read('wrangler.jsonc');
+/Backups/.test(wr) && /new_sqlite_classes/.test(wr) && /run_worker_first/.test(wr) ? pass('wrangler.jsonc declares the backup Worker and Durable Object') : fail('wrangler.jsonc is missing the backup Worker / Durable Object settings');
+/worker\//.test(read('.assetsignore')) ? pass('worker/ is kept out of the public site') : fail('.assetsignore must list worker/');
+/pathname\.startsWith\('\/api\/'\)/.test(sw) ? pass('service worker never caches /api/') : fail('sw.js must skip /api/ requests');
+/backup/i.test(pv) ? pass('privacy policy describes the cloud backup') : fail('privacy.html does not mention the cloud backup');
+
 console.log('Store files');
 for (const f of ['store/icon-512.png', 'store/feature-graphic.png']) existsSync(f) ? pass(f) : fail(`${f} is missing`);
 const fg = existsSync('store/feature-graphic.png') && pngSize('store/feature-graphic.png');

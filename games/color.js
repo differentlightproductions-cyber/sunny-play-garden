@@ -53,7 +53,7 @@
     svg.remove();
     const near = (a, b) => a.bb.x < b.bb.x + b.bb.width + 12 && b.bb.x < a.bb.x + a.bb.width + 12 && a.bb.y < b.bb.y + b.bb.height + 12 && b.bb.y < a.bb.y + a.bb.height + 12;
     secs.forEach((s, i) => { s.occ = secs.slice(i + 1).filter(o => near(s, o)); });
-    const sheet = { def, secs, byId: Object.fromEntries(secs.map(s => [s.id, s])) };
+    const sheet = { def, secs, byId: Object.fromEntries(secs.map(s => [s.id, s])), alias: def.alias || {} };
     compiled.set(def.id, sheet);
     return sheet;
   }
@@ -86,10 +86,13 @@
   }
   function applyOp(ctx, sheet, op) {
     if (op[0] === ALL) { ctx.fillStyle = PAPER; ctx.fillRect(-10, -10, W + 20, H + 20); return; }
-    const sec = sheet.byId[op[1]]; if (!sec) return;
-    if (op[0] === FILL || op[0] === CLEAR) within(ctx, sec, () => { ctx.fillStyle = op[0] === FILL ? PALETTE[op[2]] : PAPER; ctx.fill(sec.path); });
-    else if (op[0] === BRUSHOP) within(ctx, sec, () => stroke(ctx, op[3], PALETTE[op[2]], BRUSH));
-    else if (op[0] === ERASE) within(ctx, sec, () => stroke(ctx, op[2], PAPER, ERASER));
+    // Pictures colored before a section was split into separate shapes still apply to every part.
+    for (const id of sheet.alias[op[1]] || [op[1]]) {
+      const sec = sheet.byId[id]; if (!sec) continue;
+      if (op[0] === FILL || op[0] === CLEAR) within(ctx, sec, () => { ctx.fillStyle = op[0] === FILL ? PALETTE[op[2]] : PAPER; ctx.fill(sec.path); });
+      else if (op[0] === BRUSHOP) within(ctx, sec, () => stroke(ctx, op[3], PALETTE[op[2]], BRUSH));
+      else if (op[0] === ERASE) within(ctx, sec, () => stroke(ctx, op[2], PAPER, ERASER));
+    }
   }
   const paintAll = (ctx, sheet, ops) => { ctx.fillStyle = PAPER; ctx.fillRect(-10, -10, W + 20, H + 20); for (const op of ops) applyOp(ctx, sheet, op); };
 

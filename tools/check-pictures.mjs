@@ -21,7 +21,8 @@ const report = await page.evaluate(() => {
     if (ids.has(pic.id)) say('FAIL', 'duplicate picture id'); ids.add(pic.id);
     if (!/^[a-z0-9-]+$/.test(pic.id)) say('FAIL', 'picture id should be lowercase letters, numbers and dashes');
     const n = pic.sections.length;
-    if (n < 6 || n > 15) say('WARN', `${n} sections (aim for 6 to 15)`);
+    if (n < 6 || n > 26) say('WARN', `${n} sections (aim for 6 to 26)`);
+    for (const [old, parts] of Object.entries(pic.alias || {})) if (!parts.every(id => pic.sections.some(s => s.id === id))) say('FAIL', `alias "${old}" points at a missing section`);
     const seen = new Set();
     for (const s of pic.sections) {
       if (!/^[a-z0-9-]+$/.test(s.id || '')) say('FAIL', `bad section id "${s.id}"`);

@@ -43,7 +43,7 @@ bubblewrap build
 ## 3. Kids / Families settings (this is a children's app)
 - **Target audience and content**: choose the youngest age groups you designed for (e.g. "5 and under" and "6-8"). Because children are included, the app is subject to Google's **Families Policy**. Answer yes to "appeals to children".
 - **Ads**: "No, my app does not contain ads".
-- **Data safety**: the app collects **no data** and shares none. The player names, progress and optional voice recordings stay on the device. Declare accordingly (verify wording in the form).
+- **Data safety**: by default nothing leaves the device. The optional grown-up cloud backup (see `store/CLOUD-SETUP.md`) sends an **end-to-end encrypted** copy of player names, progress and drawings to your own Cloudflare account; you cannot read it. In the form, declare it truthfully: data type "App activity / other user-generated content" (and "Name" if you count player names), collected: yes but **optional**, **encrypted in transit and at rest**, **users can request deletion** (Grown-ups screen), not shared, not used for ads or analytics. If you prefer the simplest form, remove `js/sync.js` and the Backup section and declare no data.
 - **Content rating**: complete the IARC questionnaire honestly (cartoon fruit is sliced in Fruit Splash; there is no blood, no scary content, no chat, no purchases).
 - **Permissions**: the wrapper declares none. The optional voice recorder asks the browser for the microphone only when a grown-up taps Record. If you would rather have no microphone use at all in the store version, set `SPG.config.recorder = false` in `js/core.js` and, in `_headers`, change `microphone=(self)` to `microphone=()`.
 - **News/COVID/government/financial** declarations: no.

@@ -80,12 +80,14 @@
       b.addEventListener('click', () => { pickedAvatar = kind; [...pick.children].forEach(x => x.setAttribute('aria-pressed', String(x === b))); SPG.sfx.tap(); });
       return b;
     }));
+    $('setup-restore').classList.toggle('hidden', store.profiles.length > 0);
     $('name-input').value = '';
     $('setup-cancel').classList.toggle('hidden', !canCancel);
     show('setup');
     setTimeout(() => $('name-input').focus(), 60);
   }
   $('setup-cancel').addEventListener('click', renderWho);
+  $('setup-restore').addEventListener('click', () => askGate(openParent));
   $('setup-form').addEventListener('submit', e => {
     e.preventDefault();
     const input = $('name-input');
@@ -208,6 +210,7 @@
   function openParent() { renderParent(); openOverlay(overlays.parent); }
   function closeParent() {
     closeOverlay(overlays.parent);
+    if ((current === 'setup' || current === 'who') && store.profiles.length) { renderWho(); return; } // e.g. players were just restored from a backup
     if (!store.active) { store.profiles.length ? renderWho() : openSetup(false); }
     else { refreshHub(); checkLimit(); }
   }
@@ -238,6 +241,91 @@
     return b;
   }
 
+
+  /* ------------------------------------------------------------ backups */
+  let backupMsg = '';
+  const SAY = {
+    offline: 'No internet connection right now. Everything is still safe on this device; try again later.',
+    failed: 'The backup service could not be reached. Everything is still safe on this device; try again later.',
+    badcode: 'That code did not unlock a backup. Check it and try again.',
+    notfound: 'No backup was found for that code. Check it and try again.',
+    shape: 'A family code has 20 letters and numbers.',
+    slow: 'Too many tries. Please wait a little and try again.',
+    big: 'The backup is too large to send.',
+    busy: 'Another device is saving right now. Try again in a moment.',
+    notbackup: 'That file is not a Little Sprout Park backup.',
+    nocode: 'Cloud backup is not turned on.'
+  };
+  function backupSection() {
+    const sync = SPG.sync, info = sync.info();
+    const say = t => { backupMsg = t; renderParent(); };
+    const msg = () => backupMsg ? h('p', { class: 'note' }, backupMsg) : null;
+    const sec = h('section', {}, h('h3', {}, 'Keep drawings and progress safe'));
+    if (store.saveFailed) sec.append(h('p', { class: 'warn' }, 'This device could not save just now (storage may be full or blocked). Turn on the cloud backup or save a backup file so nothing is lost.'));
+    const busyBtn = (label, cls, fn) => {
+      const b = h('button', { class: `btn small ${cls}`, type: 'button' }, label);
+      b.addEventListener('click', async () => { b.disabled = true; b.textContent = 'Working…'; await fn(); });
+      return b;
+    };
+    if (!sync.supported()) sec.append(h('p', {}, 'Cloud backup needs a newer browser. You can still save a backup file below.'));
+    else if (!info.on) {
+      sec.append(h('p', {}, 'Turn on the cloud backup so players, stars and drawings come back if this device is reset, lost or replaced. It is private: everything is scrambled on the device before it is sent, and there are no emails or passwords, just a family code.'));
+      const row = h('div', { class: 'btn-row' },
+        busyBtn('Turn on cloud backup', 'go', async () => {
+          const r = await sync.create();
+          if (r.ok) { backupMsg = ''; showCode(r.code, true); } else say(SAY[r.error] || SAY.failed);
+        }));
+      const input = h('input', { type: 'text', maxlength: '32', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'XXXXX-XXXXX-XXXXX-XXXXX' });
+      const join = busyBtn('Restore from this code', 'go', async () => {
+        const r = await sync.join(input.value);
+        if (r.ok) { backupMsg = `Welcome back! Everything from the backup is here now${r.added ? ` (${r.added} player${r.added > 1 ? 's' : ''} restored)` : ''}.`; renderParent(); } else say(SAY[r.error] || SAY.failed);
+      });
+      sec.append(row, h('label', { class: 'field small-field' }, 'Already have a family code (for example from another device)?', input), join);
+    } else {
+      const when = info.last ? new Date(info.last).toLocaleString() : 'not yet';
+      sec.append(h('p', {}, 'Cloud backup is on. ', h('span', { class: 'fine' }, `Last saved: ${when}`)),
+        h('div', { class: 'btn-row' },
+          busyBtn('Sync now', 'go', async () => { const r = await sync.syncNow(); say(r.ok ? 'Saved! Everything is backed up and up to date.' : (SAY[r.error] || SAY.failed)); }),
+          (() => { const b = h('button', { class: 'btn small', type: 'button' }, 'Show family code'); b.addEventListener('click', () => showCode(sync.code(), false)); return b; })(),
+          confirmButton('Turn off and delete cloud copy', 'danger', async () => { const r = await sync.turnOff(); say(r.ok ? 'Cloud backup is off and the cloud copy was deleted. Your data is still on this device.' : (SAY[r.error] || SAY.failed)); })),
+        h('p', { class: 'fine' }, 'Changes are also saved in the background whenever the device is online. To use the same players on another device, choose “I already have a family code” there.'));
+    }
+    // backup file
+    const file = h('input', { type: 'file', accept: '.json,application/json', style: 'display:none' });
+    file.addEventListener('change', async () => {
+      const f = file.files && file.files[0]; if (!f) return;
+      const r = sync.restoreFileText(await f.text());
+      say(r.ok ? `Backup file restored (${r.total} player${r.total > 1 ? 's' : ''} here now). Nothing that was already here was lost.` : SAY[r.error]);
+    });
+    const save = h('button', { class: 'btn small', type: 'button' }, 'Save a backup file');
+    save.addEventListener('click', () => {
+      const blob = new Blob([sync.fileText()], { type: 'application/json' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = sync.fileName(); a.style.display = 'none'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+      say('Backup file saved to this device’s downloads.');
+    });
+    const restore = h('button', { class: 'btn small quiet', type: 'button' }, 'Restore from a backup file');
+    restore.addEventListener('click', () => file.click());
+    sec.append(h('div', { class: 'btn-row' }, save, restore, file));
+    const undo = store.undoInfo();
+    if (undo) {
+      const b = h('button', { class: 'btn small quiet', type: 'button' }, 'Undo the last restore or sync');
+      b.addEventListener('click', () => { store.undoRestore(); say('Undone. This device is back to how it was before.'); });
+      sec.append(h('p', { class: 'fine' }, `A copy of this device from ${new Date(undo.t).toLocaleString()} (${undo.players} player${undo.players === 1 ? '' : 's'}) is kept in case a restore was a mistake.`), b);
+    }
+    sec.append(msg());
+    return sec;
+  }
+  function showCode(code, first) {
+    const body = $('parent-body');
+    const done = h('button', { class: 'btn small go', type: 'button' }, icon('check'), first ? ' I have written it down' : ' Done');
+    done.addEventListener('click', renderParent);
+    body.replaceChildren(h('section', { style: 'border-top:0;padding-top:0' },
+      h('h3', {}, first ? 'Cloud backup is on' : 'Your family code'),
+      h('div', { class: 'code-box' }, code),
+      h('p', {}, first ? 'Write this code down or take a photo of it, and keep it somewhere safe. It is the only way to get the drawings and progress back on a new device, and nobody (including us) can look it up for you.' : 'Keep this code private. Anyone with it can restore this family’s players on another device.'),
+      done));
+  }
+
   function renderParent() {
     const body = $('parent-body');
     const fsNow = safe.isFullscreen();
@@ -265,8 +353,16 @@
     for (const p of store.profiles) {
       players.append(h('div', { class: 'player-row' },
         avatarCanvas(p.avatar, 104), h('div', { class: 'name' }, p.name, h('div', { class: 'stat' }, `${p.stars} stars`)),
-        confirmButton('Reset progress', 'quiet', () => { p.stars = 0; p.data = {}; store.save(); renderParent(); }),
+        confirmButton('Reset progress', 'quiet', () => { store.resetProfile(p.id); renderParent(); }),
         confirmButton('Remove', 'danger', () => { store.removeProfile(p.id); renderParent(); })));
+    }
+    if (store.trash.length) {
+      players.append(h('p', { class: 'fine', style: 'margin-top:10px' }, 'Recently removed or reset (nothing is lost right away):'));
+      store.trash.forEach((item, i) => {
+        const b = h('button', { class: 'btn small quiet', type: 'button' }, `Bring back ${item.p.name}`);
+        b.addEventListener('click', () => { store.restoreTrash(i); renderParent(); });
+        players.append(h('div', { class: 'player-row' }, h('div', { class: 'name' }, item.p.name, h('div', { class: 'stat' }, `${item.why === 'reset' ? 'Progress reset' : 'Removed'} ${new Date(item.t).toLocaleDateString()}`)), b));
+      });
     }
     const add = h('button', { class: 'btn small go', type: 'button', style: 'margin-top:8px' }, icon('plus'), ' Add player');
     add.addEventListener('click', () => { closeOverlay(overlays.parent); openSetup(true); });
@@ -276,6 +372,7 @@
       h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music'), toggle('Coloring Book music', 'colorMusic')),
       voicesSection(),
       timerSection(),
+      backupSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
         h('p', {}, 'A website cannot stop a child using the tablet’s own buttons. For a true lock, use Android screen pinning together with full screen:'),

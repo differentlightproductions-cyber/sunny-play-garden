@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#a9e1f3">
+  <meta name="color-scheme" content="light dark">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -75,7 +76,8 @@
         <button type="button" id="setup-cancel" class="btn quiet">Back</button>
         <button type="submit" id="setup-go" class="btn go"><svg><use href="#i-check"/></svg> Let's play!</button>
       </div>
-      <p class="fine">Everything stays on this device. Nothing is sent anywhere.</p>
+      <p class="fine">Everything stays on this device unless a grown-up turns on the private cloud backup.</p>
+      <button type="button" id="setup-restore" class="btn quiet small hidden">Grown-up: I have a family code</button>
     </form>
   </main>
 
@@ -144,6 +146,7 @@
 
   <script src="js/glyphs.js"></script>
   <script src="js/core.js"></script>
+  <script src="js/sync.js"></script>
   <script src="js/voice.js"></script>
   <script src="js/art.js"></script>
   <script src="js/art-garden.js"></script>

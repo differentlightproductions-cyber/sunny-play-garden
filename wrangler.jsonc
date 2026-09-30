@@ -1,7 +1,14 @@
 {
   "name": "sunny-play-garden",
+  "main": "worker/index.js",
   "compatibility_date": "2026-09-29",
   "assets": {
-    "directory": "./"
-  }
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "BACKUPS", "class_name": "Backups" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Backups"] }]
 }

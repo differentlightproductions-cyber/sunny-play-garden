@@ -3,6 +3,7 @@
 @font-face { font-family: Fredoka; font-weight: 700; font-display: swap; src: url(fonts/fredoka-latin-700-normal.woff2) format('woff2'); }
 
 :root {
+  color-scheme: light dark;   /* the game styles every color itself, so a browser must not auto-darken it */
   --ink: #5a3f5e;
   --ink-soft: #8a7190;
   --cream: #fff8e8;
@@ -575,3 +576,12 @@ body { position: fixed; inset: 0; width: 100%; }
 .cb .cb-rosette .ico { width: min(46vmin, 320px); height: min(46vmin, 320px); }
 .cb .cb-tile .cb-dl .ico { width: 56%; height: 56%; }
 .cb .cb-badge .ico { width: 100%; height: 100%; }
+
+/* ================= backups ================= */
+.code-box { font-size: clamp(1.4rem, 5vmin, 2.2rem); font-weight: 700; letter-spacing: .1em; text-align: center; background: #fff; border: 4px dashed var(--leaf); border-radius: 20px; padding: .6em .4em; margin: 10px 0; -webkit-user-select: text; user-select: text; word-break: break-all; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+.note { background: #e7f6e9; border-radius: 14px; padding: .55em .8em; }
+.warn { background: #ffe1e4; color: #8f2a3d; border-radius: 14px; padding: .55em .8em; font-weight: 600; }
+.small-field { font-size: .95rem; margin: 8px 0; }
+.small-field input { font-size: 1.1rem; padding: .4em .7em; border-width: 3px; letter-spacing: .06em; }
+.btn:disabled { opacity: .6; }

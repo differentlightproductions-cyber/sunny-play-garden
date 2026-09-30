@@ -10,21 +10,54 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] } });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { voice: true, sound: true, music: false, colorMusic: true, timer: 0, playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) { data = Object.assign(fresh(), JSON.parse(raw)); data.settings = Object.assign(fresh().settings, data.settings); }
     } catch (_) { /* private mode or blocked storage: play on without saving */ }
-    let timer = 0;
+    let timer = 0, rev = 0;
+    const clone = x => JSON.parse(JSON.stringify(x));
     const flush = () => {
       clearTimeout(timer); timer = 0;
-      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (_) { /* ignore */ }
+      try { localStorage.setItem(KEY, JSON.stringify(data)); store.saveFailed = false; } catch (_) { store.saveFailed = true; } // storage full or blocked
     };
-    const save = () => { if (!timer) timer = setTimeout(flush, 350); };
+    // Every change stamps the active player, so two devices can tell whose copy is newer.
+    const save = () => {
+      const a = data.profiles.find(p => p.id === data.activeId); if (a) a.t = Date.now();
+      rev++; if (!timer) timer = setTimeout(flush, 350);
+      if (store.onChange) store.onChange();
+    };
+    const commit = () => { rev++; flush(); if (store.onChange) store.onChange(); }; // for merges: keeps the original stamps
     addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
 
+    // Merge two copies of one player (this device and the cloud). The newer copy wins, but nothing a child
+    // finished is ever lost: every coloring picture keeps its newest version, and owned pets and hats are unioned.
+    const mergeProfile = (l, r) => {
+      const rNewer = (r.t || 0) > (l.t || 0);
+      const a = clone(rNewer ? r : l), b = rNewer ? l : r;
+      a.data = a.data || {};
+      const bc = b.data && b.data.color;
+      if (bc && bc.pics) {
+        const ac = a.data.color = a.data.color || { v: 1, pics: {} }; ac.pics = ac.pics || {};
+        for (const [id, pr] of Object.entries(bc.pics)) {
+          const mine = ac.pics[id];
+          if (!mine || (pr.t || 0) > (mine.t || 0)) ac.pics[id] = Object.assign(clone(pr), { done: !!(pr.done || (mine && mine.done)) });
+          else if (pr.done) mine.done = true;
+        }
+      }
+      const bp = b.data && b.data.pets;
+      if (bp) {
+        const ap = a.data.pets = a.data.pets || { v: 1, owned: {}, hats: {}, active: null };
+        for (const k of ['owned', 'hats']) { ap[k] = ap[k] || {}; for (const [id, v] of Object.entries(bp[k] || {})) if (!ap[k][id]) ap[k][id] = clone(v); }
+        if (!ap.active && bp.active) ap.active = bp.active;
+      }
+      a.t = Math.max(l.t || 0, r.t || 0);
+      return a;
+    };
+
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); // ask the browser to keep it
     const store = {
       save, flush,
       get settings() { return data.settings; },
@@ -36,7 +69,45 @@
         data.profiles.push(p); data.activeId = p.id; save();
         return p;
       },
+      // Safety nets: removing or resetting a player keeps a copy for a grown-up to bring back.
+      get trash() { return data.trash || []; },
+      trashAdd(p, why) { data.trash = [{ p: clone(p), why, t: Date.now() }, ...(data.trash || [])].slice(0, 8); },
+      restoreTrash(i) {
+        const item = (data.trash || [])[i]; if (!item) return null;
+        const p = clone(item.p);
+        const clash = data.profiles.findIndex(q => q.id === p.id);
+        if (clash >= 0) data.profiles[clash] = p; else data.profiles.push(p);
+        data.trash.splice(i, 1); if (!data.activeId) data.activeId = p.id;
+        commit(); return p;
+      },
+      resetProfile(id) {
+        const p = data.profiles.find(q => q.id === id); if (!p) return;
+        store.trashAdd(p, 'reset'); p.stars = 0; p.data = {}; save();
+      },
+      saveFailed: false, onChange: null,
+      get rev() { return rev; },
+      flush,
+      exportProfiles() { return clone(data.profiles); },
+      // Bring in players from a backup (file or cloud). Returns how many were new.
+      mergeProfiles(remote) {
+        store.snapshot();
+        let added = 0;
+        for (const r of remote || []) {
+          if (!r || !r.id) continue;
+          const i = data.profiles.findIndex(p => p.id === r.id);
+          if (i < 0) { data.profiles.push(clone(r)); added++; } else data.profiles[i] = mergeProfile(data.profiles[i], r);
+        }
+        if (!data.activeId && data.profiles[0]) data.activeId = data.profiles[0].id;
+        commit(); return { added, total: data.profiles.length };
+      },
+      // A copy of everything as it was just before a restore, so a restore can be undone.
+      snapshot() { try { localStorage.setItem(KEY + '.undo', JSON.stringify({ t: Date.now(), data })); } catch (_) { /* no room */ } },
+      undoInfo() { try { const r = JSON.parse(localStorage.getItem(KEY + '.undo')); return r && r.t ? { t: r.t, players: (r.data.profiles || []).length } : null; } catch (_) { return null; } },
+      undoRestore() {
+        try { const r = JSON.parse(localStorage.getItem(KEY + '.undo')); if (!r || !r.data) return false; data = Object.assign(fresh(), r.data); localStorage.removeItem(KEY + '.undo'); commit(); return true; } catch (_) { return false; }
+      },
       removeProfile(id) {
+        const gone = data.profiles.find(p => p.id === id); if (gone) store.trashAdd(gone, 'removed');
         data.profiles = data.profiles.filter(p => p.id !== id);
         if (data.activeId === id) data.activeId = data.profiles[0]?.id ?? null;
         save();
@@ -152,6 +223,7 @@
     erase() { noise(.08, { freq: 800 + Math.random() * 300, q: .7, vol: .035 }); },
     undo() { tone(540, .09, { slide: .6, vol: .13 }); tone(400, .11, { slide: .6, vol: .11, at: .07 }); },
     cheer() { [0, 2, 4, 5, 7, 5, 7].forEach((n, k) => tone(NOTES[n], .34, { at: k * .1, vol: .17 })); [5, 6, 7].forEach((n, k) => tone(NOTES[n] * 2, .3, { at: .55 + k * .09, vol: .07 })); tone(NOTES[0] / 2, .9, { type: 'triangle', vol: .1 }); },
+    crunch() { noise(.07, { freq: 1900, q: 1.3, vol: .17 }); noise(.06, { freq: 950, q: 1, vol: .1, at: .06 }); tone(190, .06, { type: 'triangle', vol: .06 }); },
     pat() { tone(110, .2, { slide: .55, type: 'sine', vol: .34 }); noise(.14, { freq: 500, vol: .12 }); },
     squeak() { tone(1100, .09, { slide: 1.5, vol: .08 }); }
   };

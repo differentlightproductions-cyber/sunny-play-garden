@@ -59,5 +59,9 @@ The app is called **Little Sprout Park** (launcher/short name "Sprout Park"). Th
 - `node tools/make-icons.mjs`: renders PNG icons from `icons/*.svg`. `node tools/make-store-assets.mjs`: store screenshots and feature graphic. Both need Playwright.
 - `store/PLAY-STORE-GUIDE.md` is the owner's step-by-step for the Play Console side.
 
+## Saving and backups
+- Data lives in the browser's `localStorage` (`spg.v1`, per device; not cookies, no server). `SPG.store` stamps the active player on every save (`t`), asks the browser for persistent storage, flags a failed save (`store.saveFailed`, shown in Grown-ups), keeps removed/reset players in `store.trash` (Grown-ups > Bring back), and keeps one undo copy before any restore (`store.snapshot`, `undoRestore`).
+- `js/sync.js` + `worker/index.js` + `wrangler.jsonc`: optional encrypted cloud backup on Cloudflare (Durable Object, no KV/IDs to set up). Family code -> id + AES-GCM key, so the server cannot read anything. Merge rules are in `mergeProfile` (`js/core.js`): newer player wins, coloring pictures merge per picture, owned pets/hats are unioned; deletions never propagate. Backup file save/restore is in the same Grown-ups section. Full notes and deploy steps: `store/CLOUD-SETUP.md`. The service worker never caches `/api/`. Test locally with `npx wrangler dev` (see that file).
+
 ## Guidelines
 Keep play relaxed and unlimited, no losing, no reading required, big touch targets. Don't repeat game mechanics across games. Add new games through the `SPG.games` list.

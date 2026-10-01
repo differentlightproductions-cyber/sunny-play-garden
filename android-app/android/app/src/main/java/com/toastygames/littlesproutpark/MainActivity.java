@@ -12,9 +12,9 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // Let the game background fill the display cutout area in landscape.
+        // Configure the window before Capacitor creates its WebView.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getBridge() != null && getBridge().getWebView() != null) {
             // sounds and music may start as soon as the game asks (the game itself waits for the first touch)

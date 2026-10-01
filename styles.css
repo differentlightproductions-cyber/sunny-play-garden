@@ -992,5 +992,5 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 
 /* More games use the existing space on wide screens; icon scale stays limited by row height. */
 @media (orientation: landscape) and (min-width: 850px) {
-  #hub-games .cards.page { grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(2, 1fr); }
+  #hub-games .cards.page { grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(2, 1fr); }
 }

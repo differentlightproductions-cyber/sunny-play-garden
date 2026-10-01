@@ -136,7 +136,7 @@
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    // Games look like little app icons: nine on tall screens, eight on small landscape screens, twelve on wider landscape screens.
+    // Games look like little app icons: nine on tall screens, eight on small landscape screens, up to fourteen on wider screens.
     // Swipe, or use the big arrows and dots underneath.
     const PER_PAGE = hubPer = perPage(), pages = [];
     for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
@@ -163,7 +163,7 @@
     const go = i => { const n = Math.max(0, Math.min(pages.length - 1, i)); strip.scrollTo({ left: n * strip.clientWidth, behavior: 'smooth' }); };
     const where = () => Math.max(0, Math.min(pages.length - 1, Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth))));
     const mark = () => {
-      const i = where(); if (!hubFrozen) hubPage = i;
+      const i = where(); if (!hubFrozen && pages.length > 1) hubPage = i;
       prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
       [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
     };
@@ -196,8 +196,8 @@
     drawCards();
   }
   let hubPage = 0, hubPer = 8, hubFrozen = false;
-  // Keep nine games on portrait screens; use the extra width of larger landscape screens for twelve at the same icon scale.
-  const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : matchMedia('(orientation: landscape) and (min-width: 850px)').matches ? 12 : 8);
+  // Keep nine games on portrait screens; wider landscape screens can show all thirteen without increasing icon scale.
+  const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : matchMedia('(orientation: landscape) and (min-width: 850px)').matches ? 14 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }

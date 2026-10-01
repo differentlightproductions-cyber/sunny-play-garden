@@ -191,22 +191,39 @@
   }
 
   /* ------------------------------------------------------------ playback */
-  let token = 0, current = null, voiceObj;
+  let token = 0, current = null, voiceObj, voiceMode = '';
+  // The built-in speaking voice (used for any line nobody has recorded). Phones and tablets list many voices; the plain
+  // "compact" ones sound robotic, while network / enhanced / neural ones sound much more like a person. Online we prefer those;
+  // offline only voices stored on the device can be used. A grown-up can also pick one by ear (Grown-ups > Voices).
+  const voiceScore = (v, online) => {
+    const n = `${v.name} ${v.voiceURI || ''}`;
+    let s = 0;
+    if (/^en[-_]US/i.test(v.lang)) s += 10; else if (/^en[-_](GB|AU|CA|IE|NZ|ZA|IN)/i.test(v.lang)) s += 5; else if (/^en/i.test(v.lang)) s += 2; else return -99;
+    if (/neural|natural|enhanced|premium|wavenet|studio/i.test(n)) s += 9;
+    if (/network|online/i.test(n)) s += online ? 8 : -99;
+    if (v.localService === false && !online) s -= 99;
+    if (/female|samantha|aria|jenny|ava|allison|nicky|karen|zira|susan|google us english|x-tpf|x-sfg|x-tpc|x-iob|x-iol/i.test(n)) s += 3;
+    if (/compact|espeak|robot|novelty|bad news|whisper|bubbles|boing|zarvox|trinoids|albert|fred|junior/i.test(n)) s -= 12;
+    return s;
+  };
+  const englishVoices = () => ('speechSynthesis' in window ? speechSynthesis.getVoices() : []).filter(v => /^en/i.test(v.lang));
   function pickVoice() {
-    if (voiceObj !== undefined) return voiceObj;
-    const list = speechSynthesis.getVoices();
-    if (!list.length) return null;
-    voiceObj = list.find(v => /en[-_]US/i.test(v.lang) && /female|google us|samantha|aria|jenny/i.test(v.name))
-      || list.find(v => /en[-_]US/i.test(v.lang)) || list.find(v => /^en/i.test(v.lang)) || null;
+    const online = navigator.onLine !== false, mode = (store.settings.ttsVoice || '') + (online ? '|on' : '|off');
+    if (voiceObj !== undefined && voiceMode === mode) return voiceObj;
+    const list = englishVoices(); if (!list.length) return null;
+    voiceMode = mode;
+    const chosen = store.settings.ttsVoice && list.find(v => (v.voiceURI || v.name) === store.settings.ttsVoice);
+    voiceObj = chosen || list.map(v => [voiceScore(v, online), v]).filter(x => x[0] > -50).sort((p, q) => q[0] - p[0]).map(x => x[1])[0] || list[0] || null;
     return voiceObj;
   }
   if ('speechSynthesis' in window) speechSynthesis.addEventListener?.('voiceschanged', () => { voiceObj = undefined; });
+  addEventListener('online', () => { voiceObj = undefined; }); addEventListener('offline', () => { voiceObj = undefined; });
 
   function speak(text) {
     return new Promise(resolve => {
       if (!('speechSynthesis' in window) || !text) return resolve();
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = .82; u.pitch = 1.2; u.lang = 'en-US';
+      u.rate = .9; u.pitch = 1.05; u.lang = 'en-US';   // a lightly raised pitch only: a lot of it makes voices sound robotic
       const v = pickVoice(); if (v) u.voice = v;
       let done = false;
       const fin = () => { if (!done) { done = true; resolve(); } };
@@ -295,6 +312,12 @@
     hushed: false, // true inside the Coloring Book: no spoken voices at all
     LINES, SOUNDS, PICK_NAMES, PHONICS, NAMES, WORDS, PRAISE, GROUPS, SETS, custom, ready,
     syncSets,
+    // the built-in speaking voice, for the grown-ups' picker
+    ttsVoices() { return englishVoices().map(v => ({ id: v.voiceURI || v.name, label: `${v.name} (${v.lang})${v.localService === false ? ' · needs internet' : ''}` })); },
+    ttsChosen() { return store.settings.ttsVoice || ''; },
+    setTtsVoice(id) { store.settings.ttsVoice = id || ''; voiceObj = undefined; store.save(); },
+    ttsCurrentName() { const v = pickVoice(); return v ? v.name : ''; },
+    hearTts() { return speak('Hello! Let’s play and learn together.'); },
     addVoice(name) {
       const list = store.settings.voices || (store.settings.voices = []);
       const id = 'v' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);

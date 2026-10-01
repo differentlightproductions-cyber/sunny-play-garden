@@ -50,6 +50,7 @@
     SPG.pets.draw(c, spec.sp, size * 2.3, t, { mood: pose === 'bounce' ? 'cheer' : 'happy', hop: pose === 'bounce' ? ph : 0 });
     c.restore();
   }
+  const AUTO_NEXT = 5;      // seconds after finishing a place (while she is playing) before the next place starts by itself
   const IDLE_FAST = 7;       // seconds without a touch before the flames start fading much faster
   const WET_RATE = .5;       // heat lost per second while the water is on a flame
   const DRY_RATE = .012;     // heat lost per second by itself
@@ -262,7 +263,7 @@
     /* ------------------------------------------------------------ loop */
     start() { this.resize(); this.resume(); }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
-    pause() { this.running = false; cancelAnimationFrame(this.raf); this.aim.down = false; }
+    pause() { this.running = false; cancelAnimationFrame(this.raf); this.aim.down = false; if (this.hose) { this.hose.off(); this.hose = null; } }
     destroy() { this.pause(); clearTimeout(this._nt); this.canvas.remove(); this.counter.el.remove(); }
 
     tick(now) {
@@ -281,7 +282,8 @@
       // water
       if (spraying) {
         this.sprayT += dt;
-        if ((this.waterIn -= dt) <= 0) { this.waterIn = .3; sfx.water(); }
+        if (!this.hose) this.hose = sfx.hose();
+        if ((this.waterIn -= dt) <= 0) { this.waterIn = .35 + Math.random() * .5; if (Math.random() < .6) sfx.bubble(); }
         if ((this.dropIn -= dt) <= 0) { this.dropIn = .06; this.fx.burst(this.aim.x, this.aim.y, 2, { colors: ['#bfe9ff', '#5cc8f2', '#ffffff'], speed: 120, g: 600, life: .4, size: 3.5 * this.ui, up: 60 }); }
       }
       // flames
@@ -306,7 +308,7 @@
           if (f.heat <= 0) {
             f.out = true; f.heat = 0; f.steam = 1.2;
             this.fx.burst(p.x, p.y - p.s * .5, 10, { colors: ['#ffffff', '#e7f4ff', '#cfe9ff'], speed: 75, g: -80, life: .95, size: p.s * .2 });
-            sfx.splash();
+            sfx.puff();
           }
         }
         // pets
@@ -317,12 +319,15 @@
       this.burn = clamp(burning / 8, 0, 1);
       this.stepRescue(dt);
       for (const b of this.blds) b.glow += ((b.done ? 1 : 0) - b.glow) * Math.min(1, dt * 3);
+      if (!spraying && this.hose) { this.hose.off(); this.hose = null; }
       // winning
       if (this.state === 'play' && this.blds.every(b => b.done)) this.win();
       if (this.state === 'won') {
         this.wonK = Math.min(1, this.wonK + dt * .7);
         if (this.stateT < 6 && (this.smokeIn -= dt) <= 0) { this.smokeIn = .35; this.fx.burst(this.w * (.2 + Math.random() * .6), this.h * .3, 8, { colors: RAINBOW, speed: 200, g: 350, life: 1, size: 6 * this.ui, shape: 'confetti', up: 120 }); }
-        // the round is over and stays calm: nothing catches fire again until she taps the arrow for a new place (or leaves and comes back)
+        // the round is over and stays calm: nothing catches fire again. If she was playing, the next place starts by itself after
+        // a few seconds (or sooner with the arrow); if nobody played, it just rests until the next touch.
+        if (this.stateT > AUTO_NEXT && this.sprayT > 0 && !this.aim.down) this.newRound(false);
       }
       this.fx.update(dt);
       this.bear.dir = this.aim.x >= this.bearX ? 1 : -1;
@@ -522,6 +527,7 @@
       c.save(); c.globalAlpha = a; c.translate(n.x, n.y); c.scale(k, k);
       c.fillStyle = 'rgba(0,0,0,.14)'; c.beginPath(); c.arc(0, n.r * .12, n.r, 0, TAU); c.fill();
       c.fillStyle = '#59b96e'; c.beginPath(); c.arc(0, 0, n.r, 0, TAU); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = n.r * .1; c.stroke();
+      if (this.sprayT > 0) { c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = n.r * .12; c.lineCap = 'round'; c.beginPath(); c.arc(0, 0, n.r * 1.2, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, this.stateT / AUTO_NEXT)); c.stroke(); }   // a ring fills while the next place is coming
       c.strokeStyle = '#fff'; c.lineWidth = n.r * .22; c.lineCap = c.lineJoin = 'round'; c.beginPath(); c.moveTo(-n.r * .22, -n.r * .42); c.lineTo(n.r * .26, 0); c.lineTo(-n.r * .22, n.r * .42); c.stroke();
       c.restore();
     }

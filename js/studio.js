@@ -63,12 +63,25 @@
         ...voice.SETS.map(s => h('div', { class: 'setting' }, h('span', {}, `${s.name} (${countFor(s.id)} lines)`), sw(!(store.settings.voiceOff || []).includes(s.id), `Include ${s.name}`, on => {
           const off = new Set(store.settings.voiceOff || []); on ? off.delete(s.id) : off.add(s.id); store.settings.voiceOff = [...off]; store.save();
         })))) : null,
+      ttsPicker(redraw),
       h('h3', {}, 'How often should the games cheer?'),
       seg([['lots', 'Every time'], ['some', 'Sometimes'], ['off', 'Never']], store.settings.praise || 'some', v => { store.settings.praise = v; store.save(); redraw(); }, 'Cheering frequency'),
       h('p', { class: 'fine' }, 'Recordings are saved on this tablet only. Each line can be switched off with its own switch, and you can hear what each line sounds like with Hear.'),
       ...voice.GROUPS.map(g => group(g, keys, muted, redraw))
     ].filter(Boolean));
     if (scroller) scroller.scrollTop = top;
+  }
+
+  // Lines nobody has recorded are read out by the device's own speaking voice. Phones have several; this picks one by ear.
+  function ttsPicker(redraw) {
+    const list = voice.ttsVoices(); if (!list.length) return null;
+    const sel = h('select', { 'aria-label': 'Built-in speaking voice' }, h('option', { value: '' }, 'Best one (automatic)' + (voice.ttsCurrentName() ? ` · now: ${voice.ttsCurrentName()}` : '')), ...list.map(v => h('option', { value: v.id }, v.label)));
+    sel.value = voice.ttsChosen();
+    sel.addEventListener('change', () => { voice.setTtsVoice(sel.value); voice.hearTts(); });
+    const hear = h('button', { class: 'btn small quiet', type: 'button' }, 'Hear it');
+    hear.addEventListener('click', () => voice.hearTts());
+    return h('div', { class: 'vtools' }, h('h3', {}, 'Built-in speaking voice'),
+      h('p', { class: 'fine' }, 'Used for any line that nobody has recorded. If it sounds robotic, try another one here. Voices marked “needs internet” are usually the most natural.'), h('div', { class: 'setting' }, sel, hear));
   }
 
   // Add, rename and remove extra voices (grandparents, cousins, the child herself...).

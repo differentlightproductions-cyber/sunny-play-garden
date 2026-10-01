@@ -493,6 +493,33 @@
     c.restore();
   }
 
+  // The meteor shower's catcher: a glowing star net on a gold hoop (not a water bucket). Same size and position as the bucket.
+  function catcher(c, x, y, w, h, t, mood = 'happy', glow = 0) {
+    c.save(); c.translate(x, y);
+    const top = w / 2, bot = w * .2, deep = h * 1.18, pulse = .5 + Math.sin(t * 3) * .5;
+    // a soft starlight glow around it, brighter when it has just caught something
+    const g = c.createRadialGradient(0, h * .2, w * .1, 0, h * .2, w * .85); g.addColorStop(0, `rgba(255,236,150,${(.28 + pulse * .1 + glow * .3).toFixed(3)})`); g.addColorStop(1, 'rgba(255,236,150,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(0, h * .2, w * .85, 0, TAU); c.fill();
+    const hoopY = h * .1;
+    // the back of the hoop, then the net, then the front of the hoop
+    c.strokeStyle = '#e8b23a'; c.lineWidth = w * .045; c.beginPath(); c.ellipse(0, 0, top, hoopY, 0, Math.PI, TAU); c.stroke();
+    const net = () => { c.beginPath(); c.moveTo(-top, 0); c.bezierCurveTo(-top * 1.02, h * .7, -bot, deep, 0, deep); c.bezierCurveTo(bot, deep, top * 1.02, h * .7, top, 0); c.closePath(); };
+    net(); c.fillStyle = 'rgba(176,160,255,.55)'; c.fill();
+    c.save(); net(); c.clip();
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = Math.max(1.2, w * .012);
+    for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(i * top / 6, 0); c.quadraticCurveTo(i * top / 6 * .9, h * .7, i * bot / 6, deep); c.stroke(); }
+    for (let k = 1; k <= 4; k++) { const yy = deep * k / 5.2, ww = top * (1 - k * .17); c.beginPath(); c.moveTo(-ww, yy); c.quadraticCurveTo(0, yy + h * .08, ww, yy); c.stroke(); }
+    c.restore();
+    net(); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = w * .02; c.stroke();
+    c.strokeStyle = '#ffd54a'; c.lineWidth = w * .05; c.beginPath(); c.ellipse(0, 0, top, hoopY, 0, 0, Math.PI); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = w * .015; c.beginPath(); c.ellipse(0, -hoopY * .15, top * .94, hoopY * .8, 0, Math.PI * 1.08, Math.PI * 1.5); c.stroke();
+    // little stars twinkling around the rim
+    for (let i = 0; i < 4; i++) { const a = t * .9 + i * TAU / 4, tw = .55 + Math.sin(t * 5 + i * 2) * .45; c.globalAlpha = tw; star(c, Math.cos(a) * top * 1.02, Math.sin(a) * hoopY * 1.7 - h * .05, w * (.028 + glow * .02), '#fff7c2', a); }
+    c.globalAlpha = 1;
+    c.save(); c.translate(0, h * .52); face(c, w * .28, { mood }); c.restore();
+    c.restore();
+  }
+
   /* ------------------------------------------------------------ particles */
   class Fx {
     constructor() { this.p = []; }
@@ -519,5 +546,5 @@
     }
   }
 
-  SPG.art = { TAU, INK, shade, rr, lerp, face, cloud, sun, hills, scene, star, heart, drop, fruit, FRUIT_JUICE, FRUIT_COUNT, leaf, bee, creature, CREATURES, plant, PLANTS, avatar, AVATARS, bucket, Fx };
+  SPG.art = { TAU, INK, shade, rr, lerp, face, cloud, sun, hills, scene, star, heart, drop, fruit, FRUIT_JUICE, FRUIT_COUNT, leaf, bee, creature, CREATURES, plant, PLANTS, avatar, AVATARS, bucket, catcher, Fx };
 })();

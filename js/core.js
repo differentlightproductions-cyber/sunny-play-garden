@@ -451,7 +451,7 @@
   };
 
   /* ---------------------------------------------------------------- safe mode */
-  const standalone = () => matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const standalone = () => (SPG.native && SPG.native.isApp) || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const safe = SPG.safe = {
     on: true,           // keep the child inside the app
     wantFullscreen: false,

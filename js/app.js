@@ -136,8 +136,9 @@
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    // Games look like little app icons, eight to a page. Swipe, or use the big arrows and dots underneath.
-    const PER_PAGE = 8, pages = [];
+    // Games look like little app icons: nine to a page when the screen is tall (a 3 x 3 grid), eight when it is wide (4 x 2).
+    // Swipe, or use the big arrows and dots underneath.
+    const PER_PAGE = hubPer = perPage(), pages = [];
     for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
     const strip = h('div', { class: 'pages' }, ...pages.map((list, pi) => h('div', { class: 'cards page', 'aria-label': `Page ${pi + 1} of ${pages.length}` }, ...list.map((g, k) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
@@ -162,7 +163,7 @@
     const go = i => { const n = Math.max(0, Math.min(pages.length - 1, i)); strip.scrollTo({ left: n * strip.clientWidth, behavior: 'smooth' }); };
     const where = () => Math.max(0, Math.min(pages.length - 1, Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth))));
     const mark = () => {
-      const i = where(); hubPage = i;
+      const i = where(); if (!hubFrozen) { hubPage = i; hubFirst = i * hubPer; }
       prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
       [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
     };
@@ -194,7 +195,9 @@
     }));
     drawCards();
   }
-  let hubPage = 0;
+  let hubPage = 0, hubPer = 8, hubFirst = 0, hubFrozen = false;   // hubFirst: the first game on the page she is looking at (kept steady while the screen turns)
+  // Must match the grid in styles.css: tall screens (portrait, not a short landscape phone) are 3 x 3, everything else 4 x 2.
+  const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
@@ -396,17 +399,17 @@
       const input = h('input', { type: 'text', maxlength: '32', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'XXXXX-XXXXX-XXXXX-XXXXX' });
       const join = busyBtn('Restore from this code', 'go', async () => {
         const r = await sync.join(input.value);
-        if (r.ok) { backupMsg = `Welcome back! Everything from the backup is here now${r.added ? ` (${r.added} player${r.added > 1 ? 's' : ''} restored)` : ''}.`; renderParent(); } else say(SAY[r.error] || SAY.failed);
+        if (r.ok) { backupMsg = `Welcome back! Everything from the backup is here now${r.added ? ` (${r.added} player${r.added > 1 ? 's' : ''} restored)` : ''}${r.voices && r.voices.got ? `, and ${r.voices.got} recorded voice${r.voices.got > 1 ? 's' : ''}` : ''}.`; renderParent(); } else say(SAY[r.error] || SAY.failed);
       });
       sec.append(row, h('label', { class: 'field small-field' }, 'Already have a family code (for example from another device)?', input), join);
     } else {
       const when = info.last ? new Date(info.last).toLocaleString() : 'not yet';
       sec.append(h('p', {}, 'Cloud backup is on. ', h('span', { class: 'fine' }, `Last saved: ${when}`)),
         h('div', { class: 'btn-row' },
-          busyBtn('Sync now', 'go', async () => { const r = await sync.syncNow(); say(r.ok ? 'Saved! Everything is backed up and up to date.' : (SAY[r.error] || SAY.failed)); }),
+          busyBtn('Sync now', 'go', async () => { const r = await sync.syncNow(); say(r.ok ? 'Saved! Everything is backed up and up to date' + (r.voices && (r.voices.sent || r.voices.got) ? ` (voices: ${r.voices.sent} sent, ${r.voices.got} received).` : '.') : (SAY[r.error] || SAY.failed)); }),
           (() => { const b = h('button', { class: 'btn small', type: 'button' }, 'Show family code'); b.addEventListener('click', () => showCode(sync.code(), false)); return b; })(),
           confirmButton('Turn off and delete cloud copy', 'danger', async () => { const r = await sync.turnOff(); say(r.ok ? 'Cloud backup is off and the cloud copy was deleted. Your data is still on this device.' : (SAY[r.error] || SAY.failed)); })),
-        h('p', { class: 'fine' }, 'Changes are also saved in the background whenever the device is online. To use the same players on another device, choose “I already have a family code” there.'));
+        h('p', { class: 'fine' }, 'Changes, including recorded voices, are also saved in the background whenever the device is online (recordings are encrypted first). To use the same players on another device, choose “I already have a family code” there.'));
     }
     // backup file
     const file = h('input', { type: 'file', accept: '.json,application/json', style: 'display:none' });
@@ -417,9 +420,8 @@
     });
     const save = h('button', { class: 'btn small', type: 'button' }, 'Save a backup file');
     save.addEventListener('click', () => {
-      const blob = new Blob([sync.fileText()], { type: 'application/json' }), url = URL.createObjectURL(blob), a = document.createElement('a');
-      a.href = url; a.download = sync.fileName(); a.style.display = 'none'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
-      say('Backup file saved to this device’s downloads.');
+      const blob = new Blob([sync.fileText()], { type: 'application/json' });
+      SPG.native.saveFile(blob, sync.fileName(), 'application/json').then(ok => say(SPG.native.isApp ? (ok ? 'Choose where to keep the backup file.' : 'The backup file was not saved.') : 'Backup file saved to this device’s downloads.'));
     });
     const restore = h('button', { class: 'btn small quiet', type: 'button' }, 'Restore from a backup file');
     restore.addEventListener('click', () => file.click());
@@ -678,7 +680,13 @@
 
   document.addEventListener('visibilitychange', syncPause);
   let resizeTimer = 0;
-  const onResize = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { running?.inst.resize?.(); drawCards(); }, 60); };
+  const onResize = () => { hubFrozen = true; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
+    running?.inst.resize?.();
+    // turning the phone changes how many fit on a page: rebuild the pages and stay on the same games
+    if (perPage() !== hubPer && $('hub-games').firstChild) { hubPage = Math.floor(hubFirst / perPage()); renderCards(); }
+    drawCards();
+    setTimeout(() => { hubFrozen = false; }, 150);
+  }, 60); };
   addEventListener('resize', onResize);
   addEventListener('orientationchange', onResize);
   window.visualViewport?.addEventListener('resize', onResize);
@@ -688,7 +696,7 @@
   SPG.night.apply(); setInterval(() => SPG.night.apply(), 60000);
   renderCards();
   if (store.profiles.length) { store.setActive(store.active?.id ?? store.profiles[0].id); renderWho(); } else openSetup(false);
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  if ('serviceWorker' in navigator && !(SPG.native && SPG.native.isApp) && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
   }
   SPG.app = { closeGame, show, running: () => running, askGate, askPin };

@@ -163,15 +163,10 @@
     render(c.getContext('2d'), def, ops, width);
     return new Promise(res => c.toBlob(res, 'image/png'));
   }
-  function saveFile(blob, name) {
-    const url = URL.createObjectURL(blob), a = document.createElement('a');
-    a.href = url; a.download = name; a.style.display = 'none';
-    document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  }
+  function saveFile(blob, name) { return SPG.native.saveFile(blob, name, 'image/png'); }
   const fileName = def => `little-sprout-park-${def.id}.png`;
-  // On iPhone/iPad a download can pull the child out of the app, so a grown-up has to okay it there.
-  const okToSave = fn => (SPG.safe.isIOS && SPG.app && SPG.app.askGate) ? SPG.app.askGate(fn) : fn();
+  // On iPhone/iPad (and in the Android app, where saving opens the share sheet) a download can pull the child out of the app, so a grown-up has to okay it there.
+  const okToSave = fn => ((SPG.safe.isIOS || SPG.native.isApp) && SPG.app && SPG.app.askGate) ? SPG.app.askGate(fn) : fn();
 
   /* ================================================================ the game */
   class ColorGame {

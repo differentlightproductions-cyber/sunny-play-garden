@@ -131,6 +131,11 @@
   let manifest = null;
   let db = null;
   const buffers = new Map(); // "set/key" -> AudioBuffer | null
+  // When each recording was made (kept beside the clips), so the cloud copy can tell which of two versions is newer.
+  const STAMPS = 'spg.vstamps';
+  const stamps = (() => { try { return JSON.parse(localStorage.getItem(STAMPS)) || {}; } catch (_) { return {}; } })();
+  const keepStamps = () => { try { localStorage.setItem(STAMPS, JSON.stringify(stamps)); } catch (_) { /* ignore */ } };
+  const changed = () => { try { SPG.sync && SPG.sync.voicesChanged && SPG.sync.voicesChanged(); } catch (_) { /* never break recording */ } };
 
   const idb = (mode, fn) => new Promise(resolve => {
     if (!db) return resolve(null);
@@ -270,11 +275,14 @@
     const ok = await idb('readwrite', st => st.put(blob, set + '/' + key));
     if (!ok) throw new Error('Could not save the recording.');
     (deviceKeys[set] || (deviceKeys[set] = new Set())).add(key); buffers.set(set + '/' + key, buf);
+    stamps[set + '/' + key] = Date.now(); keepStamps(); changed();
     return buf;
   }
   async function deleteClip(set, key) {
     await idb('readwrite', st => st.delete(set + '/' + key));
     deviceKeys[set] && deviceKeys[set].delete(key); buffers.delete(set + '/' + key);
+    delete stamps[set + '/' + key]; keepStamps();
+    try { SPG.sync && SPG.sync.voiceClipGone && SPG.sync.voiceClipGone(set, key); } catch (_) { /* ignore */ }
   }
   async function previewClip(set, key) {
     A.unlock(); await ready;
@@ -290,17 +298,62 @@
     addVoice(name) {
       const list = store.settings.voices || (store.settings.voices = []);
       const id = 'v' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
-      list.push({ id, name: String(name).trim().slice(0, 24) || 'New voice' }); store.save(); syncSets(); return id;
+      list.push({ id, name: String(name).trim().slice(0, 24) || 'New voice', t: Date.now() }); store.save(); syncSets(); changed(); return id;
     },
-    renameVoice(id, name) { const v = (store.settings.voices || []).find(x => x.id === id); if (v) { v.name = String(name).trim().slice(0, 24) || v.name; store.save(); syncSets(); } },
+    renameVoice(id, name) { const v = (store.settings.voices || []).find(x => x.id === id); if (v) { v.name = String(name).trim().slice(0, 24) || v.name; v.t = Date.now(); store.save(); syncSets(); changed(); } },
     // Removes the voice and every clip recorded for it.
     async removeVoice(id) {
-      for (const key of [...(deviceKeys[id] || [])]) await idb('readwrite', st => st.delete(id + '/' + key));
+      const gone = [...(deviceKeys[id] || [])];
+      (store.settings.voicesRemoved || (store.settings.voicesRemoved = [])).includes(id) || store.settings.voicesRemoved.push(id);   // so other devices let it go too
+      for (const key of gone) { await idb('readwrite', st => st.delete(id + '/' + key)); delete stamps[id + '/' + key]; }
+      keepStamps();
       deviceKeys[id] = new Set(); for (const k of [...buffers.keys()]) if (k.startsWith(id + '/')) buffers.delete(k);
       store.settings.voices = (store.settings.voices || []).filter(x => x.id !== id);
       store.settings.voiceOff = (store.settings.voiceOff || []).filter(x => x !== id);
       if (store.settings.voicePref === id) store.settings.voicePref = 'mix';
       store.save(); syncSets();
+      try { SPG.sync && SPG.sync.voiceRemoved && SPG.sync.voiceRemoved(id, gone); } catch (_) { /* ignore */ }
+    },
+    // ---- what the cloud copy needs (see js/sync.js)
+    async syncList() {   // every recording kept on this device: { set, key, stamp }
+      await ready; const out = [];
+      for (const [set, keys] of Object.entries(deviceKeys)) for (const key of keys) {
+        const id = set + '/' + key; if (!stamps[id]) { stamps[id] = Date.now(); }   // recorded before stamps existed: counts from now
+        out.push({ set, key, stamp: stamps[id] });
+      }
+      keepStamps(); return out;
+    },
+    async syncBlob(set, key) { await ready; return idb('readonly', st => st.get(set + '/' + key)); },
+    stampOf: (set, key) => stamps[set + '/' + key] || 0,
+    // Store a recording that came from the cloud copy. It is not decoded now: that happens when it is first played.
+    async importClip(set, key, blob, stamp) {
+      await ready; if (!db) return false;
+      const ok = await idb('readwrite', st => st.put(blob, set + '/' + key)); if (!ok) return false;
+      (deviceKeys[set] || (deviceKeys[set] = new Set())).add(key); buffers.delete(set + '/' + key);
+      stamps[set + '/' + key] = stamp; keepStamps(); return true;
+    },
+    // The list of named voices and the ones that were deleted, for the cloud copy.
+    voiceList() {
+      const list = store.settings.voices || []; for (const v of list) if (!v.t) v.t = Date.now();
+      return { voices: list.map(v => ({ id: v.id, name: v.name, t: v.t })), removed: store.settings.voicesRemoved || [] };
+    },
+    // Merge a list that came from the cloud copy: new voices appear, the newer name wins, deleted voices go.
+    async adoptVoiceList(remote) {
+      let changedAny = false; const list = store.settings.voices || (store.settings.voices = []);
+      const removed = new Set([...(store.settings.voicesRemoved || []), ...((remote && remote.removed) || [])]);
+      store.settings.voicesRemoved = [...removed];
+      for (const rv of (remote && remote.voices) || []) {
+        if (!rv || !rv.id || !rv.name || removed.has(rv.id)) continue;
+        const mine = list.find(v => v.id === rv.id);
+        if (mine) { if ((rv.t || 0) > (mine.t || 0) && mine.name !== rv.name) { mine.name = String(rv.name).slice(0, 24); mine.t = rv.t; changedAny = true; } continue; }
+        // the same person set up on two devices: an empty local voice with the same name just becomes the cloud one
+        const twin = list.find(v => v.name.toLowerCase() === String(rv.name).toLowerCase() && !(deviceKeys[v.id] && deviceKeys[v.id].size) && !(remote.voices || []).some(o => o.id === v.id));
+        if (twin) { list.splice(list.indexOf(twin), 1); }
+        list.push({ id: rv.id, name: String(rv.name).slice(0, 24), t: rv.t || Date.now() }); changedAny = true;
+      }
+      for (const id of removed) if (list.some(v => v.id === id)) { await SPG.voice.removeVoice(id); changedAny = true; }
+      if (changedAny) { store.save(); syncSets(); }
+      return changedAny;
     },
     originalText,
     setText(key, text) {

@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+def uploadStore = System.getenv('SPROUT_UPLOAD_STORE')
+def uploadPassword = System.getenv('SPROUT_UPLOAD_PASSWORD')
+
+android {
+    namespace 'com.toastygames.littlesproutpark'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.toastygames.littlesproutpark'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0-alpha1'
+    }
+
+    signingConfigs {
+        upload {
+            if (uploadStore && uploadPassword) {
+                storeFile file(uploadStore)
+                storePassword uploadPassword
+                keyAlias 'upload'
+                keyPassword uploadPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.upload
+        }
+    }
+}

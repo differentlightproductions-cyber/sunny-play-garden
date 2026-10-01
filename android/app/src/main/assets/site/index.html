@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#a9e1f3">
+  <meta name="color-scheme" content="light dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Little Sprout Park">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="referrer" content="no-referrer">
+  <!-- Nothing on this page can load from, or send data to, another website. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Little Sprout Park</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-moon" viewBox="0 0 48 48"><path d="M31 5a19 19 0 1 0 12 32A16 16 0 0 1 31 5z" fill="currentColor"/><circle cx="34" cy="30" r="2" fill="#fff" opacity=".5"/></symbol>
+    <symbol id="i-house" viewBox="0 0 48 48"><path d="M6 24 24 8l18 16" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 22v18h9V29h8v11h9V22L24 10z" fill="currentColor"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 48 48"><rect x="9" y="21" width="30" height="21" rx="6" fill="currentColor"/><path d="M15 21v-6a9 9 0 0 1 18 0v6" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="31" r="3.4" fill="#fff"/></symbol>
+    <symbol id="i-star" viewBox="0 0 48 48"><path d="m24 4 6.2 13.4 14.6 1.6-10.9 9.9 3.1 14.4L24 35.6 10.9 43.3 14 28.9 3.1 19l14.7-1.6z" fill="#ffd54a" stroke="#ffd54a" stroke-width="4" stroke-linejoin="round"/><ellipse cx="18" cy="17" rx="3" ry="1.6" transform="rotate(-35 18 17)" fill="#fff" opacity=".55"/></symbol>
+    <symbol id="i-left" viewBox="0 0 48 48"><path d="M30 8 14 24l16 16" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-right" viewBox="0 0 48 48"><path d="M18 8l16 16-16 16" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 48 48"><path d="M6 19h8l10-9v28l-10-9H6z" fill="currentColor" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M31 17a10 10 0 0 1 0 14M36 11a18 18 0 0 1 0 26" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 48 48"><path d="M15 8v32l27-16z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 48 48"><path d="M24 9v30M9 24h30" stroke="currentColor" stroke-width="8" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 48 48"><path d="m10 26 10 10 19-22" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 48 48"><path d="M8 14h24a9 9 0 0 1 0 18H14M8 14l8-8M8 14l8 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-book" viewBox="0 0 48 48"><path d="M6 10c7-3 13-2 18 3 5-5 11-6 18-3v29c-7-3-13-2-18 3-5-5-11-6-18-3z" fill="currentColor"/><path d="M24 13v29" stroke="#fff" stroke-width="3" opacity=".6"/></symbol>
+    <symbol id="i-shovel" viewBox="0 0 48 48"><path d="M30 6l12 12M34 10 20 24" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M20 22 8 34c-2 3 0 6 3 6h4c2 0 3-1 5-3l9-11z" fill="currentColor"/></symbol>
+    <symbol id="i-bucket" viewBox="0 0 48 48"><path d="M8 25 22 11l16 16-11 11c-2 2-5 2-7 0z" fill="currentColor"/><path d="M14 20l16 16" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".45"/><path d="M41 28c2.6 3.4 4.2 6 4.2 8.4a4.2 4.2 0 0 1-8.4 0c0-2.4 1.6-5 4.2-8.4z" fill="currentColor"/></symbol>
+    <symbol id="i-brush" viewBox="0 0 48 48"><path d="M41 7 24 24" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M23 22c-6-2-12 2-12 8 0 5-2 8-6 10 9 3 19 0 21-8 1-4 0-8-3-10z" fill="currentColor"/></symbol>
+    <symbol id="i-eraser" viewBox="0 0 48 48"><path d="M6 30 25 10c1.6-1.6 4-1.6 5.6 0L41 20.4c1.6 1.6 1.6 4 0 5.6L27 41H14z" fill="currentColor"/><path d="m17 22 14 14" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".6"/></symbol>
+    <symbol id="i-again" viewBox="0 0 48 48"><path d="M39 24a15 15 0 1 1-4.5-10.7" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M38 6v11H27" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 48 48"><rect x="6" y="6" width="16" height="16" rx="5" fill="currentColor"/><rect x="26" y="6" width="16" height="16" rx="5" fill="currentColor"/><rect x="6" y="26" width="16" height="16" rx="5" fill="currentColor"/><rect x="26" y="26" width="16" height="16" rx="5" fill="currentColor"/></symbol>
+    <symbol id="i-download" viewBox="0 0 48 48"><path d="M24 6v24M14 21l10 10 10-10" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 34v4a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4v-4" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 48 48"><path d="M12 12l24 24M36 12 12 36" stroke="currentColor" stroke-width="8" stroke-linecap="round"/></symbol>
+    <symbol id="i-rosette" viewBox="0 0 48 48"><path d="M14 30 8 46l8-4 4 6 5-14z" fill="#ff7a8a"/><path d="M34 30l6 16-8-4-4 6-5-14z" fill="#ff9db8"/><circle cx="24" cy="20" r="16" fill="#ffd54a" stroke="#f0a92e" stroke-width="3"/><path d="m24 9 3.4 7 7.6.9-5.6 5.2 1.5 7.6L24 26l-6.9 3.7 1.5-7.6L13 16.9l7.6-.9z" fill="#fff"/></symbol>
+    <symbol id="i-c-bucket" viewBox="0 0 48 48"><path d="M9 14Q24-3 39 14" fill="none" stroke="#5a3f5e" stroke-width="3.5" stroke-linecap="round"/><path d="M8 18h32l-4 24q-12 5-24 0z" fill="#5a3f5e"/><rect x="6" y="15" width="36" height="7" rx="3.5" fill="#7d5a85"/><path d="M11 17Q9 7 19 7.5Q24 2 29 7.5Q40 7 37 17z" fill="#ff6b81"/><path d="M14 21v7a3 3 0 0 0 6 0v-7zM29 21v11a3.5 3.5 0 0 0 7 0V21z" fill="#ff6b81"/><ellipse cx="18" cy="9.5" rx="3.5" ry="1.8" fill="#fff" opacity=".6"/></symbol>
+    <symbol id="i-c-brush" viewBox="0 0 48 48"><path d="M42 6 25 23" stroke="#a8744f" stroke-width="6.5" stroke-linecap="round"/><path d="M27 21 20 28" stroke="#c9c3d3" stroke-width="9" stroke-linecap="round"/><path d="M20 27c-7-3-14 3-14 10 0 4-2 6-4 7 9 4 21 1 23-8 1-4-1-8-5-9z" fill="#4f8fe8"/><path d="M8 43Q18 45 28 39" stroke="#7fd4f5" stroke-width="3" stroke-linecap="round" fill="none"/></symbol>
+    <symbol id="i-c-eraser" viewBox="0 0 48 48"><g transform="rotate(-38 24 24)"><rect x="4" y="15" width="40" height="18" rx="5" fill="#ff6b81"/><rect x="4" y="15" width="15" height="18" rx="5" fill="#f7e8cf"/><rect x="14" y="15" width="5" height="18" fill="#f7e8cf"/><rect x="19" y="15" width="3" height="18" fill="#e04a63"/><rect x="4" y="29" width="40" height="4" rx="2" fill="#e04a63" opacity=".55"/></g><circle cx="40" cy="41" r="2.5" fill="#ffb3c0"/><circle cx="33" cy="44" r="2" fill="#ffb3c0"/><circle cx="44" cy="35" r="1.8" fill="#ffb3c0"/></symbol>
+    <symbol id="i-c-undo" viewBox="0 0 48 48"><path d="M17 15H30a11 11 0 0 1 0 22H14" fill="none" stroke="#4f8fe8" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 6 11 15l11 9z" fill="#4f8fe8" stroke="#4f8fe8" stroke-width="3" stroke-linejoin="round"/></symbol>
+    <symbol id="i-c-again" viewBox="0 0 48 48"><path d="M39 24a15 15 0 1 1-4.5-10.7" fill="none" stroke="#ff9d4d" stroke-width="6.5" stroke-linecap="round"/><path d="M39 5v12H27z" fill="#ff9d4d" stroke="#ff9d4d" stroke-width="3" stroke-linejoin="round"/></symbol>
+    <symbol id="i-c-grid" viewBox="0 0 48 48"><rect x="6" y="6" width="16" height="16" rx="5" fill="#ff6b81"/><rect x="26" y="6" width="16" height="16" rx="5" fill="#ffd54a"/><rect x="6" y="26" width="16" height="16" rx="5" fill="#59b96e"/><rect x="26" y="26" width="16" height="16" rx="5" fill="#4f8fe8"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 48 48"><path d="M8 40l3-11L33 7a4 4 0 0 1 6 0l2 2a4 4 0 0 1 0 6L19 37z" fill="currentColor"/><path d="M8 40l11-3-8-8z" fill="#ffd54a"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 48 48"><rect x="4" y="11" width="40" height="26" rx="6" fill="currentColor"/><g fill="#fff"><rect x="9" y="16" width="5" height="5" rx="1.2"/><rect x="17" y="16" width="5" height="5" rx="1.2"/><rect x="25" y="16" width="5" height="5" rx="1.2"/><rect x="33" y="16" width="5" height="5" rx="1.2"/><rect x="9" y="24" width="5" height="5" rx="1.2"/><rect x="17" y="24" width="5" height="5" rx="1.2"/><rect x="25" y="24" width="5" height="5" rx="1.2"/><rect x="33" y="24" width="5" height="5" rx="1.2"/><rect x="14" y="31" width="20" height="3.5" rx="1.2"/></g></symbol>
+    <symbol id="i-dice" viewBox="0 0 48 48"><rect x="7" y="7" width="34" height="34" rx="8" fill="currentColor"/><circle cx="17" cy="17" r="3.5" fill="#fff"/><circle cx="31" cy="17" r="3.5" fill="#fff"/><circle cx="24" cy="24" r="3.5" fill="#fff"/><circle cx="17" cy="31" r="3.5" fill="#fff"/><circle cx="31" cy="31" r="3.5" fill="#fff"/></symbol>
+  </svg>
+
+  <div class="backdrop" aria-hidden="true">
+    <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+      <g class="cloud c1"><ellipse cx="240" cy="150" rx="120" ry="34" fill="#fff" opacity=".9"/><circle cx="200" cy="130" r="42" fill="#fff" opacity=".9"/><circle cx="270" cy="120" r="52" fill="#fff" opacity=".9"/></g>
+      <g class="cloud c2"><ellipse cx="1000" cy="90" rx="100" ry="28" fill="#fff" opacity=".85"/><circle cx="960" cy="72" r="34" fill="#fff" opacity=".85"/><circle cx="1030" cy="64" r="42" fill="#fff" opacity=".85"/></g>
+      <g class="cloud c3"><ellipse cx="620" cy="260" rx="80" ry="22" fill="#fff" opacity=".7"/><circle cx="590" cy="246" r="28" fill="#fff" opacity=".7"/><circle cx="650" cy="240" r="34" fill="#fff" opacity=".7"/></g>
+      <circle cx="1400" cy="150" r="62" fill="#ffe27a"/><circle cx="1400" cy="150" r="96" fill="#ffe27a" opacity=".3"/>
+      <path d="M0 640C220 560 420 590 640 640s460 60 700-20c110-36 200-30 260-10V900H0z" fill="#c3e6a6"/>
+      <path d="M0 720C260 660 520 700 760 730s520 20 840-40V900H0z" fill="#a9dc94"/>
+      <path d="M0 810C300 770 600 800 900 820s450 0 700-30V900H0z" fill="#93d087"/>
+    </svg>
+  </div>
+
+  <!-- Who is playing -->
+  <main id="who" class="screen who hidden">
+    <h1 class="logo">Little Sprout Park</h1>
+    <div id="who-list" class="who-list"></div>
+    <p id="install-hint" class="install-hint hidden">For full screen on iPhone or iPad: tap <b>Share</b>, then <b>Add to Home Screen</b>, then open it from your home screen.</p>
+  </main>
+
+  <!-- First-time / add-player setup -->
+  <main id="setup" class="screen setup hidden">
+    <form id="setup-form" class="sheet" autocomplete="off" data-scroll>
+      <h1>Welcome!</h1>
+      <p class="lead">Who is going to play?</p>
+      <p class="field-label">Pick a name</p>
+      <div id="nick-pick"></div>
+      <button type="button" id="type-name" class="btn quiet small"><svg><use href="#i-lock"/></svg><svg><use href="#i-keyboard"/></svg> Grown-up: type a name</button>
+      <label class="field hidden" id="name-field">Name
+        <input id="name-input" type="text" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Type a name">
+      </label>
+      <p class="field-label">Pick a friend</p>
+      <div id="avatar-pick" class="avatar-pick"></div>
+      <div class="row">
+        <button type="button" id="setup-cancel" class="btn quiet">Back</button>
+        <button type="submit" id="setup-go" class="btn go"><svg><use href="#i-check"/></svg> Let's play!</button>
+      </div>
+      <p class="fine">Everything stays on this device unless a grown-up turns on the private cloud backup.</p>
+      <button type="button" id="setup-restore" class="btn quiet small hidden">Grown-up: I have a family code</button>
+    </form>
+  </main>
+
+  <!-- Game hub -->
+  <main id="hub" class="screen hub hidden">
+    <header class="hub-top">
+      <button id="hub-who" class="chip" type="button" aria-label="Switch player"><canvas id="hub-avatar" width="64" height="64"></canvas><span id="hub-name"></span></button>
+      <h1 class="hub-title">Little Sprout Park</h1>
+      <div class="hub-right">
+        <div class="chip stars" aria-label="Stars"><svg class="ico"><use href="#i-star"/></svg><b id="hub-stars">0</b></div>
+        <button id="hub-lock" class="chip round" type="button" aria-label="Grown-ups"><svg class="ico"><use href="#i-lock"/></svg></button>
+      </div>
+    </header>
+    <section id="hub-games" class="cards" aria-label="Games"></section>
+    <section id="hub-shop" class="hub-shop" aria-label="Shop"></section>
+  </main>
+
+  <!-- A running game -->
+  <main id="stage" class="screen stage hidden">
+    <div id="game-host" class="game-host"></div>
+    <button id="btn-home" class="hud-btn home" type="button" aria-label="Home"><svg><use href="#i-house"/></svg></button>
+    <div class="hud-stars" aria-label="Stars"><svg class="ico"><use href="#i-star"/></svg><b id="stage-stars">0</b></div>
+  </main>
+
+  <!-- Daily play time is up -->
+  <div id="break" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="break-title">
+    <div class="break-card">
+      <canvas id="break-art" width="800" height="450"></canvas>
+      <h2 id="break-title">Time for a little rest</h2>
+      <p>Play time is up for today.</p>
+      <button id="break-adult" class="btn quiet" type="button"><svg><use href="#i-lock"/></svg> Grown-up</button>
+    </div>
+  </div>
+
+  <!-- Parent gate -->
+  <div id="gate" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="sheet gate">
+      <button id="gate-back" type="button" class="btn go gate-back"><svg class="ico"><use href="#i-house"/></svg><span>Back to the games</span></button>
+      <h2 id="gate-title">Grown-ups only</h2>
+      <p id="gate-hint" class="fine">Answer to continue</p>
+      <p id="gate-q" class="gate-q"></p>
+      <div id="gate-answer" class="gate-answer" aria-live="polite"></div>
+      <div id="numpad" class="numpad"></div>
+      <button id="gate-forgot" type="button" class="btn quiet small hidden">Forgot the PIN?</button>
+    </div>
+  </div>
+
+  <!-- Grown-ups panel -->
+  <div id="parent" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="parent-title">
+    <div class="sheet wide" data-scroll>
+      <div class="sheet-head"><h2 id="parent-title">Grown-ups</h2><button id="parent-close" class="btn go small" type="button"><svg><use href="#i-check"/></svg> Done</button></div>
+      <div id="parent-body"></div>
+    </div>
+  </div>
+
+  <!-- Record and choose voices -->
+  <div id="studio" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="studio-title">
+    <div class="sheet wide" data-scroll>
+      <div class="sheet-head"><h2 id="studio-title">Voices</h2><button id="studio-close" class="btn go small" type="button"><svg><use href="#i-check"/></svg> Done</button></div>
+      <div id="studio-body"></div>
+    </div>
+  </div>
+
+  <!-- Shown if fullscreen was left by accident -->
+  <div id="fs-resume" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Keep playing">
+    <button id="fs-play" class="btn-play" type="button" aria-label="Keep playing"><svg><use href="#i-play"/></svg></button>
+  </div>
+
+  <div id="night-veil" aria-hidden="true"></div>
+  <script src="js/glyphs.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/voice.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/art-garden.js"></script>
+  <script src="js/art-pets.js"></script>
+  <script src="js/scenery.js"></script>
+  <script src="js/pets.js"></script>
+  <script src="js/people.js"></script>
+  <script src="js/people-wear.js"></script>
+  <script src="games/letters.js"></script>
+  <script src="games/fruit.js"></script>
+  <script src="games/rain.js"></script>
+  <script src="games/firerescue.js"></script>
+  <script src="games/band.js"></script>
+  <script src="games/train.js"></script>
+  <script src="games/puzzle.js"></script>
+  <script src="games/aquarium.js"></script>
+  <script src="games/petcare-rooms.js"></script>
+  <script src="games/petcare.js"></script>
+  <script src="games/hide.js"></script>
+  <script src="games/garden.js"></script>
+  <script src="games/color-pictures.js"></script>
+  <script src="games/color-seasons.js"></script>
+  <script src="games/color-dinos.js"></script>
+  <script src="games/color.js"></script>
+  <script src="games/petshop.js"></script>
+  <script src="games/style.js"></script>
+  <script src="js/studio.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

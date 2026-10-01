@@ -1,0 +1,12 @@
+.gradle/
+.android/
+**/build/
+local.properties
+signing/
+test-captures/
+store-captures/
+*.keystore
+*.jks
+*.p12
+*.apk
+*.aab

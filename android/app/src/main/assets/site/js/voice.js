@@ -1,0 +1,346 @@
+// Voice prompts. Every spoken line is a key in LINES. A line can be played from:
+//   1. a recording made on this tablet in the grown-ups "Voices" screen (kept in IndexedDB), or
+//   2. an audio file in audio/voice/<male|female>/<key>.mp3 listed in audio/voice/manifest.json, or
+//   3. the browser's built-in speech (fallback, so nothing is ever silent).
+// Two voice sets (male, female) can be mixed. Lines can be muted one by one, and praise can be
+// made less frequent. "Sound-only" keys (critter noises) play only when recorded.
+(() => {
+  const SPG = window.SPG;
+  const A = SPG.audio, store = SPG.store;
+
+  const PHONICS = { a: 'ah', b: 'buh', c: 'kuh', d: 'duh', e: 'eh', f: 'fuh', g: 'guh', h: 'huh', i: 'ih', j: 'juh', k: 'kuh', l: 'luh', m: 'muh', n: 'nuh', o: 'aw', p: 'puh', q: 'kwuh', r: 'ruh', s: 'sss', t: 'tuh', u: 'uh', v: 'vuh', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz' };
+  const NAMES = { a: 'Ay', b: 'Bee', c: 'Cee', d: 'Dee', e: 'Ee', f: 'Eff', g: 'Gee', h: 'Aitch', i: 'Eye', j: 'Jay', k: 'Kay', l: 'El', m: 'Em', n: 'En', o: 'Oh', p: 'Pee', q: 'Cue', r: 'Ar', s: 'Ess', t: 'Tee', u: 'You', v: 'Vee', w: 'Double you', x: 'Ex', y: 'Why', z: 'Zee' };
+  // One picture word per letter (emoji renders on every Android tablet).
+  const WORDS = { a: ['apple', '🍎'], b: ['bear', '🐻'], c: ['cat', '🐱'], d: ['dog', '🐶'], e: ['elephant', '🐘'], f: ['fish', '🐟'], g: ['giraffe', '🦒'], h: ['horse', '🐴'], i: ['ice cream', '🍦'], j: ['juice', '🧃'], k: ['koala', '🐨'], l: ['lion', '🦁'], m: ['moon', '🌙'], n: ['nose', '👃'], o: ['octopus', '🐙'], p: ['pig', '🐷'], q: ['queen', '👸'], r: ['rainbow', '🌈'], s: ['sun', '☀️'], t: ['turtle', '🐢'], u: ['umbrella', '☂️'], v: ['violin', '🎻'], w: ['whale', '🐳'], x: ['box', '📦'], y: ['yarn', '🧶'], z: ['zebra', '🦓'] };
+
+  const PRAISE = new Set(['great-job', 'wow', 'you-did-it', 'amazing', 'yay']);
+  const CRITTERS = ['bee', 'butterfly', 'ladybug', 'bunny', 'bird', 'snail', 'hedgehog', 'frog', 'duckling', 'mouse', 'turtle', 'dragonfly', 'cat', 'dog'];
+  const CRITTER_NOISE = { bee: 'Bzzzz!', butterfly: 'a soft flutter noise', ladybug: 'a tiny squeak', bunny: 'a happy sniffle', bird: 'Tweet tweet!', snail: 'a slow, sleepy "sloooow"', hedgehog: 'a little snuffle', frog: 'Ribbit!', duckling: 'Quack quack!', mouse: 'Squeak squeak!', turtle: 'a slow "hellooo"', dragonfly: 'a quick buzzy zip', cat: 'Meow!', dog: 'Woof woof!' };
+  const CRITTER_LINE = { bee: 'Bzzz! A bee!', butterfly: 'A butterfly!', ladybug: 'A ladybug!', bunny: 'A bunny!', bird: 'A little bird!', snail: 'A snail!', hedgehog: 'A hedgehog!', frog: 'A frog!', duckling: 'A duckling!', mouse: 'A little mouse!', turtle: 'A turtle!', dragonfly: 'A dragonfly!', cat: 'A kitty!', dog: 'A puppy!' };
+
+  // Spoken lines (also the built-in speech fallback text).
+  const LINES = {
+    'welcome': "Hi! Let's play!",
+    'great-job': 'Great job!', 'wow': 'Wow!', 'you-did-it': 'You did it!', 'amazing': 'Amazing!', 'yay': 'Yay!',
+    'try-again': 'Try again!',
+    'find': 'Can you find the letter', 'follow-bee': 'Follow the bee!', 'is-for': 'is for',
+    'starts-with': 'Which one starts with', 'write-name': "Let's write your name!", 'spell-name': 'Your name is spelled',
+    'catch-drops': 'Catch the raindrops!', 'rainbow': 'A rainbow!',
+    'fire-start': 'Some little fires! Spray them with water!', 'fire-pet': 'Tap the pet to help them down!', 'fire-done': 'Everyone is safe! Hooray!',
+    'band-start': 'Touch the friends to make music!', 'band-copy': 'Listen... now you play!', 'band-song': 'Play some notes, then touch the red button!',
+    'train-start': 'All aboard! Fill up the train!', 'train-go': 'Choo choo! Off we go!', 'train-wrong': 'Try another one!',
+    'puzzle-start': 'Put the picture together!', 'puzzle-done': 'You made the picture!', 'puzzle-next': 'Tap the green arrow for another puzzle!',
+    'care-start': 'Take care of your friend!', 'care-food': 'Yum! Thank you!', 'care-clean': 'So fresh and clean!', 'care-sleep': 'Shhh... sleepy time.', 'care-hungry': 'Your friend is hungry!', 'care-dirty': 'Your friend needs a bath!', 'care-tired': 'Your friend is sleepy!',
+    'hide-start': 'Who is hiding? Walk around and look!', 'hide-found': 'Found you!', 'hide-done': 'You found everybody!',
+    'num/1': 'One!', 'num/2': 'Two!', 'num/3': 'Three!', 'num/4': 'Four!', 'num/5': 'Five!',
+    'color/red': 'Red!', 'color/blue': 'Blue!', 'color/yellow': 'Yellow!', 'color/green': 'Green!',
+    'shape/circle': 'Circle!', 'shape/square': 'Square!', 'shape/triangle': 'Triangle!', 'shape/star': 'Star!',
+    'aq-start': 'Touch the water to feed the fish!', 'aq-coin': 'A shiny coin! Touch it!', 'aq-grow': 'Your fish is growing!', 'aq-shop': 'Spend your coins!', 'aq-boss': 'A grumpy visitor! Tap it with bubbles!', 'aq-boss-done': 'You made a new friend! Hooray!',
+    'aq/guppy': 'A little guppy', 'aq/clown': 'A clownfish', 'aq/angel': 'An angelfish', 'aq/puffer': 'A pufferfish', 'aq/food': 'Better fish food', 'aq/more': 'More fish food', 'aq/snail': 'A helper snail', 'aq/power': 'Bubble power', 'aq/castle': 'A castle', 'aq/chest': 'A treasure chest', 'aq/weed': 'Seaweed', 'aq/shell': 'A big shell',
+    'care-morning': 'Good morning!', 'room/home': 'A cozy home!', 'room/castle': 'A castle!', 'room/halloween': 'A spooky house!', 'room/christmas': 'A Christmas house!', 'room/dino': 'Dinosaur land!', 'room/space': 'Outer space!', 'room/beach': 'A seaside house!',
+    'fire-level': 'A new place to help!', 'fire-next': 'Tap the green arrow to go somewhere new!',
+    'meteor-start': 'Shooting stars! Catch them in your bucket!', 'meteor-done': 'You kept all the dinosaurs safe! Hooray!', 'storm-coming': 'Here comes a big rainy storm!', 'storm-over': 'The storm is over. Look, the sun!',
+    'raining-pets': "It's raining cats and dogs!", 'pets-safe': 'You saved them all!',
+    'dig-first': 'First, dig a hole with the shovel!', 'dig-one': 'Dig! One!', 'dig-two': 'Two!', 'dig-three': 'Three! A perfect hole!', 'pat-it': 'Now pat the dirt down!', 'bye-bye': 'Bye bye, friend! Have fun!', 'pour-water': 'Hold the can over the plant to water it!', 'seed-in': 'Now drop in a seed!', 'water-me': 'Tap the plant to water it!',
+    'new-friend': 'A new friend!', 'new-seeds': 'New seeds to plant!', 'bigger-garden': 'Your garden got bigger!',
+    'confirm-bye': 'Do you want to say bye-bye? Tap the soft pink button to say bye-bye, or the green one to stay.',
+    'break-time': 'Time for a little rest!'
+  };
+  // Style Studio: every tab, friend and clothing name is said out loud when she touches it (she cannot read yet).
+  const STYLE_NAMES = {
+    'tab-who': 'Pick a friend!', 'tab-hair': 'Hair salon!', 'tab-makeup': 'Make-up!', 'tab-dress': 'Princess dresses!', 'tab-top': 'Tops!', 'tab-bottom': 'Skirts and pants!', 'tab-shoes': 'Shoes!', 'tab-hat': 'Crowns and hats!', 'tab-extras': 'Sparkly extras!', 'tab-nails': 'Nail salon!', 'tab-places': 'Places to go!',
+    'who-0': 'Poppy', 'who-1': 'Maya', 'who-2': 'Zoe', 'who-3': 'Ivy', 'who-4': 'Leo', 'who-5': 'Sam', 'who-6': 'Kai', 'who-7': 'Theo',
+    'hair-long': 'Long hair', 'hair-wavy': 'Wavy hair', 'hair-ponytail': 'A ponytail', 'hair-pigtails': 'Pigtails', 'hair-buns': 'Two buns', 'hair-braid': 'A braid', 'hair-bob': 'A bob', 'hair-short': 'Short hair', 'hair-spiky': 'Spiky hair', 'hair-curly': 'Curly hair', 'hair-topknot': 'A top knot', 'hair-none': 'No hair',
+    'tool-comb': 'A comb!', 'tool-dryer': 'A hair dryer!', 'tool-spray': 'Sparkle spray!', 'tool-bubbles': 'Bubbles! Wash the hair!',
+    'dress-ball': 'A ball gown!', 'dress-aline': 'A party dress!', 'dress-tutu': 'A ballet tutu!', 'dress-mermaid': 'A mermaid gown!', 'dress-petal': 'A flower fairy dress!', 'dress-sun': 'A sundress!',
+    'top-tee': 'A t-shirt', 'top-tank': 'A tank top', 'top-stripes': 'A stripy shirt', 'top-hoodie': 'A hoodie', 'top-sweater': 'A cozy sweater', 'top-star': 'A star shirt', 'top-vest': 'A fancy vest',
+    'bottom-skirt': 'A skirt', 'bottom-shorts': 'Shorts', 'bottom-jeans': 'Jeans', 'bottom-leggings': 'Leggings', 'bottom-tutuskirt': 'A tutu skirt',
+    'shoes-sneakers': 'Sneakers', 'shoes-boots': 'Boots', 'shoes-sandals': 'Sandals', 'shoes-glass': 'Glass slippers!', 'shoes-flats': 'Ballet shoes',
+    'hat-crown': 'A crown!', 'hat-tiara': 'A tiara!', 'hat-bow': 'A big bow', 'hat-flowers': 'A flower crown', 'hat-cap': 'A cap', 'hat-beanie': 'A woolly hat', 'hat-party': 'A party hat!', 'hat-cowboy': 'A cowboy hat', 'hat-wizard': 'A wizard hat!', 'hat-bunny': 'Bunny ears!', 'hat-kitty': 'Kitty ears!', 'hat-princess': 'A princess hat!',
+    'face-glasses': 'Glasses', 'face-hearts': 'Heart glasses!', 'face-stars': 'Star glasses!', 'face-mask': 'A fancy mask', 'face-stache': 'A silly mustache!',
+    'neck-pearls': 'Pearls', 'neck-heart': 'A heart necklace', 'neck-star': 'A star necklace', 'neck-scarf': 'A scarf', 'neck-bowtie': 'A bow tie',
+    'back-cape': 'A cape!', 'back-fairy': 'Fairy wings!', 'back-butterfly': 'Butterfly wings!', 'back-angel': 'Angel wings!', 'back-pack': 'A backpack',
+    'hand-wand': 'A magic wand!', 'hand-flower': 'Flowers', 'hand-balloon': 'A balloon!', 'hand-purse': 'A purse', 'hand-teddy': 'A teddy bear', 'hand-lolly': 'A lollipop!',
+    'hair-pixie': 'A pixie cut', 'hair-afro': 'A big afro', 'hair-halfup': 'Half up, half down', 'hair-twinbraids': 'Two braids', 'hair-mohawk': 'A mohawk!', 'hair-bowl': 'A bowl cut', 'hair-longcurly': 'Long curls', 'hair-sidepony': 'A side ponytail', 'hair-locs': 'Long locs', 'hair-crownbraid': 'A crown braid',
+    'dress-royal': 'A royal gown!', 'dress-skater': 'A twirly dress!', 'dress-tiers': 'A ruffle dress', 'dress-pinafore': 'A pinafore', 'dress-snow': 'An ice queen gown!',
+    'top-polo': 'A polo shirt', 'top-jersey': 'A sports shirt', 'top-flannel': 'A checked shirt', 'top-cardigan': 'A cardigan', 'top-puffer': 'A puffy jacket', 'top-blazer': 'A blazer', 'top-hearttee': 'A heart shirt',
+    'bottom-capris': 'Capri pants', 'bottom-cargo': 'Pocket pants', 'bottom-joggers': 'Joggers', 'bottom-longskirt': 'A long skirt', 'bottom-plaid': 'A checked skirt',
+    'shoes-rainboots': 'Rain boots', 'shoes-heels': 'Princess heels!', 'shoes-fuzzy': 'Fuzzy slippers', 'shoes-skates': 'Roller skates!',
+    'hat-sun': 'A sun hat', 'hat-beret': 'A beret', 'hat-santa': 'A Santa hat!', 'hat-pirate': 'A pirate hat!', 'hat-chef': 'A chef hat', 'hat-halo': 'A halo', 'hat-ribbon': 'A ribbon headband',
+    'face-shades': 'Sunglasses', 'face-clown': 'A red nose!', 'face-whiskers': 'Kitty whiskers!', 'face-patch': 'A pirate patch',
+    'neck-lei': 'A flower necklace', 'neck-choker': 'A choker', 'neck-tie': 'A necktie', 'neck-medal': 'A gold medal!',
+    'back-bat': 'Bat wings!', 'back-dragon': 'Dragon wings!', 'back-rainbow': 'Rainbow wings!',
+    'hand-umbrella': 'An umbrella', 'hand-icecream': 'Ice cream!', 'hand-mirror': 'A hand mirror', 'hand-plush': 'A bunny toy', 'hand-starballoon': 'A star balloon!',
+    'place-0': 'The castle ballroom', 'place-1': 'The garden', 'place-2': 'The beach', 'place-3': 'The salon', 'place-4': 'Under the stars', 'place-5': 'The rainbow meadow',
+    'say-start': "Let's get dressed up!", 'say-show': 'Ta-da! Look at you! You look amazing!', 'say-nails': 'Pick a color and touch the nails!', 'say-hair': 'Touch the hair!', 'say-lips': 'Lipstick!', 'say-shadow': 'Sparkly eyes!', 'say-blush': 'Rosy cheeks!', 'say-freckles': 'Freckles!', 'say-gems': 'Face jewels!', 'say-skin': 'Skin color', 'say-eyes': 'Eye color', 'say-glitter': 'Glitter!', 'say-all': 'All the nails!', 'say-clear': 'Clean nails.'
+  };
+  for (const [k, v] of Object.entries(STYLE_NAMES)) LINES['style/' + k] = v;
+  // The names in the name pickers (players and pets) are real lines too, so they can be recorded in the grown-ups' voice.
+  const PICK_NAMES = {
+    nicks: ['Sunny', 'Bunny', 'Sprout', 'Star', 'Peanut', 'Buttercup', 'Pumpkin', 'Ladybug', 'Honey', 'Dot', 'Bee', 'Twinkle'],
+    pets: ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle', 'Rex', 'Spike', 'Stompy', 'Dino', 'Waddles', 'Nibbles', 'Whiskers', 'Snowball', 'Ginger', 'Bubbles', 'Oreo', 'Pepper', 'Fluffy', 'Sparkle', 'Bean', 'Noodle']
+  };
+  for (const n of new Set([...PICK_NAMES.nicks, ...PICK_NAMES.pets])) LINES['name/' + n] = n;
+  Object.assign(LINES, { 'hello': 'Hello!', 'welcome-home': 'Welcome home,' });
+  for (const [l, t] of Object.entries(NAMES)) LINES['letter/' + l] = t;
+  for (const [l, t] of Object.entries(PHONICS)) LINES['sound/' + l] = t;
+  for (const [l, [w]] of Object.entries(WORDS)) LINES['word/' + l] = w;
+  for (const k of CRITTERS) LINES['creature/' + k] = CRITTER_LINE[k];
+  // Sound-only keys: no speech fallback. They play only if someone has recorded them.
+  const SOUNDS = {};
+  for (const k of CRITTERS) SOUNDS['critter/' + k] = CRITTER_NOISE[k];
+  // Purring and happy sounds for the close-up petting in Pet Care. Without a recording the game makes a soft synthesized purr.
+  const PURRS = { trex: 'a low, rumbly happy growl', trike: 'a low, happy rumble', stego: 'a deep, sleepy rumble', bronto: 'a slow, deep hum', babydino: 'a squeaky happy chirp', cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
+  for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
+  const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
+
+  // Two built-in voice slots plus any extra voices the grown-ups add and name (grandparents, cousins, the child herself...).
+  // Extra voices live in settings.voices = [{ id, name }]; their clips are stored like the others under "<id>/<line>".
+  const BASE_SETS = [{ id: 'male', name: 'Male voice' }, { id: 'female', name: 'Female voice' }];
+  const SETS = [...BASE_SETS];
+  function syncSets() {
+    const extra = (store.settings.voices || []).filter(v => v && v.id && v.name);
+    SETS.length = 0; SETS.push(...BASE_SETS, ...extra.map(v => ({ id: v.id, name: v.name, extra: true })));
+    for (const s of SETS) if (!deviceKeys[s.id]) deviceKeys[s.id] = new Set();
+    return SETS;
+  }
+
+  const GROUPS = [
+    { id: 'praise', title: 'Cheering', note: 'Said after she does something well. Turn down how often in the "Praise" setting.', test: k => PRAISE.has(k) },
+    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style|name)\//.test(k) },
+    { id: 'names', title: 'Names in the name pickers', note: 'Said when a name button is touched (player nicknames and pet names) and in "Welcome home, ...".', test: k => k.startsWith('name/') },
+    { id: 'style', title: 'Style Studio names', note: 'Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
+    { id: 'letters', title: 'Letter names (A to Z)', note: 'Say the name of the letter: "Bee", "Cee".', test: k => k.startsWith('letter/') },
+    { id: 'sounds', title: 'Letter sounds (A to Z)', note: 'Say the sound the letter makes: "buh", "kuh", "sss". Not the name.', test: k => k.startsWith('sound/') },
+    { id: 'words', title: 'Picture words', note: 'The word for each letter picture: apple, bear, cat...', test: k => k.startsWith('word/') },
+    { id: 'friends', title: 'Garden friend announcements', note: 'Said when a new garden friend appears.', test: k => k.startsWith('creature/') },
+    { id: 'critters', title: 'Critter noises (make the sound!)', note: 'Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.', test: k => k.startsWith('critter/') },
+    { id: 'purrs', title: 'Purring and happy sounds', note: 'Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.', test: k => k.startsWith('purr/') },
+    { id: 'players', title: 'Player names', note: 'Say each player\'s greeting, like "Hi Charlotte!".', test: k => k.startsWith('player/') || k.startsWith('pname/') }
+  ];
+
+  const base = key => key.replace(/\//g, '-');
+  const fileFor = (set, key) => `audio/voice/${set}/${base(key)}.mp3`;
+  const allKeys = () => [...Object.keys(LINES), ...Object.keys(SOUNDS), ...Object.keys(custom)];
+  // The grown-ups can reword any line (settings.lineText); the reworded text is what the built-in voice says and what shows in the recorder.
+  const textFor = key => (store.settings.lineText && store.settings.lineText[key]) || LINES[key] || SOUNDS[key] || custom[key] || key;
+  const originalText = key => LINES[key] ?? SOUNDS[key] ?? custom[key] ?? key;
+
+  /* ------------------------------------------------------------ stored clips */
+  const deviceKeys = { male: new Set(), female: new Set() };   // more sets appear as extra voices are added (see syncSets)
+  let manifest = null;
+  let db = null;
+  const buffers = new Map(); // "set/key" -> AudioBuffer | null
+
+  const idb = (mode, fn) => new Promise(resolve => {
+    if (!db) return resolve(null);
+    try {
+      const tx = db.transaction('clips', mode), st = tx.objectStore('clips'), rq = fn(st);
+      tx.oncomplete = () => resolve(rq ? rq.result : true); tx.onerror = tx.onabort = () => resolve(null);
+    } catch (_) { resolve(null); }
+  });
+  const openDB = () => new Promise(resolve => {
+    try {
+      const rq = indexedDB.open('spg-voice', 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('clips');
+      rq.onsuccess = () => resolve(rq.result); rq.onerror = rq.onblocked = () => resolve(null);
+    } catch (_) { resolve(null); }
+  });
+
+  const ready = (async () => {
+    db = typeof indexedDB !== 'undefined' ? await openDB() : null;
+    const keys = (await idb('readonly', st => st.getAllKeys())) || [];
+    for (const id of keys) { const [set, ...rest] = String(id).split('/'); (deviceKeys[set] || (deviceKeys[set] = new Set())).add(rest.join('/')); }
+    syncSets();
+    try { const res = await fetch('audio/voice/manifest.json'); if (res.ok) manifest = await res.json(); } catch (_) { /* no file recordings */ }
+  })();
+
+  const fileAvail = (set, key) => !!(manifest && manifest[set] && manifest[set].includes(base(key)));
+  const hasClip = (set, key) => !!(deviceKeys[set] && deviceKeys[set].has(key)) || fileAvail(set, key);
+  const hasDeviceClip = (set, key) => !!(deviceKeys[set] && deviceKeys[set].has(key));
+
+  // Trim silence, and level the clip so quiet phone recordings are as loud as clear ones.
+  function analyse(buf) {
+    const d = buf.getChannelData(0), n = d.length, sr = buf.sampleRate;
+    let peak = 0; for (let i = 0; i < n; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; }
+    const thr = Math.max(.012, peak * .05);
+    let a = 0; while (a < n && Math.abs(d[a]) < thr) a++;
+    let b = n - 1; while (b > a && Math.abs(d[b]) < thr) b--;
+    const start = Math.max(0, a / sr - .06), end = Math.min(buf.duration, b / sr + .18);
+    buf._trim = [start, Math.max(.05, end - start)];
+    buf._gain = peak > 0 ? Math.min(4, .85 / peak) : 1;
+    return buf;
+  }
+  const decode = async ab => analyse(await A.ctx.decodeAudioData(ab));
+
+  async function loadBuffer(set, key) {
+    const id = set + '/' + key;
+    if (buffers.has(id)) return buffers.get(id);
+    let buf = null;
+    try {
+      if (deviceKeys[set] && deviceKeys[set].has(key)) { const blob = await idb('readonly', st => st.get(id)); if (blob) buf = await decode(await blob.arrayBuffer()); }
+      if (!buf && fileAvail(set, key)) { const res = await fetch(fileFor(set, key)); if (res.ok) buf = await decode(await res.arrayBuffer()); }
+    } catch (_) { /* unreadable clip: fall back to speech */ }
+    buffers.set(id, buf);
+    return buf;
+  }
+
+  /* ------------------------------------------------------------ playback */
+  let token = 0, current = null, voiceObj;
+  function pickVoice() {
+    if (voiceObj !== undefined) return voiceObj;
+    const list = speechSynthesis.getVoices();
+    if (!list.length) return null;
+    voiceObj = list.find(v => /en[-_]US/i.test(v.lang) && /female|google us|samantha|aria|jenny/i.test(v.name))
+      || list.find(v => /en[-_]US/i.test(v.lang)) || list.find(v => /^en/i.test(v.lang)) || null;
+    return voiceObj;
+  }
+  if ('speechSynthesis' in window) speechSynthesis.addEventListener?.('voiceschanged', () => { voiceObj = undefined; });
+
+  function speak(text) {
+    return new Promise(resolve => {
+      if (!('speechSynthesis' in window) || !text) return resolve();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = .82; u.pitch = 1.2; u.lang = 'en-US';
+      const v = pickVoice(); if (v) u.voice = v;
+      let done = false;
+      const fin = () => { if (!done) { done = true; resolve(); } };
+      u.onend = fin; u.onerror = fin;
+      setTimeout(fin, 1200 + text.length * 130);
+      current = { stop: () => { speechSynthesis.cancel(); fin(); } };
+      speechSynthesis.speak(u);
+    });
+  }
+
+  function playBuffer(buf) {
+    return new Promise(resolve => {
+      const src = A.ctx.createBufferSource(); src.buffer = buf;
+      const g = A.ctx.createGain(); g.gain.value = buf._gain || 1;
+      src.connect(g); g.connect(A.master); src.onended = resolve;
+      current = { stop: () => { try { src.stop(); } catch (_) { /* already ended */ } resolve(); } };
+      const [off, dur] = buf._trim || [0, undefined];
+      src.start(0, off, dur);
+    });
+  }
+
+  const settings = () => store.settings;
+  function chooseSet(key) {
+    const pref = settings().voicePref || 'mix';
+    if (pref === 'builtin') return null;
+    const off = settings().voiceOff || [];
+    const order = pref === 'mix' ? syncSets().filter(s => !off.includes(s.id)).map(s => s.id) : [pref];
+    const have = order.filter(s => hasClip(s, key));
+    return have.length ? have[Math.floor(Math.random() * have.length)] : null;
+  }
+  function skip(key) {
+    const s = settings();
+    if ((s.muted || []).includes(key)) return true;
+    if (PRAISE.has(key)) return Math.random() > ({ lots: 1, some: .5, off: 0 }[s.praise ?? 'some']);
+    return false;
+  }
+
+  async function playOne(item) {
+    if (!settings().voice || !item || SPG.voice.hushed) return;
+    if (typeof item !== 'string') return item.say ? speak(item.say) : undefined;
+    if (skip(item)) return;
+    await ready;
+    const set = A.ctx ? chooseSet(item) : null;
+    if (set) { const buf = await loadBuffer(set, item); if (buf) return playBuffer(buf); }
+    if (item in SOUNDS) return; // sound-only: silent unless recorded
+    const text = textFor(item) === item ? (LINES[item] ?? custom[item]) : textFor(item);
+    if (text) return speak(text);
+  }
+
+  /* ------------------------------------------------------------ recording (grown-ups) */
+  async function startRecording() {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
+    const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || '';
+    const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const done = new Promise(res => { rec.onstop = () => { stream.getTracks().forEach(t => t.stop()); res(new Blob(chunks, { type: rec.mimeType || mime || 'audio/webm' })); }; });
+    rec.start();
+    return { stop: () => { if (rec.state !== 'inactive') rec.stop(); return done; }, cancel: () => { chunks.length = 0; if (rec.state !== 'inactive') rec.stop(); } };
+  }
+
+  async function saveClip(set, key, blob) {
+    A.unlock();
+    const buf = await decode(await blob.arrayBuffer()); // throws if the browser cannot read it
+    if (!db) throw new Error('This browser cannot store recordings.');
+    const ok = await idb('readwrite', st => st.put(blob, set + '/' + key));
+    if (!ok) throw new Error('Could not save the recording.');
+    (deviceKeys[set] || (deviceKeys[set] = new Set())).add(key); buffers.set(set + '/' + key, buf);
+    return buf;
+  }
+  async function deleteClip(set, key) {
+    await idb('readwrite', st => st.delete(set + '/' + key));
+    deviceKeys[set] && deviceKeys[set].delete(key); buffers.delete(set + '/' + key);
+  }
+  async function previewClip(set, key) {
+    A.unlock(); await ready;
+    const buf = await loadBuffer(set, key);
+    if (!buf) return false;
+    current?.stop(); await playBuffer(buf); return true;
+  }
+
+  SPG.voice = {
+    hushed: false, // true inside the Coloring Book: no spoken voices at all
+    LINES, SOUNDS, PICK_NAMES, PHONICS, NAMES, WORDS, PRAISE, GROUPS, SETS, custom, ready,
+    syncSets,
+    addVoice(name) {
+      const list = store.settings.voices || (store.settings.voices = []);
+      const id = 'v' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+      list.push({ id, name: String(name).trim().slice(0, 24) || 'New voice' }); store.save(); syncSets(); return id;
+    },
+    renameVoice(id, name) { const v = (store.settings.voices || []).find(x => x.id === id); if (v) { v.name = String(name).trim().slice(0, 24) || v.name; store.save(); syncSets(); } },
+    // Removes the voice and every clip recorded for it.
+    async removeVoice(id) {
+      for (const key of [...(deviceKeys[id] || [])]) await idb('readwrite', st => st.delete(id + '/' + key));
+      deviceKeys[id] = new Set(); for (const k of [...buffers.keys()]) if (k.startsWith(id + '/')) buffers.delete(k);
+      store.settings.voices = (store.settings.voices || []).filter(x => x.id !== id);
+      store.settings.voiceOff = (store.settings.voiceOff || []).filter(x => x !== id);
+      if (store.settings.voicePref === id) store.settings.voicePref = 'mix';
+      store.save(); syncSets();
+    },
+    originalText,
+    setText(key, text) {
+      const t = String(text || '').trim().slice(0, 120), map = store.settings.lineText || (store.settings.lineText = {});
+      if (!t || t === originalText(key)) delete map[key]; else map[key] = t;
+      store.save();
+    },
+    isReworded: key => !!(store.settings.lineText && store.settings.lineText[key]),
+    fileFor, allKeys, textFor, hasClip, hasDeviceClip,
+    groupOf: key => GROUPS.find(g => g.test(key)),
+    // Say a line, or a list of lines one after another. Items are keys, {say: 'free text'}, or null.
+    async say(...items) {
+      const list = items.flat();
+      const my = ++token;
+      current?.stop();
+      for (const it of list) {
+        if (my !== token) return;
+        await playOne(it);
+      }
+    },
+    // Play a critter noise if one is recorded, otherwise the spoken announcement.
+    async sound(soundKey, fallbackKey) {
+      await ready;
+      if (A.ctx && !skip(soundKey) && chooseSet(soundKey)) return SPG.voice.say(soundKey);
+      return fallbackKey ? SPG.voice.say(fallbackKey) : undefined;
+    },
+    // Quietly play a recorded critter noise if there is one. Never interrupts speech. Resolves to its length in seconds (0 = none).
+    async ambient(key, gain = .2) {
+      if (!settings().voice || SPG.voice.hushed || skip(key) || !A.ctx) return 0;
+      await ready;
+      const set = chooseSet(key); if (!set) return 0;
+      const buf = await loadBuffer(set, key); if (!buf) return 0;
+      const src = A.ctx.createBufferSource(); src.buffer = buf;
+      const g = A.ctx.createGain(); g.gain.value = (buf._gain || 1) * gain;
+      src.connect(g); g.connect(A.master);
+      const [off, dur] = buf._trim || [0, undefined]; src.start(0, off, dur);
+      return dur || buf.duration;
+    },
+    stop() { token++; current?.stop(); },
+    praise() { const k = [...PRAISE]; return SPG.voice.say(k[Math.floor(Math.random() * k.length)]); },
+    startRecording, saveClip, deleteClip, previewClip
+  };
+})();

@@ -163,7 +163,7 @@
     const go = i => { const n = Math.max(0, Math.min(pages.length - 1, i)); strip.scrollTo({ left: n * strip.clientWidth, behavior: 'smooth' }); };
     const where = () => Math.max(0, Math.min(pages.length - 1, Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth))));
     const mark = () => {
-      const i = where(); if (!hubFrozen) { hubPage = i; hubFirst = i * hubPer; }
+      const i = where(); if (!hubFrozen) hubPage = i;
       prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
       [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
     };
@@ -195,7 +195,7 @@
     }));
     drawCards();
   }
-  let hubPage = 0, hubPer = 8, hubFirst = 0, hubFrozen = false;   // hubFirst: the first game on the page she is looking at (kept steady while the screen turns)
+  let hubPage = 0, hubPer = 8, hubFrozen = false;
   // Must match the grid in styles.css: tall screens (portrait, not a short landscape phone) are 3 x 3, everything else 4 x 2.
   const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
   function drawCards() {
@@ -682,8 +682,8 @@
   let resizeTimer = 0;
   const onResize = () => { hubFrozen = true; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
     running?.inst.resize?.();
-    // turning the phone changes how many fit on a page: rebuild the pages and stay on the same games
-    if (perPage() !== hubPer && $('hub-games').firstChild) { hubPage = Math.floor(hubFirst / perPage()); renderCards(); }
+    // Turning the phone changes how many fit on a page: rebuild while keeping the same page number.
+    if (perPage() !== hubPer && $('hub-games').firstChild) renderCards();
     drawCards();
     setTimeout(() => { hubFrozen = false; }, 150);
   }, 60); };

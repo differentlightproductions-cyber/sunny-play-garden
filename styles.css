@@ -327,7 +327,9 @@ button.chip:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(90, 63
 .lg-emoji, .lg-emoji-opt, .lg-reveal-emoji, .lg-reveal { font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 
 /* ================= voices studio ================= */
-#studio { z-index: 55; }
+#studio, #vintro { z-index: 55; }
+.vchips { gap: 10px; }
+.vchips .seg-btn { font-size: 1.2rem; min-height: 52px; }
 .notice { background: #fff0d6; border-radius: 16px; padding: .7em 1em; margin: 8px 0; font-weight: 600; }
 details.vgroup { border-top: 3px dashed #e8dcee; padding: 6px 0; }
 details.vgroup > summary { font-weight: 700; font-size: 1.25rem; padding: 10px 0; cursor: pointer; list-style: revert; }

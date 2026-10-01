@@ -194,6 +194,9 @@
   // (Frogs have smooth skin with soft spots instead.) detail scales how many strands are drawn.
   const cl = (v, a, b) => Math.max(a, Math.min(b, v));
   const rnd = i => { const x = Math.sin(i * 91.7 + 13.3) * 43758.5453; return x - Math.floor(x); };
+  // Soft fur: a gentle shaded rim, rows of tiny curved fur marks that follow the body, and (for cats) soft tapered stripes.
+  // No stiff spikes sticking out of the outline.
+  const mark = (c, x, y, len, ang, w) => { c.lineWidth = w; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + Math.cos(ang + .7) * len * .6, y + Math.sin(ang + .7) * len * .6, x + Math.cos(ang) * len, y + Math.sin(ang) * len); c.stroke(); };
   function furBody(c, id, sp, s, detail) {
     if (sp.smooth || id === 'frog') {
       if (id !== 'frog') return;
@@ -201,37 +204,36 @@
       for (let i = 0; i < 9; i++) { const a = rnd(i) * TAU, r = Math.sqrt(rnd(i + 20)); ell(c, Math.cos(a) * s * .17 * r, Math.sin(a) * s * .15 * r - s * .02, s * (.012 + rnd(i + 40) * .018), s * (.01 + rnd(i + 60) * .014)); c.fill(); }
       return;
     }
-    const rx = s * .25, ry = s * .23, n = Math.round(cl(s / 3.2 * detail, 24, 96));
+    const rx = s * .25, ry = s * .23, m = Math.round(cl(s / 5 * detail, 14, 70)), body = /^#[0-9a-f]{3}$/i.test(sp.body) ? '#' + [...sp.body.slice(1)].map(ch => ch + ch).join('') : sp.body;   // art.shade wants six-digit colors
     c.lineCap = 'round';
-    c.strokeStyle = sp.body; c.lineWidth = Math.max(1.2, s * .012);
-    for (let i = 0; i < n; i++) {   // little tufts poking out around the edge
-      const a = i / n * TAU + rnd(i) * .08, ex = Math.cos(a) * rx, ey = Math.sin(a) * ry, len = s * (.009 + rnd(i + 5) * .012);
-      c.beginPath(); c.moveTo(ex - Math.cos(a) * len * .4, ey - Math.sin(a) * len * .4); c.lineTo(ex + Math.cos(a) * len + (rnd(i + 9) - .5) * len * .7, ey + Math.sin(a) * len + (rnd(i + 11) - .5) * len * .7); c.stroke();
+    // a soft darker rim and a lighter top, so the body looks round and plush
+    const g = c.createRadialGradient(-rx * .2, -ry * .35, rx * .3, 0, 0, rx * 1.05); g.addColorStop(0, 'rgba(255,255,255,.1)'); g.addColorStop(.7, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(60,30,20,.16)');
+    c.fillStyle = g; ell(c, 0, 0, rx, ry); c.fill();
+    // little curved fur marks in rows, coat colour only slightly darker, and a few lighter ones; none on the belly
+    c.save(); c.beginPath(); c.ellipse(0, 0, rx * .96, ry * .96, 0, 0, TAU); c.clip();
+    const lum = (() => { const n = parseInt(body.slice(1), 16); return ((n >> 16) * .3 + ((n >> 8) & 255) * .59 + (n & 255) * .11) / 255; })(), soft = lum > .85 ? .45 : 1;   // white fur gets fainter marks
+    for (let pass = 0; pass < 2; pass++) {
+      c.globalAlpha = (pass ? .22 : .2) * soft; c.strokeStyle = pass ? art.shade(body, .35) : art.shade(body, -.22);
+      for (let i = 0; i < m; i++) {
+        const x = (rnd(i + 100 + pass * 50) - .5) * rx * 1.85, y = (rnd(i + 150 + pass * 50) - .5) * ry * 1.8;
+        if ((x * x) / (s * .165 * s * .165) + ((y - s * .03) * (y - s * .03)) / (s * .165 * s * .165) < 1) continue;
+        mark(c, x, y, s * (.022 + rnd(i + 200) * .016), Math.PI * .5 + (x > 0 ? .5 : -.5) * (.4 + rnd(i + 230)), Math.max(1, s * .007));
+      }
     }
-    c.globalAlpha = .32; c.strokeStyle = art.shade(sp.body, -.3); c.lineWidth = Math.max(.8, s * .006);
-    const m = Math.round(cl(s / 6 * detail, 10, 60));
-    for (let i = 0; i < m; i++) {   // hairs across the coat, leaving the belly clear
-      const x = (rnd(i + 100) - .5) * rx * 1.7, y = (rnd(i + 150) - .5) * ry * 1.6;
-      if ((x * x) / (s * .16 * s * .16) + ((y - s * .03) * (y - s * .03)) / (s * .16 * s * .16) < 1) continue;
-      const len = s * (.035 + rnd(i + 200) * .03), sway = (x > 0 ? 1 : -1) * s * .012;
-      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + sway, y + len * .5, x + sway * .5, y + len); c.stroke();
-    }
-    if (id === 'cat') { c.lineWidth = Math.max(1.5, s * .014); c.globalAlpha = .28; for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(sd * rx * .98, -ry * .35 + k * ry * .3); c.quadraticCurveTo(sd * rx * .62, -ry * .3 + k * ry * .3, sd * rx * .5, -ry * .05 + k * ry * .3); c.stroke(); } }
-    c.globalAlpha = .5; c.strokeStyle = sp.belly; c.lineWidth = Math.max(1, s * .008);
-    for (let i = 0; i < Math.round(m / 2); i++) { const a = rnd(i + 300) * Math.PI, x = Math.cos(a) * s * .15, y = s * .03 + Math.sin(a) * s * .14, len = s * .022; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (rnd(i + 320) - .5) * len, y + len); c.stroke(); }   // soft belly fluff
+    if (id === 'cat') { c.globalAlpha = .2; c.fillStyle = art.shade(body, -.4); for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) { c.save(); c.translate(sd * rx * .8, -ry * .3 + k * ry * .3); c.rotate(sd * .5); ell(c, 0, 0, rx * .26, ry * .06); c.fill(); c.restore(); } }
+    c.restore();
     c.globalAlpha = 1;
+    // soft fluff on the belly: a pale glow
+    const bg = c.createRadialGradient(0, s * .04, 0, 0, s * .04, s * .15); bg.addColorStop(0, 'rgba(255,255,255,.28)'); bg.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = bg; ell(c, 0, s * .04, s * .15, s * .15); c.fill();
   }
   function furHead(c, id, sp, R, detail) {
     if (id === 'frog' || sp.smooth) return;
+    // fluffy cheeks: a few soft overlapping puffs, never points
     c.fillStyle = sp.body;
-    for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) {   // fluffy cheek tufts
-      c.beginPath(); c.moveTo(sd * R * .86, R * (.1 + .15 * k)); c.lineTo(sd * R * (1.1 + .04 * (k === 1)), R * (.24 + .15 * k)); c.lineTo(sd * R * .84, R * (.32 + .15 * k)); c.closePath(); c.fill();
-    }
-    c.strokeStyle = art.shade(sp.body, -.3); c.lineCap = 'round'; c.globalAlpha = .4; c.lineWidth = Math.max(1, R * .05);
-    const n = detail > 1.4 ? 7 : 5;
-    for (let k = 0; k < n; k++) { const x = (k - (n - 1) / 2) * R * .13; c.beginPath(); c.moveTo(x, -R * .6); c.quadraticCurveTo(x + (x > 0 ? 1 : -1) * R * .05, -R * .72, x * 1.5, -R * .82); c.stroke(); }
-    if (id === 'cat') { c.globalAlpha = .45; c.lineWidth = Math.max(1.2, R * .06); for (const x of [-.18, 0, .18]) { c.beginPath(); c.moveTo(x * R, -R * .5); c.lineTo(x * R * 1.2, -R * .78); c.stroke(); } }
-    c.globalAlpha = 1;
+    for (const sd of [-1, 1]) for (let k = 0; k < 3; k++) { ell(c, sd * R * (.9 + .02 * (k === 1)), R * (.2 + .15 * k), R * .16, R * .11); c.fill(); }
+    // a soft glossy crown, and (for cats) three tapered forehead stripes
+    const hg = c.createRadialGradient(-R * .3, -R * .55, R * .05, -R * .3, -R * .55, R * .6); hg.addColorStop(0, 'rgba(255,255,255,.16)'); hg.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = hg; ell(c, -R * .3, -R * .55, R * .6, R * .35); c.fill();
+    if (id === 'cat') { c.fillStyle = art.shade(/^#[0-9a-f]{3}$/i.test(sp.body) ? '#' + [...sp.body.slice(1)].map(ch => ch + ch).join('') : sp.body, -.3); c.globalAlpha = .3; for (const x of [-.2, 0, .2]) { c.save(); c.translate(x * R, -R * .64); c.rotate(x * .6); ell(c, 0, 0, R * .035, R * .16); c.fill(); c.restore(); } c.globalAlpha = 1; }
   }
 
   // One pet standing on the line y = 0 (its feet), s = about its height. o: { mood, hop, hat, wave, detail }

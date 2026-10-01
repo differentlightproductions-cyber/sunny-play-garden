@@ -5,7 +5,7 @@
   const { store, voice, safe, art } = SPG;
   const $ = id => document.getElementById(id);
   const screens = { who: $('who'), setup: $('setup'), hub: $('hub'), stage: $('stage') };
-  const overlays = { brk: $('break'), gate: $('gate'), parent: $('parent'), studio: $('studio'), fs: $('fs-resume') };
+  const overlays = { brk: $('break'), gate: $('gate'), parent: $('parent'), studio: $('studio'), fs: $('fs-resume'), vintro: $('vintro') };
   let current = 'who';
   let running = null;
 
@@ -99,7 +99,16 @@
     const name = input.value.trim() || (nickGrid && nickGrid.value) || '';
     if (!name) { const t = $('nick-pick'); t.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'none' }], { duration: 250 }); SPG.sfx.oops(); return; }
     input.blur();
-    choose(store.addProfile(name, pickedAvatar));
+    const first = store.profiles.length === 0, p = store.addProfile(name, pickedAvatar);
+    // the very first time, grown-ups are asked to choose the family voices (5-10 people) before play starts
+    if (first && SPG.config.recorder && !store.settings.voiceIntroDone) {
+      store.settings.voiceIntroDone = true; store.save();
+      SPG.studio.intro($('vintro-body'), (act, id) => {
+        closeOverlay(overlays.vintro); choose(p);
+        if (act === 'record' && id) { SPG.studio.begin(id); openStudio(); }
+      });
+      openOverlay(overlays.vintro);
+    } else choose(p);
   });
 
   /* ------------------------------------------------------------ hub */
@@ -657,6 +666,7 @@
   /* ------------------------------------------------------------ safe mode wiring */
   safe.onBack = () => {
     if (!overlays.gate.classList.contains('hidden')) { gateState = null; closeOverlay(overlays.gate); return; }
+    if (!overlays.vintro.classList.contains('hidden')) return;
     if (!overlays.studio.classList.contains('hidden')) { closeStudio(); return; }
     if (!overlays.parent.classList.contains('hidden')) { closeParent(); return; }
     if (!overlays.fs.classList.contains('hidden') || !overlays.brk.classList.contains('hidden')) return;

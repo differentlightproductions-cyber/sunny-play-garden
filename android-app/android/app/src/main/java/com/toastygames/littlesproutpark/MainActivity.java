@@ -13,7 +13,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // Configure the window before Capacitor creates its WebView.
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowCompat.enableEdgeToEdge(getWindow());
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getBridge() != null && getBridge().getWebView() != null) {

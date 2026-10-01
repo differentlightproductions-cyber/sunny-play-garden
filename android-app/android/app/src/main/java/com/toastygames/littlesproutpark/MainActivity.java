@@ -12,9 +12,9 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Configure the window before Capacitor creates its WebView.
-        WindowCompat.enableEdgeToEdge(getWindow());
         super.onCreate(savedInstanceState);
+        // Let the game extend behind system bars after the splash theme has changed.
+        WindowCompat.enableEdgeToEdge(getWindow());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (getBridge() != null && getBridge().getWebView() != null) {
             // sounds and music may start as soon as the game asks (the game itself waits for the first touch)

@@ -1,0 +1,20 @@
+{
+  "name": "little-sprout-park-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Android app shell for Little Sprout Park. The game itself lives in the repo root; this folder only packages it.",
+  "scripts": {
+    "web": "node build-web.mjs",
+    "sync": "node build-web.mjs && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/share": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0"
+  }
+}

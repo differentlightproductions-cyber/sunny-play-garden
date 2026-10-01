@@ -9,12 +9,23 @@
 //   PUT    /api/backup   { rev, blob }  -> 200 { rev, updated } | 409 { rev } (someone saved in between) | 413 | 429
 //   DELETE /api/backup   -> 204
 //   GET    /api/health   -> 200 "ok"
+//   GET    /api/voice            -> 200 { items: [{ k, s, n }] }   the recorded voices, one encrypted file per line
+//   GET    /api/voice?k=<64 hex> -> 200 the encrypted bytes | 404
+//   PUT    /api/voice?k=<64 hex> (X-Stamp: when it was recorded) -> 204 | 413 | 429
+//   DELETE /api/voice?k=<64 hex> -> 204    DELETE /api/voice (no k) -> 204, removes every voice file
+// Voice files are encrypted on the device like the backup, and the names they are stored under are scrambled (a keyed
+// hash), so the server cannot tell whose voice it is or which line it says.
+// The website and the Android app (origin https://localhost) may both call these routes.
 // Every backup request carries `X-Family: <64 hex chars>`.
 import { DurableObject } from 'cloudflare:workers';
 
 const MAX_BLOB = 2_400_000;          // characters of ciphertext (about 1.8 MB), far more than a family will ever use
 const CHUNK = 400_000;               // stored in pieces so no single row gets too big
 const KEEP_DAYS = 400;               // a backup nobody has touched for this long is deleted
+const MAX_CLIP = 400_000;            // bytes per encrypted voice file (a spoken line is about 15-40 KB)
+const MAX_VOICE_TOTAL = 80_000_000;  // bytes of voice files per family
+const MAX_VOICE_COUNT = 6000;        // files per family
+const APP_ORIGINS = new Set(['https://localhost']);   // the Android app (Capacitor serves the game from here)
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
 export class Backups extends DurableObject {
@@ -27,7 +38,24 @@ export class Backups extends DurableObject {
   tables() {
     this.sql.exec('CREATE TABLE IF NOT EXISTS chunks (i INTEGER PRIMARY KEY, b TEXT NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS voice (k TEXT PRIMARY KEY, s INTEGER NOT NULL, n INTEGER NOT NULL, b BLOB NOT NULL)');
   }
+  // ---- voice files (this object is the family's "voice:<id>" one, separate from its backup)
+  vlist() { this.tables(); return this.sql.exec('SELECT k, s, n FROM voice ORDER BY k').toArray(); }
+  vget(k) { this.tables(); const r = this.sql.exec('SELECT b FROM voice WHERE k = ?', k).toArray(); return r.length ? r[0].b : null; }
+  async vput(k, bytes, stamp) {
+    this.tables();
+    const hour = Math.floor(Date.now() / 3.6e6), n = this.meta('vhour') === String(hour) ? Number(this.meta('vhits') || 0) : 0;
+    if (n >= 3000) return { limited: true };
+    this.setMeta('vhour', hour); this.setMeta('vhits', n + 1);
+    const old = this.sql.exec('SELECT n FROM voice WHERE k = ?', k).toArray(), tot = this.sql.exec('SELECT COALESCE(SUM(n), 0) AS t, COUNT(*) AS c FROM voice').toArray()[0];
+    if (tot.t - (old.length ? old[0].n : 0) + bytes.byteLength > MAX_VOICE_TOTAL || (!old.length && tot.c >= MAX_VOICE_COUNT)) return { full: true };
+    this.sql.exec('INSERT OR REPLACE INTO voice (k, s, n, b) VALUES (?, ?, ?, ?)', k, stamp, bytes.byteLength, bytes);
+    await this.ctx.storage.setAlarm(Date.now() + KEEP_DAYS * 864e5);
+    return { ok: true };
+  }
+  vdel(k) { this.tables(); this.sql.exec('DELETE FROM voice WHERE k = ?', k); }
+  async vclear() { await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); }
   meta(k) { const r = this.sql.exec('SELECT v FROM meta WHERE k = ?', k).toArray(); return r.length ? r[0].v : null; }
   setMeta(k, v) { this.sql.exec('INSERT OR REPLACE INTO meta (k, v) VALUES (?, ?)', k, String(v)); }
 
@@ -66,25 +94,65 @@ export class Backups extends DurableObject {
   }
 }
 
+const corsFor = origin => origin && APP_ORIGINS.has(origin) ? {
+  'Access-Control-Allow-Origin': origin, 'Vary': 'Origin', 'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'X-Family, X-Stamp, Content-Type', 'Access-Control-Max-Age': '86400'
+} : null;
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', { status: 404 });
-    // The app talks to its own address only.
+    // The website talks to its own address; the Android app is the one other caller that is allowed.
     const origin = request.headers.get('Origin');
-    if (origin && new URL(origin).host !== url.host) return json({ error: 'forbidden' }, 403);
+    const cors = corsFor(origin);
+    if (origin && !cors && new URL(origin).host !== url.host) return json({ error: 'forbidden' }, 403);
+    if (request.method === 'OPTIONS') return cors ? new Response(null, { status: 204, headers: cors }) : new Response(null, { status: 204 });
+    const res = await route(request, env, url);
+    if (!cors) return res;
+    const out = new Response(res.body, res);
+    for (const [k, v] of Object.entries(cors)) out.headers.set(k, v);
+    return out;
+  }
+};
+
+async function route(request, env, url) {
     if (url.pathname === '/api/health') return new Response('ok', { headers: { 'Cache-Control': 'no-store' } });
-    if (url.pathname !== '/api/backup') return json({ error: 'not found' }, 404);
+    if (url.pathname !== '/api/backup' && url.pathname !== '/api/voice') return json({ error: 'not found' }, 404);
 
     const id = request.headers.get('X-Family') || '';
     if (!/^[a-f0-9]{64}$/.test(id)) return json({ error: 'bad id' }, 400);
-    const stub = env.BACKUPS.get(env.BACKUPS.idFromName('fam:' + id));
 
+    if (url.pathname === '/api/voice') {
+      const vs = env.BACKUPS.get(env.BACKUPS.idFromName('voice:' + id)), k = url.searchParams.get('k');
+      if (k !== null && !/^[a-f0-9]{64}$/.test(k)) return json({ error: 'bad key' }, 400);
+      if (request.method === 'GET' && k === null) return json({ items: await vs.vlist() });
+      if (request.method === 'GET') {
+        const b = await vs.vget(k);
+        return b ? new Response(b, { headers: { 'Content-Type': 'application/octet-stream', 'Cache-Control': 'no-store' } }) : json({ error: 'none' }, 404);
+      }
+      if (request.method === 'DELETE') { if (k === null) await vs.vclear(); else await vs.vdel(k); return new Response(null, { status: 204 }); }
+      if (request.method === 'PUT' && k !== null) {
+        const len = Number(request.headers.get('Content-Length') || 0);
+        if (len > MAX_CLIP) return json({ error: 'too big' }, 413);
+        const bytes = await request.arrayBuffer();
+        if (bytes.byteLength > MAX_CLIP || bytes.byteLength < 29) return json({ error: 'too big' }, 413);
+        const stamp = Math.floor(Number(request.headers.get('X-Stamp') || 0));
+        if (!Number.isFinite(stamp) || stamp < 0) return json({ error: 'bad stamp' }, 400);
+        const r = await vs.vput(k, bytes, stamp);
+        if (r.limited) return json({ error: 'slow down' }, 429);
+        if (r.full) return json({ error: 'full' }, 413);
+        return new Response(null, { status: 204 });
+      }
+      return json({ error: 'method' }, 405);
+    }
+
+    const stub = env.BACKUPS.get(env.BACKUPS.idFromName('fam:' + id));
     if (request.method === 'GET') {
       const got = await stub.get();
       return got ? json(got) : json({ error: 'none' }, 404);
     }
-    if (request.method === 'DELETE') { await stub.remove(); return new Response(null, { status: 204 }); }
+    if (request.method === 'DELETE') { await stub.remove(); await env.BACKUPS.get(env.BACKUPS.idFromName('voice:' + id)).vclear(); return new Response(null, { status: 204 }); }
     if (request.method === 'PUT') {
       const len = Number(request.headers.get('Content-Length') || 0);
       if (len > MAX_BLOB + 1000) return json({ error: 'too big' }, 413);
@@ -103,5 +171,4 @@ export default {
       return json(res);
     }
     return json({ error: 'method' }, 405);
-  }
-};
+}

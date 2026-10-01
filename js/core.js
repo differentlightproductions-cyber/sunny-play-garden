@@ -269,6 +269,30 @@
     bubble() { tone(520 + Math.random() * 500, .1, { slide: 1.8, vol: .07 }); },
     lullaby() { [4, 2, 0].forEach((n, k) => tone(NOTES[n] * .75, .6, { at: k * .5, vol: .09 })); },
     munch() { noise(.06, { freq: 1500, q: 1.2, vol: .13 }); noise(.05, { freq: 900, q: 1, vol: .1, at: .08 }); },
+    // Fire Rescue's hose: one soft, steady stream of water for as long as she holds her finger down (not a series of bursts).
+    // A gentle rush (filtered noise, no whistle) over a low watery body with a slow flow in it. Returns { set(0..1), off() }.
+    hose() {
+      const c = A.ctx; if (!c || !SPG.store.settings.sound) return { set() {}, off() {} };
+      if (!noiseBuf) { noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      const t = c.currentTime, f = (type, hz, q) => { const n = c.createBiquadFilter(); n.type = type; n.frequency.value = hz; n.Q.value = q; return n; };
+      const mk = (rate, hz1, type1, hz2, gain) => {
+        const s = c.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.playbackRate.value = rate; s.loopStart = Math.random() * .5;
+        const a = f(type1, hz1, .4), b = f('lowpass', hz2, .4), g = c.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(gain, t + .18);
+        s.connect(a); a.connect(b); b.connect(g); g.connect(A.master); s.start(t); return { s, g, gain };
+      };
+      const rush = mk(.92, 500, 'highpass', 3300, .05), body = mk(.6, 120, 'highpass', 750, .045);
+      const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 5.2; lg.gain.value = .012; lfo.connect(lg); lg.connect(rush.g.gain); lfo.start(t);
+      let off = false;
+      return {
+        set(level) { if (!off) for (const v of [rush, body]) v.g.gain.setTargetAtTime(v.gain * (.6 + .6 * level), c.currentTime, .1); },
+        off() { if (off) return; off = true; const n = c.currentTime; for (const v of [rush, body]) { v.g.gain.cancelScheduledValues(n); v.g.gain.setTargetAtTime(.0001, n, .07); v.s.stop(n + .5); } lfo.stop(n + .5); }
+      };
+    },
+    // A flame going out: a soft puff of steam and a small low "whump", nothing sharp.
+    puff() {
+      noise(.55, { freq: 2200, q: .35, vol: .06, sweep: .45 }); noise(.4, { freq: 700, q: .4, vol: .05 });
+      tone(150, .3, { slide: .55, type: 'sine', vol: .09 }); tone(660, .2, { slide: 1.25, type: 'sine', vol: .03, at: .05 });
+    },
     spray() { noise(.32, { freq: 5200, q: .5, vol: .07 }); noise(.28, { freq: 3400, q: .7, vol: .05, at: .02 }); },
     // A steady, gentle purr that gets louder the more she strokes. Returns { set(level 0..1), off() }.
     // Synthesized: a soft noise band switched on and off about 25 times a second, with a low hum under it.
@@ -451,7 +475,7 @@
   };
 
   /* ---------------------------------------------------------------- safe mode */
-  const standalone = () => matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const standalone = () => (SPG.native && SPG.native.isApp) || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const safe = SPG.safe = {
     on: true,           // keep the child inside the app
     wantFullscreen: false,

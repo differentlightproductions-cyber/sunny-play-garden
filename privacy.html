@@ -45,13 +45,13 @@
   backup below.</p>
 
   <h2>Optional cloud backup (grown-ups only)</h2>
-  <p>A grown-up can turn on a backup so that players, stars and drawings can be brought back if a device is lost or
-  replaced. It is off by default and is controlled from the Grown-ups screen, which is protected by a grown-up check.</p>
+  <p>A grown-up can turn on a backup so that players, stars, drawings and the voice recordings described below can be brought back if a device is lost or
+  replaced, or shared with a second device in the same family. It is off by default and is controlled from the Grown-ups screen, which is protected by a grown-up check.</p>
   <ul>
     <li>The app makes a random <strong>family code</strong>. There is no email address, password or account.</li>
     <li>Everything is <strong>encrypted on the device</strong> using a key made from the family code before it is sent.
     The code itself never leaves the device. We store only the encrypted data and an identifier made from the code,
-    so <strong>we cannot read names, progress or drawings</strong>, and we cannot recover a lost code.</li>
+    so <strong>we cannot read names, progress, drawings or voice recordings</strong>, and we cannot recover a lost code.</li>
     <li>The encrypted copy is stored with Cloudflare, Inc., our hosting provider. We do not use it for anything else,
     and never for advertising or analytics.</li>
     <li>A grown-up can delete the cloud copy at any time (Grown-ups &rarr; Turn off and delete cloud copy). A backup that has not
@@ -62,8 +62,11 @@
 
   <h2>Microphone</h2>
   <p>The microphone is used <strong>only</strong> when a grown-up taps Record in the Grown-ups &rarr; Voices screen, so the
-  games can play their voice instead of the device's built-in voice. The recordings are stored only on that device,
-  are never uploaded, and can be deleted at any time from the same screen.</p>
+  games can play a family member's voice instead of the device's built-in voice. Recordings are stored on that device and
+  can be deleted at any time from the same screen. They are never sent anywhere unless the optional cloud backup above is on.
+  If it is on, each recording (and the names a grown-up gave the voices, such as &ldquo;Grandma&rdquo;) is encrypted on the device with the key made from
+  the family code before it is uploaded, under a scrambled file name, so we cannot listen to it or tell whose voice it is.
+  Turning the cloud backup off and deleting the cloud copy removes the uploaded recordings too. The app never records in the background.</p>
 
   <h2>Children</h2>
   <p>The app is designed for young children to use with a grown-up nearby. We do not knowingly collect personal
@@ -75,9 +78,10 @@
   Fonts and images are included with the app.</p>
 
   <h2>How the app is delivered</h2>
-  <p>The app's files are delivered over the internet by our web host (Cloudflare). Like any website, the host may keep
+  <p>The Android app contains all of its files and works fully offline; it goes online only if a grown-up turns on the optional cloud backup.
+  The cloud backup (and the web version of the game) is served by our web host (Cloudflare). Like any website, the host may keep
   standard technical logs such as IP address, time, and browser type for security and to deliver the files. We do not
-  use these logs to identify players. After the first load the app works offline.</p>
+  use these logs to identify players.</p>
 
   <h2>Deleting information</h2>
   <p>A grown-up can remove a player or reset progress in Grown-ups &rarr; Players. Clearing the app's storage, or

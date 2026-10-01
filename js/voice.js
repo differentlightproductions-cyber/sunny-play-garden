@@ -131,6 +131,11 @@
   let manifest = null;
   let db = null;
   const buffers = new Map(); // "set/key" -> AudioBuffer | null
+  // When each recording was made (kept beside the clips), so the cloud copy can tell which of two versions is newer.
+  const STAMPS = 'spg.vstamps';
+  const stamps = (() => { try { return JSON.parse(localStorage.getItem(STAMPS)) || {}; } catch (_) { return {}; } })();
+  const keepStamps = () => { try { localStorage.setItem(STAMPS, JSON.stringify(stamps)); } catch (_) { /* ignore */ } };
+  const changed = () => { try { SPG.sync && SPG.sync.voicesChanged && SPG.sync.voicesChanged(); } catch (_) { /* never break recording */ } };
 
   const idb = (mode, fn) => new Promise(resolve => {
     if (!db) return resolve(null);
@@ -186,22 +191,39 @@
   }
 
   /* ------------------------------------------------------------ playback */
-  let token = 0, current = null, voiceObj;
+  let token = 0, current = null, voiceObj, voiceMode = '';
+  // The built-in speaking voice (used for any line nobody has recorded). Phones and tablets list many voices; the plain
+  // "compact" ones sound robotic, while network / enhanced / neural ones sound much more like a person. Online we prefer those;
+  // offline only voices stored on the device can be used. A grown-up can also pick one by ear (Grown-ups > Voices).
+  const voiceScore = (v, online) => {
+    const n = `${v.name} ${v.voiceURI || ''}`;
+    let s = 0;
+    if (/^en[-_]US/i.test(v.lang)) s += 10; else if (/^en[-_](GB|AU|CA|IE|NZ|ZA|IN)/i.test(v.lang)) s += 5; else if (/^en/i.test(v.lang)) s += 2; else return -99;
+    if (/neural|natural|enhanced|premium|wavenet|studio/i.test(n)) s += 9;
+    if (/network|online/i.test(n)) s += online ? 8 : -99;
+    if (v.localService === false && !online) s -= 99;
+    if (/female|samantha|aria|jenny|ava|allison|nicky|karen|zira|susan|google us english|x-tpf|x-sfg|x-tpc|x-iob|x-iol/i.test(n)) s += 3;
+    if (/compact|espeak|robot|novelty|bad news|whisper|bubbles|boing|zarvox|trinoids|albert|fred|junior/i.test(n)) s -= 12;
+    return s;
+  };
+  const englishVoices = () => ('speechSynthesis' in window ? speechSynthesis.getVoices() : []).filter(v => /^en/i.test(v.lang));
   function pickVoice() {
-    if (voiceObj !== undefined) return voiceObj;
-    const list = speechSynthesis.getVoices();
-    if (!list.length) return null;
-    voiceObj = list.find(v => /en[-_]US/i.test(v.lang) && /female|google us|samantha|aria|jenny/i.test(v.name))
-      || list.find(v => /en[-_]US/i.test(v.lang)) || list.find(v => /^en/i.test(v.lang)) || null;
+    const online = navigator.onLine !== false, mode = (store.settings.ttsVoice || '') + (online ? '|on' : '|off');
+    if (voiceObj !== undefined && voiceMode === mode) return voiceObj;
+    const list = englishVoices(); if (!list.length) return null;
+    voiceMode = mode;
+    const chosen = store.settings.ttsVoice && list.find(v => (v.voiceURI || v.name) === store.settings.ttsVoice);
+    voiceObj = chosen || list.map(v => [voiceScore(v, online), v]).filter(x => x[0] > -50).sort((p, q) => q[0] - p[0]).map(x => x[1])[0] || list[0] || null;
     return voiceObj;
   }
   if ('speechSynthesis' in window) speechSynthesis.addEventListener?.('voiceschanged', () => { voiceObj = undefined; });
+  addEventListener('online', () => { voiceObj = undefined; }); addEventListener('offline', () => { voiceObj = undefined; });
 
   function speak(text) {
     return new Promise(resolve => {
       if (!('speechSynthesis' in window) || !text) return resolve();
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = .82; u.pitch = 1.2; u.lang = 'en-US';
+      u.rate = .9; u.pitch = 1.05; u.lang = 'en-US';   // a lightly raised pitch only: a lot of it makes voices sound robotic
       const v = pickVoice(); if (v) u.voice = v;
       let done = false;
       const fin = () => { if (!done) { done = true; resolve(); } };
@@ -270,11 +292,14 @@
     const ok = await idb('readwrite', st => st.put(blob, set + '/' + key));
     if (!ok) throw new Error('Could not save the recording.');
     (deviceKeys[set] || (deviceKeys[set] = new Set())).add(key); buffers.set(set + '/' + key, buf);
+    stamps[set + '/' + key] = Date.now(); keepStamps(); changed();
     return buf;
   }
   async function deleteClip(set, key) {
     await idb('readwrite', st => st.delete(set + '/' + key));
     deviceKeys[set] && deviceKeys[set].delete(key); buffers.delete(set + '/' + key);
+    delete stamps[set + '/' + key]; keepStamps();
+    try { SPG.sync && SPG.sync.voiceClipGone && SPG.sync.voiceClipGone(set, key); } catch (_) { /* ignore */ }
   }
   async function previewClip(set, key) {
     A.unlock(); await ready;
@@ -287,20 +312,71 @@
     hushed: false, // true inside the Coloring Book: no spoken voices at all
     LINES, SOUNDS, PICK_NAMES, PHONICS, NAMES, WORDS, PRAISE, GROUPS, SETS, custom, ready,
     syncSets,
+    // the built-in speaking voice, for the grown-ups' picker
+    ttsVoices() { return englishVoices().map(v => ({ id: v.voiceURI || v.name, label: `${v.name} (${v.lang})${v.localService === false ? ' · needs internet' : ''}` })); },
+    ttsChosen() { return store.settings.ttsVoice || ''; },
+    setTtsVoice(id) { store.settings.ttsVoice = id || ''; voiceObj = undefined; store.save(); },
+    ttsCurrentName() { const v = pickVoice(); return v ? v.name : ''; },
+    hearTts() { return speak('Hello! Let’s play and learn together.'); },
     addVoice(name) {
       const list = store.settings.voices || (store.settings.voices = []);
       const id = 'v' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
-      list.push({ id, name: String(name).trim().slice(0, 24) || 'New voice' }); store.save(); syncSets(); return id;
+      list.push({ id, name: String(name).trim().slice(0, 24) || 'New voice', t: Date.now() }); store.save(); syncSets(); changed(); return id;
     },
-    renameVoice(id, name) { const v = (store.settings.voices || []).find(x => x.id === id); if (v) { v.name = String(name).trim().slice(0, 24) || v.name; store.save(); syncSets(); } },
+    renameVoice(id, name) { const v = (store.settings.voices || []).find(x => x.id === id); if (v) { v.name = String(name).trim().slice(0, 24) || v.name; v.t = Date.now(); store.save(); syncSets(); changed(); } },
     // Removes the voice and every clip recorded for it.
     async removeVoice(id) {
-      for (const key of [...(deviceKeys[id] || [])]) await idb('readwrite', st => st.delete(id + '/' + key));
+      const gone = [...(deviceKeys[id] || [])];
+      (store.settings.voicesRemoved || (store.settings.voicesRemoved = [])).includes(id) || store.settings.voicesRemoved.push(id);   // so other devices let it go too
+      for (const key of gone) { await idb('readwrite', st => st.delete(id + '/' + key)); delete stamps[id + '/' + key]; }
+      keepStamps();
       deviceKeys[id] = new Set(); for (const k of [...buffers.keys()]) if (k.startsWith(id + '/')) buffers.delete(k);
       store.settings.voices = (store.settings.voices || []).filter(x => x.id !== id);
       store.settings.voiceOff = (store.settings.voiceOff || []).filter(x => x !== id);
       if (store.settings.voicePref === id) store.settings.voicePref = 'mix';
       store.save(); syncSets();
+      try { SPG.sync && SPG.sync.voiceRemoved && SPG.sync.voiceRemoved(id, gone); } catch (_) { /* ignore */ }
+    },
+    // ---- what the cloud copy needs (see js/sync.js)
+    async syncList() {   // every recording kept on this device: { set, key, stamp }
+      await ready; const out = [];
+      for (const [set, keys] of Object.entries(deviceKeys)) for (const key of keys) {
+        const id = set + '/' + key; if (!stamps[id]) { stamps[id] = Date.now(); }   // recorded before stamps existed: counts from now
+        out.push({ set, key, stamp: stamps[id] });
+      }
+      keepStamps(); return out;
+    },
+    async syncBlob(set, key) { await ready; return idb('readonly', st => st.get(set + '/' + key)); },
+    stampOf: (set, key) => stamps[set + '/' + key] || 0,
+    // Store a recording that came from the cloud copy. It is not decoded now: that happens when it is first played.
+    async importClip(set, key, blob, stamp) {
+      await ready; if (!db) return false;
+      const ok = await idb('readwrite', st => st.put(blob, set + '/' + key)); if (!ok) return false;
+      (deviceKeys[set] || (deviceKeys[set] = new Set())).add(key); buffers.delete(set + '/' + key);
+      stamps[set + '/' + key] = stamp; keepStamps(); return true;
+    },
+    // The list of named voices and the ones that were deleted, for the cloud copy.
+    voiceList() {
+      const list = store.settings.voices || []; for (const v of list) if (!v.t) v.t = Date.now();
+      return { voices: list.map(v => ({ id: v.id, name: v.name, t: v.t })), removed: store.settings.voicesRemoved || [] };
+    },
+    // Merge a list that came from the cloud copy: new voices appear, the newer name wins, deleted voices go.
+    async adoptVoiceList(remote) {
+      let changedAny = false; const list = store.settings.voices || (store.settings.voices = []);
+      const removed = new Set([...(store.settings.voicesRemoved || []), ...((remote && remote.removed) || [])]);
+      store.settings.voicesRemoved = [...removed];
+      for (const rv of (remote && remote.voices) || []) {
+        if (!rv || !rv.id || !rv.name || removed.has(rv.id)) continue;
+        const mine = list.find(v => v.id === rv.id);
+        if (mine) { if ((rv.t || 0) > (mine.t || 0) && mine.name !== rv.name) { mine.name = String(rv.name).slice(0, 24); mine.t = rv.t; changedAny = true; } continue; }
+        // the same person set up on two devices: an empty local voice with the same name just becomes the cloud one
+        const twin = list.find(v => v.name.toLowerCase() === String(rv.name).toLowerCase() && !(deviceKeys[v.id] && deviceKeys[v.id].size) && !(remote.voices || []).some(o => o.id === v.id));
+        if (twin) { list.splice(list.indexOf(twin), 1); }
+        list.push({ id: rv.id, name: String(rv.name).slice(0, 24), t: rv.t || Date.now() }); changedAny = true;
+      }
+      for (const id of removed) if (list.some(v => v.id === id)) { await SPG.voice.removeVoice(id); changedAny = true; }
+      if (changedAny) { store.save(); syncSets(); }
+      return changedAny;
     },
     originalText,
     setText(key, text) {

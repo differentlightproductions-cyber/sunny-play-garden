@@ -471,7 +471,11 @@
       c.globalAlpha = 1;
       if (this.met) this.drawMeteors(c);
       // bucket
-      if (this.bucketHide < .98) art.bucket(c, this.bucket.x, this.rimY + this.bucketHide * this.h * .4, this.bw, this.bh, this.fill, this.t, this.moodT > 0 || this.rainbow > .5 ? 'cheer' : 'happy');
+      if (this.bucketHide < .98) {
+        const by = this.rimY + this.bucketHide * this.h * .4, mood = this.moodT > 0 || this.rainbow > .5 ? 'cheer' : 'happy';
+        // while the meteors fall she holds a glowing star net instead of the rain bucket
+        if (this.met) art.catcher(c, this.bucket.x, by, this.bw, this.bh, this.t, mood, this.moodT > 0 ? 1 : 0); else art.bucket(c, this.bucket.x, by, this.bw, this.bh, this.fill, this.t, mood);
+      }
       if (this.pets) this.drawPets(c);
       this.fx.draw(c);
       if (this.flash > 0) { c.fillStyle = `rgba(255, 255, 236, ${(this.flash * .28).toFixed(3)})`; c.fillRect(0, 0, w, h); }

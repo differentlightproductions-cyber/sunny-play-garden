@@ -304,56 +304,79 @@
     menu() {
       this.reset('lg-menu');
       const name = displayName();
+      // The six activities look like the little app icons on the games page: a bright little scene with a soft sky, hills and a
+      // few friends, drawn in a square (see the .lg-mode styles).
+      const sc = (c, w, h, top, bot, hillA, hillB) => {
+        const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, top); g.addColorStop(1, bot); c.fillStyle = g; c.fillRect(0, 0, w, h);
+        const gl = c.createRadialGradient(w * .78, h * .16, 0, w * .78, h * .16, w * .5); gl.addColorStop(0, 'rgba(255,255,255,.7)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gl; c.fillRect(0, 0, w, h);
+        c.fillStyle = hillA; c.beginPath(); c.moveTo(0, h * .78); c.quadraticCurveTo(w * .28, h * .6, w * .62, h * .76); c.quadraticCurveTo(w * .85, h * .86, w, h * .72); c.lineTo(w, h); c.lineTo(0, h); c.fill();
+        c.fillStyle = hillB; c.beginPath(); c.moveTo(0, h * .88); c.quadraticCurveTo(w * .4, h * .76, w, h * .9); c.lineTo(w, h); c.lineTo(0, h); c.fill();
+        c.fillStyle = 'rgba(255,255,255,.75)'; for (const [x, y, r] of [[.12, .12, .012], [.3, .06, .01], [.9, .4, .012], [.06, .5, .01]]) { c.beginPath(); c.arc(w * x, h * y, w * r, 0, Math.PI * 2); c.fill(); }
+      };
+      const card = (c, x, y, s, rot, col, shadow = true) => { c.save(); c.translate(x, y); c.rotate(rot); if (shadow) { c.fillStyle = 'rgba(90,63,94,.16)'; art.rr(c, -s * .5, -s * .62 + s * .04, s, s * 1.24, s * .12); c.fill(); } c.fillStyle = col; art.rr(c, -s * .5, -s * .62, s, s * 1.24, s * .12); c.fill(); c.restore(); };
+      const head = (c, kind, x, y, r) => { c.save(); c.translate(x, y); art.avatar(c, kind, r); c.restore(); };
       const modes = [
         ['Trace', 'Trace letters', (c, w, h) => {
+          sc(c, w, h, '#ffd6e4', '#ffeede', '#f7c8d6', '#f0b4c8');
+          card(c, w * .5, h * .46, w * .62, -.04, '#fff');
           const s = Math.min(w, h) * .6; ghostGlyph(c, 'A', w / 2 - 30 * s / 100, h * .2, s, 1);
-          c.save(); c.translate(w * .62, h * .34); art.bee(c, Math.min(w, h) * .11, 0); c.restore();
+          c.save(); c.translate(w * .22, h * .78); c.rotate(-.7); c.fillStyle = '#ff7a8a'; art.rr(c, -w * .015, -w * .13, w * .03, w * .2, w * .01); c.fill(); c.fillStyle = '#f2c230'; c.beginPath(); c.moveTo(-w * .015, w * .07); c.lineTo(0, w * .11); c.lineTo(w * .015, w * .07); c.fill(); c.restore();
+          c.save(); c.translate(w * .74, h * .24); art.bee(c, Math.min(w, h) * .1, 0); c.restore();
+          art.star(c, w * .84, h * .66, w * .05, '#ffd54a', .2); art.star(c, w * .14, h * .22, w * .035, '#fff', 0);
         }, () => this.traceGrid()],
         ['Flash cards', 'Flash cards', (c, w, h) => {
-          const s = Math.min(w, h);
-          for (const [dx, rot, col] of [[-.12, -.12, '#ffe0a8'], [.1, .1, '#c9f0dc']]) {
-            c.save(); c.translate(w / 2 + dx * w, h / 2); c.rotate(rot); c.fillStyle = col; art.rr(c, -s * .27, -s * .34, s * .54, s * .68, s * .07); c.fill();
-            c.restore();
-          }
-          c.save(); c.translate(w / 2 + .1 * w, h / 2); c.rotate(.1);
-          glyphs.draw(c, 'B', -s * .11, -s * .26, s * .3, { color: '#ff7a8a', width: 13 });
-          c.font = `${s * .22}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🐻', 0, s * .18);
-          c.restore();
+          sc(c, w, h, '#ffe9b0', '#e2f5c9', '#bfe5a0', '#9fd685');
+          card(c, w * .3, h * .5, w * .36, -.22, '#c9f0dc'); card(c, w * .7, h * .5, w * .36, .22, '#ffd6e4'); card(c, w * .5, h * .5, w * .46, 0, '#fff');
+          glyphs.draw(c, 'B', w * .5 - w * .075, h * .27, w * .2, { color: '#ff7a8a', width: 13 });
+          head(c, 'bear', w * .5, h * .66, w * .1);
+          art.star(c, w * .8, h * .22, w * .05, '#ffd54a', .3); art.heart(c, w * .17, h * .24, w * .035, '#ff8aa3');
         }, () => this.cards()],
         ['Find it', 'Find the letter', (c, w, h) => {
-          const s = Math.min(w * .3, h * .5);
-          ['C', 'a', 'T'].forEach((ch, i) => {
-            const x = w / 2 + (i - 1) * s * 1.1 - s / 2, y = h / 2 - s * .55;
-            c.fillStyle = '#fff'; art.rr(c, x, y, s, s * 1.05, s * .18); c.fill();
-            if (i === 1) { c.strokeStyle = '#59b96e'; c.lineWidth = 6; art.rr(c, x, y, s, s * 1.05, s * .18); c.stroke(); }
-            glyphs.draw(c, ch, x + s * .18, y + s * .1, s * .62, { color: COLORS[(i * 2 + 1) % 6], width: 14 });
-          });
-          art.star(c, w / 2 + s * .5, h / 2 + s * .72, s * .2);
+          sc(c, w, h, '#c9f0e2', '#e6f8ee', '#a8dcb8', '#8fcfa6');
+          const s = w * .24;
+          [['C', .2, .74, 3], ['T', .8, .74, 5]].forEach(([ch, x, y, k]) => { card(c, w * x, h * y - s * .5, s * .8, ch === 'C' ? -.08 : .08, '#fff'); glyphs.draw(c, ch, w * x - s * .24, h * y - s * .85, s * .55, { color: COLORS[k], width: 14 }); });
+          // the magnifying glass finds the little "a"
+          c.save(); c.translate(w * .5, h * .42);
+          c.strokeStyle = '#b9805a'; c.lineWidth = w * .05; c.lineCap = 'round'; c.beginPath(); c.moveTo(w * .17, h * .17); c.lineTo(w * .3, h * .3); c.stroke();
+          c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(0, 0, w * .26, 0, Math.PI * 2); c.fill();
+          c.strokeStyle = '#59b96e'; c.lineWidth = w * .045; c.stroke();
+          glyphs.draw(c, 'a', -w * .09, -h * .12, w * .2, { color: '#ff7a8a', width: 14 });
+          c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.ellipse(-w * .13, -h * .15, w * .05, h * .02, -.7, 0, Math.PI * 2); c.fill();
+          c.restore();
+          art.star(c, w * .84, h * .2, w * .05, '#ffd54a', .2);
         }, () => this.find()],
         ['My name', 'Write my name', (c, w, h) => {
+          sc(c, w, h, '#bfe3ff', '#ece4ff', '#c9bdf2', '#b3a5ea');
+          // bunting across the top
+          c.strokeStyle = '#8a7190'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(0, h * .1); c.quadraticCurveTo(w / 2, h * .26, w, h * .1); c.stroke();
+          for (let i = 0; i < 7; i++) { const u = (i + .5) / 7, x = w * u, y = h * (.1 + .32 * u * (1 - u)), col = COLORS[i % 6]; c.fillStyle = col; c.beginPath(); c.moveTo(x - w * .035, y); c.lineTo(x + w * .035, y); c.lineTo(x, y + h * .07); c.closePath(); c.fill(); }
           const text = name || 'Me', unit = glyphs.measure(text, 1);
-          const size = Math.min(h * .34, w * .7 / unit), tw = glyphs.measure(text, size);
-          c.fillStyle = '#fff'; art.rr(c, w / 2 - tw / 2 - size * .5, h / 2 - size * .45, tw + size, size * 1.4, size * .3); c.fill();
-          text.split('').forEach((ch, i) => { const x = w / 2 - tw / 2 + glyphs.measure(text.slice(0, i), size) + i * 10 * size / 100 * 0; });
-          let x = w / 2 - tw / 2;
-          for (const ch of text) { glyphs.draw(c, ch, x, h / 2 - size * .3, size, { color: COLORS[(x | 0) % 6 === 0 ? 0 : Math.abs((x | 0)) % 6], width: 12 }); x += ((glyphs.get(ch)?.w ?? 30) + 10) * size / 100; }
-          art.star(c, w / 2 + tw / 2 + size * .3, h / 2 - size * .45, size * .26);
+          const size = Math.min(h * .3, w * .7 / unit), tw = glyphs.measure(text, size);
+          c.fillStyle = 'rgba(90,63,94,.16)'; art.rr(c, w / 2 - tw / 2 - size * .5, h * .46 - size * .4 + size * .08, tw + size, size * 1.4, size * .3); c.fill();
+          c.fillStyle = '#fff'; art.rr(c, w / 2 - tw / 2 - size * .5, h * .46 - size * .4, tw + size, size * 1.4, size * .3); c.fill();
+          let x = w / 2 - tw / 2, i = 0;
+          for (const ch of text) { glyphs.draw(c, ch, x, h * .46 - size * .22, size, { color: COLORS[i++ % 6], width: 12 }); x += ((glyphs.get(ch)?.w ?? 30) + 10) * size / 100; }
+          art.star(c, w / 2 + tw / 2 + size * .3, h * .46 - size * .4, size * .26);
+          const mine = store.active && store.active.avatar; if (mine) head(c, mine, w * .5, h * .88, w * .09);
         }, () => this.nameMode()],
         ['Sounds', 'Which picture starts with the sound', (c, w, h) => {
-          const s = Math.min(w, h);
-          c.fillStyle = '#5a3f5e'; c.beginPath(); c.moveTo(w * .12, h * .42); c.lineTo(w * .2, h * .42); c.lineTo(w * .32, h * .3); c.lineTo(w * .32, h * .7); c.lineTo(w * .2, h * .58); c.lineTo(w * .12, h * .58); c.closePath(); c.fill();
-          c.strokeStyle = '#5a3f5e'; c.lineWidth = s * .03; c.lineCap = 'round';
-          for (const r of [.07, .13]) { c.beginPath(); c.arc(w * .34, h * .5, s * r, -.9, .9); c.stroke(); }
-          [['🐻', .58], ['🐱', .75], ['🐶', .92]].forEach(([e, x], i) => { c.fillStyle = '#fff'; art.rr(c, w * (x - .07), h * .3, w * .14, h * .4, s * .05); c.fill(); c.font = `${s * .14}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e, w * x, h * .5); });
+          sc(c, w, h, '#e4d8ff', '#ffe3f1', '#d2c2f5', '#bfaaec');
+          // a speaker with sound waves, and three picture cards waiting
+          c.fillStyle = '#fff'; c.beginPath(); c.arc(w * .22, h * .45, w * .15, 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#9a7be8'; c.beginPath(); c.moveTo(w * .15, h * .42); c.lineTo(w * .2, h * .42); c.lineTo(w * .26, h * .35); c.lineTo(w * .26, h * .55); c.lineTo(w * .2, h * .48); c.lineTo(w * .15, h * .48); c.closePath(); c.fill();
+          c.strokeStyle = '#9a7be8'; c.lineWidth = w * .02; c.lineCap = 'round'; for (const r of [.05, .09]) { c.beginPath(); c.arc(w * .27, h * .45, w * r, -.9, .9); c.stroke(); }
+          [['bear', .46], ['cat', .67], ['frog', .86]].forEach(([k, x], i) => { card(c, w * (x - .0), h * .56, w * .2, i === 1 ? 0 : (i - 1) * .1, '#fff'); head(c, k, w * x, h * .6, w * .075); });
+          c.strokeStyle = '#59b96e'; c.lineWidth = w * .015; art.rr(c, w * .57, h * .56 - w * .2 * .62, w * .2, w * .2 * 1.24, w * .024); c.stroke();
+          c.fillStyle = '#ff8aa3'; c.font = `700 ${w * .14}px Fredoka, system-ui`; c.textAlign = 'center'; c.fillText('♪', w * .34, h * .22); c.fillStyle = '#ffa64d'; c.font = `700 ${w * .1}px Fredoka, system-ui`; c.fillText('♫', w * .13, h * .26);
         }, () => this.sounds()],
         ['Match', 'Match big and little letters', (c, w, h) => {
-          const s = Math.min(w * .3, h * .62);
-          [['A', -.6, '#ff7a8a'], ['a', .6, '#ff7a8a']].forEach(([ch, dx, col]) => {
-            const x = w / 2 + dx * s - s / 2, y = h / 2 - s * .6;
-            c.fillStyle = '#fff'; art.rr(c, x, y, s, s * 1.2, s * .16); c.fill();
-            glyphs.draw(c, ch, x + s * .2, y + s * (ch === 'A' ? .16 : .0), s * (ch === 'A' ? .68 : .5), { color: col, width: 14 });
-          });
-          art.heart(c, w / 2, h / 2 + s * .05, s * .17, '#ff7a8a');
+          sc(c, w, h, '#ffd8c4', '#fff0e6', '#f7c0a4', '#f0aa8a');
+          card(c, w * .3, h * .5, w * .36, -.1, '#fff'); card(c, w * .7, h * .5, w * .36, .1, '#fff');
+          glyphs.draw(c, 'A', w * .3 - w * .09, h * .3, w * .22, { color: '#ff7a8a', width: 14 });
+          glyphs.draw(c, 'a', w * .7 - w * .07, h * .36, w * .16, { color: '#ff7a8a', width: 14 });
+          c.strokeStyle = '#fff'; c.lineWidth = w * .02; c.setLineDash([w * .02, w * .03]); c.lineCap = 'round'; c.beginPath(); c.moveTo(w * .46, h * .5); c.lineTo(w * .54, h * .5); c.stroke(); c.setLineDash([]);
+          art.heart(c, w * .5, h * .5, w * .06, '#ff5c7a');
+          art.star(c, w * .5, h * .18, w * .05, '#ffd54a', .2); art.star(c, w * .86, h * .82, w * .035, '#fff', 0); art.star(c, w * .12, h * .8, w * .035, '#fff', 0);
         }, () => this.match()]
       ];
       const grid = el('div', 'lg-modes');

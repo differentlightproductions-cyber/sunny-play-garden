@@ -1,0 +1,65 @@
+# Builds the Android app (android-app/) as an Android App Bundle for Google Play.
+#
+# Run it by hand from the Actions tab ("Build Android app"), or it runs for every change to android-app, js, games and so on.
+# The result is attached to the run as "app-release-bundle" (an .aab you upload in the Play Console) and "app-debug-apk"
+# (an .apk you can install on a phone to try it before uploading).
+#
+# To get a SIGNED bundle (the one Play accepts), add these four repository secrets (Settings > Secrets and variables > Actions):
+#   ANDROID_KEYSTORE_BASE64   the upload keystore file, base64 encoded (e.g.  base64 -w0 upload.keystore)
+#   ANDROID_KEYSTORE_PASSWORD the keystore password
+#   ANDROID_KEY_ALIAS         the key alias
+#   ANDROID_KEY_PASSWORD      the key password
+# Optional repository variable SPG_API_BASE: the https address of the Cloudflare site that runs the cloud backup
+# (for example https://little-sprout-park.example.workers.dev). Without it the app still works; only cloud backup is off.
+# Without the secrets the bundle is built unsigned, which is fine for checking that it builds.
+name: Build Android app
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name shown to people (for example 1.0.0-alpha2)'
+        required: false
+        default: '1.0.0-alpha2'
+      version_code:
+        description: 'Version code: a whole number higher than every version already uploaded to Play (the first upload was 1)'
+        required: false
+        default: '2'
+  push:
+    branches: [claude-android-app]
+    paths: ['android-app/**', 'js/**', 'games/**', 'index.html', 'styles.css', 'fonts/**', 'audio/**', 'icons/**', '.github/workflows/android.yml']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: android-app/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Install and pack the game into the app
+        working-directory: android-app
+        env: { SPG_API_BASE: '${{ vars.SPG_API_BASE }}' }
+        run: |
+          npm ci
+          node build-web.mjs
+          npx cap sync android
+      - name: Restore the signing key (only if the secrets are set)
+        env: { KS: '${{ secrets.ANDROID_KEYSTORE_BASE64 }}' }
+        run: |
+          if [ -n "$KS" ]; then echo "$KS" | base64 -d > "$RUNNER_TEMP/upload.keystore"; echo "SPG_KEYSTORE=$RUNNER_TEMP/upload.keystore" >> "$GITHUB_ENV"; fi
+      - name: Build
+        working-directory: android-app/android
+        env:
+          SPG_KEYSTORE_PASSWORD: '${{ secrets.ANDROID_KEYSTORE_PASSWORD }}'
+          SPG_KEY_ALIAS: '${{ secrets.ANDROID_KEY_ALIAS }}'
+          SPG_KEY_PASSWORD: '${{ secrets.ANDROID_KEY_PASSWORD }}'
+        run: |
+          VC='${{ github.event.inputs.version_code }}'; VN='${{ github.event.inputs.version_name }}'
+          # on a push (no inputs) use the run number, offset so it is always higher than the first upload
+          if [ -z "$VC" ]; then VC=$((100 + GITHUB_RUN_NUMBER)); VN="1.0.0-build$GITHUB_RUN_NUMBER"; fi
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease assembleDebug -PspgVersionCode=$VC -PspgVersionName=$VN
+      - uses: actions/upload-artifact@v4
+        with: { name: app-release-bundle, path: android-app/android/app/build/outputs/bundle/release/*.aab }
+      - uses: actions/upload-artifact@v4
+        with: { name: app-debug-apk, path: android-app/android/app/build/outputs/apk/debug/*.apk }

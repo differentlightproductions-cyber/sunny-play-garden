@@ -63,12 +63,25 @@
         ...voice.SETS.map(s => h('div', { class: 'setting' }, h('span', {}, `${s.name} (${countFor(s.id)} lines)`), sw(!(store.settings.voiceOff || []).includes(s.id), `Include ${s.name}`, on => {
           const off = new Set(store.settings.voiceOff || []); on ? off.delete(s.id) : off.add(s.id); store.settings.voiceOff = [...off]; store.save();
         })))) : null,
+      ttsPicker(redraw),
       h('h3', {}, 'How often should the games cheer?'),
       seg([['lots', 'Every time'], ['some', 'Sometimes'], ['off', 'Never']], store.settings.praise || 'some', v => { store.settings.praise = v; store.save(); redraw(); }, 'Cheering frequency'),
       h('p', { class: 'fine' }, 'Recordings are saved on this tablet only. Each line can be switched off with its own switch, and you can hear what each line sounds like with Hear.'),
       ...voice.GROUPS.map(g => group(g, keys, muted, redraw))
     ].filter(Boolean));
     if (scroller) scroller.scrollTop = top;
+  }
+
+  // Lines nobody has recorded are read out by the device's own speaking voice. Phones have several; this picks one by ear.
+  function ttsPicker(redraw) {
+    const list = voice.ttsVoices(); if (!list.length) return null;
+    const sel = h('select', { 'aria-label': 'Built-in speaking voice' }, h('option', { value: '' }, 'Best one (automatic)' + (voice.ttsCurrentName() ? ` · now: ${voice.ttsCurrentName()}` : '')), ...list.map(v => h('option', { value: v.id }, v.label)));
+    sel.value = voice.ttsChosen();
+    sel.addEventListener('change', () => { voice.setTtsVoice(sel.value); voice.hearTts(); });
+    const hear = h('button', { class: 'btn small quiet', type: 'button' }, 'Hear it');
+    hear.addEventListener('click', () => voice.hearTts());
+    return h('div', { class: 'vtools' }, h('h3', {}, 'Built-in speaking voice'),
+      h('p', { class: 'fine' }, 'Used for any line that nobody has recorded. If it sounds robotic, try another one here. Voices marked “needs internet” are usually the most natural.'), h('div', { class: 'setting' }, sel, hear));
   }
 
   // Add, rename and remove extra voices (grandparents, cousins, the child herself...).
@@ -302,5 +315,56 @@
   // Called when the screen is closed mid-recording.
   function abort() { if (recording) { clearTimeout(recording.timer); recording.ctl.cancel(); recording = null; } if (guide) { cancelAnimationFrame(guide.raf); clearTimeout(guide.auto); } }
 
-  SPG.studio = { render, abort: () => { abort(); guide = null; adding = null; confirmDel = null; } };
+  /* ------------------------------------------------------------ first-run prompt for grown-ups */
+  // Shown once, right after the first player is made: pick the people who will record (5-10 is a good number, their
+  // choice), then either start recording or come back later. The voices live in Grown-ups > Voices from then on.
+  const FAMILY = ['Mom', 'Dad', 'Grandma', 'Grandpa', 'Auntie', 'Uncle', 'Big sister', 'Big brother', 'Cousin', 'Friend'];
+  const MAX_PEOPLE = 10;
+  function intro(body, done) {
+    const have = (store.settings.voices || []).map(v => v.name);
+    const picked = new Set(have.length ? have : ['Mom', 'Dad']);
+    const names = [...new Set([...FAMILY, ...have])];
+    let note = '', step = 1, made = [];
+    const draw = () => {
+      if (step === 2) {
+        const first = made[0];
+        const rec = h('button', { class: 'btn go', type: 'button' }, first ? `● Record now, starting with ${first.name}` : '✓ Done');
+        rec.addEventListener('click', () => done(first ? 'record' : 'later', first && first.id));
+        const later = h('button', { class: 'btn quiet', type: 'button' }, first ? 'I’ll record later' : '');
+        later.addEventListener('click', () => done('later'));
+        body.replaceChildren(...[h('h2', { class: 'guide-h' }, made.length ? `${made.length} ${made.length === 1 ? 'voice is' : 'voices are'} ready` : 'No voices added'),
+          made.length ? h('p', { class: 'lead' }, made.map(v => v.name).join(', ') + '.') : null,
+          h('p', { class: 'lead' }, 'Recording is easy: the tablet shows one line at a time, you say it, and it moves on by itself. You can pause, and hand the tablet to the next person, whenever you like. Until someone records a line, the games use the tablet’s built-in voice.'),
+          h('p', { class: 'lead' }, 'Mix and match: the games take turns between everyone who has recorded, so a line might be said by Mom, then Grandpa, then Dad. You can add more people, record more lines or switch anyone off at any time in Grown-ups, then Voices.'),
+          h('div', { class: 'guide-controls' }, rec, first ? later : null)].filter(Boolean));
+        return;
+      }
+      const chips = h('div', { class: 'vtools vchips' }, ...names.map(n => {
+        const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(picked.has(n)) }, n);
+        b.addEventListener('click', () => { if (picked.has(n)) picked.delete(n); else if (picked.size >= MAX_PEOPLE) { note = `That’s ${MAX_PEOPLE} people. Un-pick someone to choose another. You can add more later.`; draw(); return; } else picked.add(n); note = ''; draw(); });
+        return b;
+      }));
+      const input = h('input', { type: 'text', maxlength: '24', placeholder: 'Someone else, like Nana', 'aria-label': 'Another name' });
+      const addB = h('button', { class: 'btn small', type: 'button' }, '＋ Add');
+      const addIt = () => { const n = input.value.trim(); if (!n) return; if (picked.size >= MAX_PEOPLE && !picked.has(n)) { note = `That’s ${MAX_PEOPLE} people. You can add more later.`; draw(); return; } if (!names.includes(n)) names.push(n); picked.add(n); note = ''; draw(); };
+      addB.addEventListener('click', addIt); input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addIt(); } });
+      const go = h('button', { class: 'btn go', type: 'button' }, picked.size ? `Continue with ${picked.size} ${picked.size === 1 ? 'person' : 'people'}` : 'Continue without recording');
+      go.addEventListener('click', () => {
+        made = [];
+        const mine = store.settings.voices || [];
+        for (const n of names) if (picked.has(n)) { const ex = mine.find(v => v.name === n); made.push({ name: n, id: ex ? ex.id : voice.addVoice(n) }); }
+        step = 2; draw();
+      });
+      const skip = h('button', { class: 'btn quiet', type: 'button' }, 'Not now, I’ll do this later');
+      skip.addEventListener('click', () => done('skip'));
+      body.replaceChildren(...[h('h2', { class: 'guide-h' }, 'Welcome, grown-ups!'),
+        h('p', { class: 'lead' }, 'Little ones love hearing the people they know. Choose who will record the voices for the games, about 5 to 10 of the people closest to her. Parents, grandparents, aunts, uncles, cousins: your choice, and you can mix and match.'),
+        h('p', { class: 'fine' }, `Tap to pick. ${picked.size} chosen. You can add more people later in Grown-ups, then Voices.`),
+        chips, h('div', { class: 'vtools' }, input, addB), note ? h('p', { class: 'notice' }, note) : null,
+        h('div', { class: 'guide-controls' }, go, skip)].filter(Boolean));
+    };
+    draw();
+  }
+
+  SPG.studio = { intro, begin(id) { activeSet = id; guide = { picking: true, skip: 'anyone' }; message = ''; }, render, abort: () => { abort(); guide = null; adding = null; confirmDel = null; } };
 })();

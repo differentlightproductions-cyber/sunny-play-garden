@@ -36,7 +36,6 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: android-app/package-lock.json }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
-      - uses: android-actions/setup-android@v3
       - name: Install and pack the game into the app
         working-directory: android-app
         env: { SPG_API_BASE: '${{ vars.SPG_API_BASE }}' }

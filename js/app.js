@@ -131,12 +131,12 @@
     const paint = (canvas, g) => () => {
       const r = canvas.getBoundingClientRect();
       if (!r.width) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
       canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    // Games look like little app icons: nine to a page when the screen is tall (a 3 x 3 grid), eight when it is wide (4 x 2).
+    // Games look like little app icons: nine on tall screens, eight on small landscape screens, up to fourteen on wider screens.
     // Swipe, or use the big arrows and dots underneath.
     const PER_PAGE = hubPer = perPage(), pages = [];
     for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
@@ -163,7 +163,7 @@
     const go = i => { const n = Math.max(0, Math.min(pages.length - 1, i)); strip.scrollTo({ left: n * strip.clientWidth, behavior: 'smooth' }); };
     const where = () => Math.max(0, Math.min(pages.length - 1, Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth))));
     const mark = () => {
-      const i = where(); if (!hubFrozen) { hubPage = i; hubFirst = i * hubPer; }
+      const i = where(); if (!hubFrozen && pages.length > 1) hubPage = i;
       prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
       [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
     };
@@ -195,9 +195,9 @@
     }));
     drawCards();
   }
-  let hubPage = 0, hubPer = 8, hubFirst = 0, hubFrozen = false;   // hubFirst: the first game on the page she is looking at (kept steady while the screen turns)
-  // Must match the grid in styles.css: tall screens (portrait, not a short landscape phone) are 3 x 3, everything else 4 x 2.
-  const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
+  let hubPage = 0, hubPer = 8, hubFrozen = false;
+  // Keep nine games on portrait screens; wider landscape screens can show all thirteen without increasing icon scale.
+  const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : matchMedia('(orientation: landscape) and (min-width: 850px)').matches ? 14 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
@@ -682,8 +682,8 @@
   let resizeTimer = 0;
   const onResize = () => { hubFrozen = true; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
     running?.inst.resize?.();
-    // turning the phone changes how many fit on a page: rebuild the pages and stay on the same games
-    if (perPage() !== hubPer && $('hub-games').firstChild) { hubPage = Math.floor(hubFirst / perPage()); renderCards(); }
+    // Turning the phone changes how many fit on a page: rebuild while keeping the same page number.
+    if (perPage() !== hubPer && $('hub-games').firstChild) renderCards();
     drawCards();
     setTimeout(() => { hubFrozen = false; }, 150);
   }, 60); };

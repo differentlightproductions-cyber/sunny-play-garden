@@ -3,10 +3,17 @@
   "appName": "Sprout Park",
   "webDir": "www",
   "backgroundColor": "#a9e1f3",
-  "server": { "androidScheme": "https" },
+  "server": {
+    "androidScheme": "https"
+  },
   "android": {
     "allowMixedContent": false,
     "webContentsDebuggingEnabled": false,
     "backgroundColor": "#a9e1f3"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "disable"
+    }
   }
 }

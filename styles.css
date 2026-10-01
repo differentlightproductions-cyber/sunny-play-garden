@@ -815,7 +815,7 @@ body.night.st-open #night-veil { opacity: 0; }
 body.night.st-open .st-panel, body.night.st-open .hud-btn, body.night.st-open .chip { filter: brightness(.7) saturate(.8); transition: filter 1.2s; }
 
 
-/* ================= hub: games as small app icons, nine to a page on tall screens and eight on wide ones ================= */
+/* ================= hub: readable app icons, with more games across larger landscape screens ================= */
 #hub-games .cards.page { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: clamp(8px, 2vmin, 24px) clamp(8px, 2vmin, 24px); padding: 4px 4px 6px; align-items: stretch; justify-items: stretch; }
 #hub-games .card { background: none; box-shadow: none; border-radius: 0; overflow: visible; container-type: size; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35em; font-size: clamp(.9rem, 2.5vmin, 1.5rem); min-width: 0; }
 #hub-games .card canvas { flex: none; width: 76%; aspect-ratio: 1; width: min(100cqw, calc(100cqh - 2.3em)); height: auto; min-height: 0; border-radius: 22%; background: var(--tint, #fff);
@@ -989,3 +989,8 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 .lg-mode .lg-mode-label { background: none; padding: 0; font-size: 1em; line-height: 1.25; text-align: center; white-space: nowrap; text-shadow: 0 2px 0 rgba(255, 255, 255, .8); }
 @media (max-height: 520px) and (orientation: landscape) { .lg-modes { grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr; align-items: center; } }
 .vtools select { flex: 1 1 220px; min-height: 48px; border-radius: 14px; border: 3px solid #e3d5ea; padding: 0 12px; font-size: 1.05rem; background: #fff; max-width: 100%; }
+
+/* More games use the existing space on wide screens; icon scale stays limited by row height. */
+@media (orientation: landscape) and (min-width: 850px) {
+  #hub-games .cards.page { grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(2, 1fr); }
+}

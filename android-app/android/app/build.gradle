@@ -9,7 +9,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Play needs every upload to have a higher versionCode than the one before. The build sets it (see
         // .github/workflows/android.yml); the default is for building by hand.
-        versionCode (project.findProperty('spgVersionCode') ?: '2').toInteger()
+        versionCode = (project.findProperty('spgVersionCode') ?: '2').toString().toInteger()
         versionName (project.findProperty('spgVersionName') ?: '1.0.0-alpha2')
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

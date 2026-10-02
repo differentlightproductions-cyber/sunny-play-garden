@@ -131,12 +131,12 @@
     const paint = (canvas, g) => () => {
       const r = canvas.getBoundingClientRect();
       if (!r.width) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
       canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    // Games look like little app icons: nine to a page when the screen is tall (a 3 x 3 grid), eight when it is wide (4 x 2).
+    // Games look like little app icons: six big ones on tablets, nine (3 x 3) on tall phones, eight (4 x 2) on wide phones.
     // Swipe, or use the big arrows and dots underneath.
     const PER_PAGE = hubPer = perPage(), pages = [];
     for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));

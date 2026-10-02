@@ -251,7 +251,7 @@ Said when a name button is touched (player nicknames and pet names) and in "Welc
 
 ## Style Studio names
 
-Said when a friend, a hairstyle or a piece of clothing is touched in the dress-up game, like "A ball gown!" or "Fairy wings!".
+Only said when "Extra audio help" is on in Grown-ups. Said when a friend, a hairstyle or a piece of clothing is touched in the dress-up game, like "A ball gown!" or "Fairy wings!".
 
 | File | Say |
 |---|---|
@@ -423,7 +423,7 @@ Said when a friend, a hairstyle or a piece of clothing is touched in the dress-u
 
 ## Sprout Kitchen names
 
-Said when an ingredient, a cutter shape, a recipe or a food group is touched in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".
+Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a cutter shape, a recipe or a food group is touched in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".
 
 | File | Say |
 |---|---|

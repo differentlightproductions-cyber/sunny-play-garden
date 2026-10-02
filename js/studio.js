@@ -147,7 +147,7 @@
     if (rec) rec.addEventListener('click', () => (isRec ? finish(redraw) : start(key, redraw)));
     const hear = h('button', { class: 'btn small quiet', type: 'button', disabled: sound && !has }, 'Hear');
     hear.addEventListener('click', async () => {
-      if (has) await voice.previewClip(activeSet, key); else voice.say({ say: voice.textFor(key) });
+      if (has) await voice.previewClip(activeSet, key); else voice.say({ say: voice.spokenFor(key) });
     });
     const edit = h('button', { class: 'btn small quiet', type: 'button', 'aria-label': 'Change the words' }, 'Edit');
     edit.addEventListener('click', () => { const n = prompt('What should this line say?', voice.textFor(key)); if (n !== null) { voice.setText(key, n); redraw(); } });

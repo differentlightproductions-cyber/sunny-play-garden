@@ -358,6 +358,7 @@
       sw.setAttribute('aria-checked', String(store.settings[key]));
       SPG.music.sync();
       if (store.settings[key] && (key === 'sound' || key === 'voice')) { key === 'sound' ? SPG.sfx.chime() : voice.say('hello'); }
+      if (store.settings[key] && key === 'audioHelp') voice.say('cookc/0');   // a sample: "Sweets!"
     });
     return h('div', { class: 'setting' }, h('span', {}, label), sw);
   }
@@ -499,7 +500,7 @@
     players.append(add);
 
     body.replaceChildren(
-      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music'), toggle('Coloring Book music', 'colorMusic')),
+      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Extra audio help', 'audioHelp'), h('p', { class: 'fine' }, 'For children who need more help hearing what things are: the games also say the name of each menu item, ingredient, piece of clothing or shop item as it is touched, and speak a little slower. Off by default, so the games stay quiet and calm.'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music'), toggle('Coloring Book music', 'colorMusic')),
       voicesSection(),
       timerSection(),
       pinSection(),

@@ -102,6 +102,13 @@
   // Purring and happy sounds for the close-up petting in Pet Care. Without a recording the game makes a soft synthesized purr.
   const PURRS = { trex: 'a low, rumbly happy growl', trike: 'a low, happy rumble', stego: 'a deep, sleepy rumble', bronto: 'a slow, deep hum', babydino: 'a squeaky happy chirp', cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
   for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
+  // "Extra audio help" (Grown-ups > Sound, off by default): lines that only say what a touched menu item, ingredient, piece of clothing
+  // or shop item is called, or comment on what is happening. Everything that teaches or tells what to do is always spoken.
+  const EXTRA_KEYS = new Set(['cook-yum', 'cook-shake', 'cook-start']);
+  const isExtra = k => EXTRA_KEYS.has(k) || /^(cookc|cookr|cook|aq|room)\//.test(k) || (/^style\//.test(k) && !/^style\/say-/.test(k));
+  // How the built-in voice should say a line when the written text comes out wrong. (A recording, or text a grown-up has edited, is never changed.)
+  // A lone "Ay" is read like the word "eye" by phone voices; a capital letter on its own is read as the letter.
+  const SAY_AS = { 'letter/a': 'A.', 'sound/x': 'kss' };
   const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
 
   // Two built-in voice slots plus any extra voices the grown-ups add and name (grandparents, cousins, the child herself...).
@@ -120,8 +127,8 @@
     { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell {her} what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style|name|cook|cookr|cookc|num)\//.test(k) },
     { id: 'numbers', title: 'Numbers (0 to 20)', note: 'Said when counting and adding: "One!", "Two!"... Say just the number.', test: k => k.startsWith('num/') },
     { id: 'names', title: 'Names in the name pickers', note: 'Said when a name button is touched (player nicknames and pet names) and in "Welcome home, ...".', test: k => k.startsWith('name/') },
-    { id: 'style', title: 'Style Studio names', note: 'Said when a friend, a hairstyle or a piece of clothing is touched in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
-    { id: 'kitchen', title: 'Sprout Kitchen names', note: 'Said when an ingredient, a cutter shape, a recipe or a food group is touched in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".', test: k => /^(cook|cookr|cookc)\//.test(k) },
+    { id: 'style', title: 'Style Studio names', note: 'Only said when "Extra audio help" is on in Grown-ups. Said when a friend, a hairstyle or a piece of clothing is touched in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
+    { id: 'kitchen', title: 'Sprout Kitchen names', note: 'Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a cutter shape, a recipe or a food group is touched in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".', test: k => /^(cook|cookr|cookc)\//.test(k) },
     { id: 'letters', title: 'Letter names (A to Z)', note: 'Say the name of the letter: "Bee", "Cee".', test: k => k.startsWith('letter/') },
     { id: 'sounds', title: 'Letter sounds (A to Z)', note: 'Say the sound the letter makes: "buh", "kuh", "sss". Not the name.', test: k => k.startsWith('sound/') },
     { id: 'words', title: 'Picture words', note: 'The word for each letter picture: apple, bear, cat...', test: k => k.startsWith('word/') },
@@ -241,14 +248,14 @@
     if (T && text) return new Promise(resolve => {
       let done = false; const fin = () => { if (!done) { done = true; resolve(); } };
       const v = pickVoice();
-      T.speak({ text, lang: (v && v.lang) || 'en-US', rate: .92, pitch: 1.0, volume: 1, voice: v && v.idx != null ? v.idx : undefined, queueStrategy: 0 }).then(fin, fin);
+      T.speak({ text, lang: (v && v.lang) || 'en-US', rate: settings().audioHelp ? .8 : .92, pitch: 1.0, volume: 1, voice: v && v.idx != null ? v.idx : undefined, queueStrategy: 0 }).then(fin, fin);
       setTimeout(fin, 1500 + text.length * 140);
       current = { stop: () => { try { T.stop(); } catch (_) { /* ignore */ } fin(); } };
     });
     return new Promise(resolve => {
       if (!('speechSynthesis' in window) || !text) return resolve();
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = .9; u.pitch = 1.05; u.lang = 'en-US';   // a lightly raised pitch only: a lot of it makes voices sound robotic
+      u.rate = settings().audioHelp ? .78 : .9; u.pitch = 1.05; u.lang = 'en-US';   // a lightly raised pitch only: a lot of it makes voices sound robotic
       const v = pickVoice(); if (v) u.voice = v;
       let done = false;
       const fin = () => { if (!done) { done = true; resolve(); } };
@@ -290,11 +297,12 @@
     if (!settings().voice || !item || SPG.voice.hushed) return;
     if (typeof item !== 'string') return item.say ? speak(item.say) : undefined;
     if (skip(item)) return;
+    if (isExtra(item) && !settings().audioHelp) return;   // only with Extra audio help
     await ready;
     const set = A.ctx ? chooseSet(item) : null;
     if (set) { const buf = await loadBuffer(set, item); if (buf) return playBuffer(buf); }
     if (item in SOUNDS) return; // sound-only: silent unless recorded
-    const text = textFor(item) === item ? (LINES[item] ?? custom[item]) : textFor(item);
+    const text = SAY_AS[item] && !(store.settings.lineText && store.settings.lineText[item]) ? SAY_AS[item] : textFor(item) === item ? (LINES[item] ?? custom[item]) : textFor(item);
     if (text) return speak(text);
   }
 
@@ -403,7 +411,8 @@
       if (changedAny) { store.save(); syncSets(); }
       return changedAny;
     },
-    originalText,
+    originalText, isExtra,
+    spokenFor: key => (SAY_AS[key] && !(store.settings.lineText && store.settings.lineText[key]) ? SAY_AS[key] : textFor(key)),
     setText(key, text) {
       const t = String(text || '').trim().slice(0, 120), map = store.settings.lineText || (store.settings.lineText = {});
       if (!t || t === originalText(key)) delete map[key]; else map[key] = t;

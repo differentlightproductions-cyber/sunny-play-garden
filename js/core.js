@@ -10,7 +10,7 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { night: 'off', nightFrom: 19, nightTo: 7, voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { night: 'off', nightFrom: 19, nightTo: 7, voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', audioHelp: false, muted: [] }, trash: [] });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);

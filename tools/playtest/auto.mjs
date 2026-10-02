@@ -1,0 +1,60 @@
+import { start, stop, newPage, login, openGame, SP } from './lib.mjs';
+const W = +process.argv[2] || 1280, H = +process.argv[3] || 800, only = process.argv[4] ? process.argv[4].split(',') : null, shots = process.argv[5] || '';
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const P = page => page.evaluate(() => { const g = SPG.cookGame; return { ...g.probe(), cutters: g.cutters, arrowPos: g.arrow ? g.arrowPos() : null, tab: g.tab, hasSt: !!g.st, left: g.st && g.st.left ? g.st.left.length : 0, canvasTop: g.canvas.getBoundingClientRect().top, spec: g.st && g.st.spec, recipe: g.R && g.R.id, sauces: g.pieces.map(p => (p.paint || []).length), plate: g.screen === 'cook' ? g.plate() : null }; });
+async function drag(page, pts, steps = 6) { await page.mouse.move(pts[0][0], pts[0][1]); await page.mouse.down(); for (const [x, y] of pts.slice(1)) await page.mouse.move(x, y, { steps }); await page.mouse.up(); }
+async function playRecipe(page, id, log) {
+  let p = await P(page);
+  // choose it from the menu
+  const recipes = await page.evaluate(() => [...new Set(SPG.cookGame.menuHit.map(m => m.id).filter(Boolean))]);
+  const cat = await page.evaluate(i => SPG.games.length && ({ sugar: 0, chip: 0, cupcake: 0, cake: 0, pancake: 0, sundae: 0, pbj: 1, toastie: 1, hamcheese: 1, veggie: 1, turkey: 1, hotdog: 1 }[i] ?? 2), id);
+  let m = (await P(page)).menu.find(x => x.tab === cat); await page.mouse.click(m.x, m.y); await wait(300);
+  m = (await P(page)).menu.find(x => x.id === id); await page.mouse.click(m.x, m.y); await wait(500);
+  const t0 = Date.now(); let lastStep = '', stuck = 0, shot = {};
+  while (Date.now() - t0 < 140000) {
+    p = await P(page);
+    if (p.screen === 'menu') break;
+    if (p.trans) { await wait(150); continue; }
+    if (p.finishedAll) { if (shots.includes('serve') && !shot.done) { shot.done = 1; await page.screenshot({ path: `${SP}/done_${id}_${W}x${H}.png` }); } if (p.arrowPos) { await page.mouse.click(p.arrowPos.x, p.arrowPos.y); await wait(400); continue; } }
+    const k = p.step; if (k !== lastStep) { log.push(`${id}: ${k}`); lastStep = k; stuck = Date.now(); }
+    const U = p.U, bx = p.bx, by = p.by, st = p.st || {};
+    if (st.fin && k !== 'serve') { await wait(200); continue; }
+    if (p.busy) { await wait(120); continue; }
+    if (k === 'add') { const it = p.tray.find(t => !t.used && p.want.includes(t.id)); if (!it) { await wait(150); continue; } await drag(page, [[it.x, it.y], [bx, by]], 8); await wait(150); }
+    else if (k === 'stir') { const pts = []; for (let a = 0; a < 3.2 * 2 * Math.PI; a += .3) pts.push([bx + Math.cos(a) * U * .2, by + Math.sin(a) * U * .12]); await drag(page, pts, 2); }
+    else if (k === 'roll') { const pts = []; for (let i = 0; i < 8; i++) pts.push([bx + (i % 2 ? 1 : -1) * U * .3, by + (i % 3 - 1) * U * .05]); await drag(page, pts, 10); }
+    else if (k === 'cut') {
+      const sandwich = p.spec.target === 'piece'; const first = p.tray[0]; await page.mouse.click(first.x, first.y); await wait(200);
+      const spots = sandwich ? [[-.14, -.14], [.14, -.14], [-.14, .14], [.14, .14]] : [[-.3, -.1], [0, -.1], [.3, -.1], [-.3, .13], [0, .13], [.3, .13]];
+      let n = (await P(page)).cuts;
+      for (const [x, y] of spots) { const q = await P(page); if (q.cuts >= spots.length) break; await page.mouse.click(bx + x * U, by + y * U); await wait(350); if (shots.includes('cut') && !shot.cut && (await P(page)).cuts === 2) { shot.cut = 1; await page.screenshot({ path: `${SP}/cut_${id}_${W}x${H}.png` }); } }
+      await wait(400);
+      if (!(await P(page)).st.fin) { const ck = (await P(page)).check; if (ck) await page.mouse.click(ck.x, ck.y); }
+    }
+    else if (k === 'fill') { const it = p.tray[0]; for (let i = 0; i < 8; i++) { const q = await P(page); if (q.st.fin) break; await page.mouse.click(it.x, it.y); await wait(500); } }
+    else if (k === 'bake') { const o = await page.evaluate(() => { const g = SPG.cookGame, b = g.U * .78; return H_geom(); function H_geom() { const S = Math.min(g.U * .78, g.SH * .62); return { x: g.bx, y: g.y0 + g.SH * .36 }; } }); await page.mouse.click(o.x, o.y); await wait(1500); }
+    else if (k === 'grill') { const it = p.tray.find(t => !t.used); if (it && p.st.units.length < 6 && (p.spec.existing ? false : true)) { const q = await P(page); const placed = q.st.units.length; if (it && !it.used) { await page.mouse.click(it.x, it.y); await wait(500); continue; } } for (const u of p.st.units) { if (u.state === 'flip') { await page.mouse.click(u.x, u.y); await wait(300); } if (u.state === 'pop') { await page.mouse.click(u.x, u.y - U * .12); await wait(300); } } await wait(300); }
+    else if (k === 'stack') { const id2 = p.want[0]; const it = p.tray.find(t => t.id === id2); if (it) { await page.mouse.click(it.x, it.y); await wait(700); } }
+    else if (k === 'decorate') {
+      const spec = p.spec, sl = p.slots; const tools = p.tray.filter(t => t.kind === 'tool');
+      for (const tl of tools) {
+        const q = await P(page); if (q.st.fin || q.check) break; await page.mouse.click(tl.x, tl.y); await wait(150);
+        for (const s of sl.slice(0, Math.min(sl.length, 3))) { await drag(page, [[s.x - s.r * .5, s.y], [s.x, s.y - s.r * .1], [s.x + s.r * .5, s.y]], 6); await wait(120); }
+        if (shots.includes('sauce') && !shot.sauce && /hotdog|hamburger/.test(id)) { shot.sauce = 1; await page.screenshot({ path: `${SP}/sauce_${id}_${W}x${H}.png` }); }
+      }
+      const q2 = await P(page); if (q2.check) { await page.mouse.click(q2.check.x, q2.check.y); await wait(300); } else if (!q2.st.fin) { for (let r = 0; r < 4; r++) for (const s of sl) { await page.mouse.click(s.x, s.y); await wait(100); } }
+    }
+    else if (k === 'slice') { await drag(page, [[bx, p.by - U * .1], [bx, by + U * .26]], 12); await wait(300); }
+    else if (k === 'serve') { if (shots.includes('serve') && !shot.s) { shot.s = 1; await wait(900); await page.screenshot({ path: `${SP}/serve_${id}_${W}x${H}.png` }); } for (const s of p.slots) for (let i = 0; i < 6; i++) { await page.mouse.click(s.x, s.y); await wait(90); } }
+    else await wait(200);
+    if (Date.now() - stuck > 50000) { log.push(`${id}: STUCK in ${k}`); break; }
+  }
+  const final = await P(page); return { id, ok: final.screen === 'menu' };
+}
+const b = await start();
+const page = await newPage(b, W, H); await login(page); await openGame(page, 'Sprout Kitchen');
+const all = ['sugar', 'chip', 'cupcake', 'cake', 'pancake', 'sundae', 'pbj', 'toastie', 'hamcheese', 'veggie', 'turkey', 'hotdog', 'hamburger', 'cheeseburger', 'double', 'veggieb', 'chickenb', 'super'];
+const log = [];
+for (const id of (only || all)) { const t0 = Date.now(); const r = await playRecipe(page, id, log); console.log(r.id, r.ok ? 'OK' : 'FAILED', ((Date.now() - t0) / 1000).toFixed(0) + 's'); }
+console.log(log.join('\n')); console.log(page.errs.join('\n') || 'no page errors');
+stop(b);

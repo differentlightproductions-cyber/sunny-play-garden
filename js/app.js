@@ -124,7 +124,7 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'], aquarium: ['#d8f2ff', '#7fc8ec'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'], aquarium: ['#d8f2ff', '#7fc8ec'], cook: ['#fff0dc', '#f5c690'] };
   function renderCards() {
     const all = SPG.games.slice().sort((a, b) => a.order - b.order);
     const games = all.filter(g => !g.shop), shops = all.filter(g => g.shop);
@@ -136,7 +136,7 @@
       const c = canvas.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.icon(c, r.width, r.height);
     };
-    // Games look like little app icons: nine on tall screens, eight on small landscape screens, up to fourteen on wider screens.
+    // Games look like little app icons: six big ones on tablets, nine (3 x 3) on tall phones, eight (4 x 2) on wide phones.
     // Swipe, or use the big arrows and dots underneath.
     const PER_PAGE = hubPer = perPage(), pages = [];
     for (let i = 0; i < games.length; i += PER_PAGE) pages.push(games.slice(i, i + PER_PAGE));
@@ -163,7 +163,7 @@
     const go = i => { const n = Math.max(0, Math.min(pages.length - 1, i)); strip.scrollTo({ left: n * strip.clientWidth, behavior: 'smooth' }); };
     const where = () => Math.max(0, Math.min(pages.length - 1, Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth))));
     const mark = () => {
-      const i = where(); if (!hubFrozen && pages.length > 1) hubPage = i;
+      const i = where(); if (!hubFrozen) { hubPage = i; hubFirst = i * hubPer; }
       prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
       [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
     };
@@ -195,9 +195,10 @@
     }));
     drawCards();
   }
-  let hubPage = 0, hubPer = 8, hubFrozen = false;
-  // Keep nine games on portrait screens; wider landscape screens can show all thirteen without increasing icon scale.
-  const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : matchMedia('(orientation: landscape) and (min-width: 850px)').matches ? 14 : 8);
+  let hubPage = 0, hubPer = 8, hubFirst = 0, hubFrozen = false;   // hubFirst: the first game on the page she is looking at (kept steady while the screen turns)
+  // Must match the grid in styles.css: tall screens (portrait, not a short landscape phone) are 3 x 3, everything else 4 x 2.
+  // Tablets (at least 600 px both ways) show six big icons a page (3 x 2 wide, 2 x 3 tall); phones keep 8 or 9.
+  const perPage = () => (matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
@@ -682,8 +683,8 @@
   let resizeTimer = 0;
   const onResize = () => { hubFrozen = true; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
     running?.inst.resize?.();
-    // Turning the phone changes how many fit on a page: rebuild while keeping the same page number.
-    if (perPage() !== hubPer && $('hub-games').firstChild) renderCards();
+    // turning the phone changes how many fit on a page: rebuild the pages and stay on the same games
+    if (perPage() !== hubPer && $('hub-games').firstChild) { hubPage = Math.floor(hubFirst / perPage()); renderCards(); }
     drawCards();
     setTimeout(() => { hubFrozen = false; }, 150);
   }, 60); };

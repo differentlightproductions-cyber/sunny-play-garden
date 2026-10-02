@@ -35,6 +35,13 @@
         </provider>
     </application>
 
+    <!-- Android 11+: lets the app see the phone's text-to-speech engine (the games read lines aloud with it). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <!-- INTERNET: only for the optional encrypted cloud backup. RECORD_AUDIO: only when a grown-up records a voice. -->

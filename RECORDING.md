@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 100 short lines.
+1. **Cheering** and **Prompts**: about 126 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -70,9 +70,35 @@ Short lines that tell her what to do.
 | `care-hungry.mp3` | Your friend is hungry! |
 | `care-dirty.mp3` | Your friend needs a bath! |
 | `care-tired.mp3` | Your friend is sleepy! |
-| `hide-start.mp3` | Who is hiding? Walk around and look! |
-| `hide-found.mp3` | Found you! |
+| `hide-start.mp3` | Who is hiding? Walk along the trail and look! |
+| `hide-found.mp3` | Found you! Come along! |
 | `hide-done.mp3` | You found everybody! |
+| `hide-gate.mp3` | You found everyone here! Follow the glowing trail to the next place! |
+| `hide-locked.mp3` | Find all your friends first! |
+| `hide-new.mp3` | A new place to explore! |
+| `hide-home.mp3` | What a wonderful adventure! Everyone is home! |
+| `cook-pick.mp3` | What shall we cook today? |
+| `cook-start.mp3` | Let us cook! Follow the chef! |
+| `cook-add.mp3` | Put it in the bowl! |
+| `cook-stir.mp3` | Stir, stir, stir! |
+| `cook-roll.mp3` | Roll the dough flat! |
+| `cook-cut.mp3` | Pick a friend and press it in! |
+| `cook-drop.mp3` | Put some dough on the tray! |
+| `cook-pour.mp3` | Pour the batter in! |
+| `cook-bake.mp3` | Into the oven! Touch the tray! |
+| `cook-ding.mp3` | Ding! It is ready! Touch the oven! |
+| `cook-grill.mp3` | Put it on the grill! |
+| `cook-flip.mp3` | Flip it over! |
+| `cook-stack.mp3` | Stack it up! Pick the glowing one! |
+| `cook-frost.mp3` | Touch the cake with icing! |
+| `cook-decorate.mp3` | Make it pretty! |
+| `cook-shake.mp3` | Shake, shake, shake! |
+| `cook-alldone.mp3` | All done? Touch the green check! |
+| `cook-slice.mp3` | Slice it with the knife! |
+| `cook-serve.mp3` | Yummy! Touch it to take a bite! |
+| `cook-yum.mp3` | Yum yum! |
+| `cook-wrong.mp3` | Try the glowing one! |
+| `cook-done.mp3` | You cooked it! Delicious! |
 | `num-1.mp3` | One! |
 | `num-2.mp3` | Two! |
 | `num-3.mp3` | Three! |
@@ -357,6 +383,102 @@ Said when she touches a friend, a hairstyle or a piece of clothing in the dress-
 | `style-say-glitter.mp3` | Glitter! |
 | `style-say-all.mp3` | All the nails! |
 | `style-say-clear.mp3` | Clean nails. |
+
+## Sprout Kitchen names
+
+Said when she touches an ingredient, a cutter shape, a recipe or a food group in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".
+
+| File | Say |
+|---|---|
+| `cookc-0.mp3` | Sweets! |
+| `cookc-1.mp3` | Sandwiches! |
+| `cookc-2.mp3` | Burgers! |
+| `cookr-sugar.mp3` | Sugar cookies! |
+| `cookr-chip.mp3` | Chocolate chip cookies! |
+| `cookr-cupcake.mp3` | Cupcakes! |
+| `cookr-cake.mp3` | A birthday cake! |
+| `cookr-pancake.mp3` | Pancakes! |
+| `cookr-sundae.mp3` | An ice cream sundae! |
+| `cookr-pbj.mp3` | Peanut butter and jelly! |
+| `cookr-toastie.mp3` | A cheese toastie! |
+| `cookr-hamcheese.mp3` | Ham and cheese! |
+| `cookr-veggie.mp3` | A veggie sandwich! |
+| `cookr-turkey.mp3` | Turkey and lettuce! |
+| `cookr-hotdog.mp3` | Hot dog pals! |
+| `cookr-hamburger.mp3` | A hamburger! |
+| `cookr-cheeseburger.mp3` | A cheeseburger! |
+| `cookr-double.mp3` | A double cheeseburger! |
+| `cookr-veggieb.mp3` | A veggie burger! |
+| `cookr-chickenb.mp3` | A chicken burger! |
+| `cookr-super.mp3` | A super burger! |
+| `cook-flour.mp3` | Flour! |
+| `cook-sugar.mp3` | Sugar! |
+| `cook-egg.mp3` | An egg! |
+| `cook-butter.mp3` | Butter! |
+| `cook-milk.mp3` | Milk! |
+| `cook-chips.mp3` | Chocolate chips! |
+| `cook-cheese.mp3` | Cheese! |
+| `cook-lettuce.mp3` | Lettuce! |
+| `cook-tomato.mp3` | Tomato! |
+| `cook-onion.mp3` | Onion! |
+| `cook-pickle.mp3` | Pickle! |
+| `cook-cucumber.mp3` | Cucumber! |
+| `cook-avocado.mp3` | Avocado! |
+| `cook-carrot.mp3` | Carrot! |
+| `cook-ham.mp3` | Ham! |
+| `cook-turkey.mp3` | Turkey! |
+| `cook-patty.mp3` | A burger patty! |
+| `cook-beanpatty.mp3` | A veggie patty! |
+| `cook-chicken.mp3` | A chicken patty! |
+| `cook-bunB.mp3` | The bottom bun! |
+| `cook-bunT.mp3` | The top bun! |
+| `cook-bread.mp3` | Bread! |
+| `cook-hotbun.mp3` | A hot dog bun! |
+| `cook-sausage.mp3` | A sausage! |
+| `cook-pancake.mp3` | Pancake! |
+| `cook-toast.mp3` | Toast! |
+| `cook-butterpat.mp3` | A pat of butter! |
+| `cook-batter.mp3` | Batter! |
+| `cook-hotbunBack.mp3` | A hot dog bun! |
+| `cook-bunny.mp3` | Bunny! |
+| `cook-bear.mp3` | Bear! |
+| `cook-cat.mp3` | Kitty! |
+| `cook-fox.mp3` | Fox! |
+| `cook-frog.mp3` | Frog! |
+| `cook-panda.mp3` | Panda! |
+| `cook-dino.mp3` | Dinosaur! |
+| `cook-unicorn.mp3` | Unicorn! |
+| `cook-flower.mp3` | Flower! |
+| `cook-heart.mp3` | Heart! |
+| `cook-ketchup.mp3` | Ketchup! |
+| `cook-mustard.mp3` | Mustard! |
+| `cook-mayo.mp3` | Mayo! |
+| `cook-pbutter.mp3` | Peanut butter! |
+| `cook-jelly.mp3` | Jelly! |
+| `cook-syrup.mp3` | Syrup! |
+| `cook-strawberry.mp3` | A strawberry! |
+| `cook-blueberry.mp3` | Blueberries! |
+| `cook-cherry.mp3` | A cherry! |
+| `cook-sprinkles.mp3` | Sprinkles! |
+| `cook-candy.mp3` | Candy! |
+| `cook-candle.mp3` | A candle! |
+| `cook-star.mp3` | A star! |
+| `cook-cone.mp3` | A cone! |
+| `cook-salt.mp3` | Salt! |
+| `cook-pepper.mp3` | Pepper! |
+| `cook-dough.mp3` | Dough! |
+| `cook-ice-pink.mp3` | Pink icing! |
+| `cook-ice-blue.mp3` | Blue icing! |
+| `cook-ice-yellow.mp3` | Yellow icing! |
+| `cook-ice-white.mp3` | White icing! |
+| `cook-ice-choc.mp3` | Chocolate icing! |
+| `cook-ice-green.mp3` | Green icing! |
+| `cook-ice-purple.mp3` | Purple icing! |
+| `cook-sc-vanilla.mp3` | Vanilla ice cream! |
+| `cook-sc-strawb.mp3` | Strawberry ice cream! |
+| `cook-sc-choc.mp3` | Chocolate ice cream! |
+| `cook-sc-mint.mp3` | Mint ice cream! |
+| `cook-sc-blueb.mp3` | Blueberry ice cream! |
 
 ## Letter names (A to Z)
 

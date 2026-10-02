@@ -31,7 +31,7 @@
     'train-start': 'All aboard! Fill up the train!', 'train-go': 'Choo choo! Off we go!', 'train-wrong': 'Try another one!',
     'puzzle-start': 'Put the picture together!', 'puzzle-done': 'You made the picture!', 'puzzle-next': 'Tap the green arrow for another puzzle!',
     'care-start': 'Take care of your friend!', 'care-food': 'Yum! Thank you!', 'care-clean': 'So fresh and clean!', 'care-sleep': 'Shhh... sleepy time.', 'care-hungry': 'Your friend is hungry!', 'care-dirty': 'Your friend needs a bath!', 'care-tired': 'Your friend is sleepy!',
-    'hide-start': 'Who is hiding? Walk around and look!', 'hide-found': 'Found you!', 'hide-done': 'You found everybody!',
+    'hide-start': 'Who is hiding? Walk along the trail and look!', 'hide-found': 'Found you! Come along!', 'hide-done': 'You found everybody!', 'hide-gate': 'You found everyone here! Follow the glowing trail to the next place!', 'hide-locked': 'Find all your friends first!', 'hide-new': 'A new place to explore!', 'hide-home': 'What a wonderful adventure! Everyone is home!',
     'num/1': 'One!', 'num/2': 'Two!', 'num/3': 'Three!', 'num/4': 'Four!', 'num/5': 'Five!',
     'color/red': 'Red!', 'color/blue': 'Blue!', 'color/yellow': 'Yellow!', 'color/green': 'Green!',
     'shape/circle': 'Circle!', 'shape/square': 'Square!', 'shape/triangle': 'Triangle!', 'shape/star': 'Star!',

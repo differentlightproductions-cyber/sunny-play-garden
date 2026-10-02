@@ -145,6 +145,7 @@
     }
   };
 
+  let outBus = null;   // while the background music is playing its notes, they go through their own volume (so they can fade in and out)
   function tone(freq, dur, { type = 'sine', vol = .22, slide = 0, at = 0 } = {}) {
     const c = A.ctx;
     if (!c || !SPG.store.settings.sound) return;
@@ -156,7 +157,7 @@
     g.gain.setValueAtTime(.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + .015);
     g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    o.connect(g); g.connect(A.master);
+    o.connect(g); g.connect(outBus || A.master);
     o.start(t); o.stop(t + dur + .05);
   }
 
@@ -178,7 +179,7 @@
     g.gain.setValueAtTime(.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + .02);
     g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    s.connect(f); f.connect(g); g.connect(A.master);
+    s.connect(f); f.connect(g); g.connect(outBus || A.master);
     s.start(t); s.stop(t + dur + .05);
   }
 
@@ -413,7 +414,32 @@
     if (m) { tone(m, 1.4, { vol: .042 }); tone(m * 2, .6, { vol: .011 }); }
     restStep++;
   };
+  // The background music has its own volume ("bus") so one song can fade out and the next fade in.
+  let bus = null;
+  const musicBus = () => { if (!A.ctx) return null; if (!bus) { bus = A.ctx.createGain(); bus.gain.value = 1; bus.connect(A.master); } return bus; };
+  const musicWrap = fn => () => { outBus = musicBus(); try { fn(); } finally { outBus = null; } };
+  // Shuffle: when the menu music is on it plays the songs from across the games, one after another in a random order, each for
+  // three to five minutes, fading out and in so the change is gentle.
+  const SONGS = ['box', 'dino', 'thanksgiving', 'main', 'christmas', 'halloween'];
+  let shuffleTimer = 0, shuffleQueue = [], shuffleSong = '';
+  const songStep = song => (song === 'box' ? [boxStep, 640] : song === 'main' ? [musicStep, 950] : [themeStep(THEMES[song]), THEMES[song].ms]);
+  function shuffleNext(first) {
+    clearTimeout(shuffleTimer);
+    const play = () => {
+      if (!shuffleQueue.length) { shuffleQueue = SONGS.slice().sort(() => Math.random() - .5); if (shuffleQueue[0] === shuffleSong) shuffleQueue.push(shuffleQueue.shift()); }
+      shuffleSong = shuffleQueue.shift(); tbar = 0; tstep = 0; tpass = 0; beat = 0;
+      const [fn, ms] = songStep(shuffleSong), b = musicBus(); clearInterval(musicTimer);
+      if (b) { b.gain.cancelScheduledValues(A.ctx.currentTime); b.gain.setValueAtTime(.0001, A.ctx.currentTime); b.gain.linearRampToValueAtTime(1, A.ctx.currentTime + 4); }
+      musicTimer = setInterval(musicWrap(fn), ms); musicWrap(fn)();
+      shuffleTimer = setTimeout(() => shuffleNext(false), 180000 + Math.random() * 120000);   // 3 to 5 minutes
+    };
+    const b = musicBus();
+    if (first || !b || !musicTimer) { play(); return; }
+    b.gain.cancelScheduledValues(A.ctx.currentTime); b.gain.setValueAtTime(Math.max(.0001, b.gain.value), A.ctx.currentTime); b.gain.linearRampToValueAtTime(.0001, A.ctx.currentTime + 4);   // fade out...
+    shuffleTimer = setTimeout(play, 4200);                                                                                                          // ...then the next one fades in
+  }
   SPG.music = {
+    song: () => shuffleSong, skip: () => shuffleNext(false),   // (for tests and for a future skip button)
     rest(on) {
       resting = !!on; clearInterval(restTimer); restTimer = 0; restStep = 0;
       if (resting && SPG.store.settings.sound) { lullStep(); restTimer = setInterval(lullStep, 560); }
@@ -423,12 +449,13 @@
       const s = SPG.store.settings;
       const key = scene ? scene + ':' + (theme || '') : 'main';
       const want = !resting && !document.hidden && s.sound && (scene === 'color' ? s.colorMusic !== false : s.music);
-      if (musicTimer && (!want || key !== musicKey)) { clearInterval(musicTimer); musicTimer = 0; }
+      if ((musicTimer || shuffleTimer) && (!want || key !== musicKey)) { clearInterval(musicTimer); musicTimer = 0; clearTimeout(shuffleTimer); shuffleTimer = 0; if (bus) { bus.gain.cancelScheduledValues(A.ctx.currentTime); bus.gain.value = 1; } }
       if (want && !musicTimer) {
         musicKey = key;
+        if (!scene) { shuffleNext(true); return; }   // the menu music is a shuffled playlist of every song in the games
         const th = scene === 'color' && THEMES[theme];
-        const step = th ? themeStep(th) : scene === 'color' ? boxStep : musicStep;
-        step(); musicTimer = setInterval(step, th ? th.ms : scene === 'color' ? 640 : 950);
+        musicTimer = setInterval(musicWrap(th ? themeStep(th) : scene === 'color' ? boxStep : musicStep), th ? th.ms : scene === 'color' ? 640 : 950);
+        musicWrap(th ? themeStep(th) : scene === 'color' ? boxStep : musicStep)();
       }
     },
     // Switch the music to a scene ('color') with an optional theme ('halloween', 'thanksgiving', 'christmas'), or back to normal (null).

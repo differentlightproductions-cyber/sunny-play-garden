@@ -99,7 +99,7 @@
       box.append(h('div', { class: 'setting' }, input, ok, no)); setTimeout(() => input.focus(), 50);
       return box;
     }
-    const add = h('button', { class: 'btn small', type: 'button', disabled: !!recording }, '＋ Add a voice (grandparent, family, or her own)');
+    const add = h('button', { class: 'btn small', type: 'button', disabled: !!recording }, SPG.pron.fill('＋ Add a voice (grandparent, family, or {their} own)'));
     add.addEventListener('click', () => { adding = { name: '' }; redraw(); });
     box.append(add);
     if (cur && cur.extra) {
@@ -127,7 +127,7 @@
     const det = h('details', { class: 'vgroup', open: openGroups.has(g.id) });
     det.addEventListener('toggle', () => { det.open ? openGroups.add(g.id) : openGroups.delete(g.id); });
     det.append(h('summary', {}, `${g.title} `, h('span', { class: 'fine' }, `${done}/${list.length} recorded`)));
-    det.append(h('p', { class: 'fine' }, g.note));
+    det.append(h('p', { class: 'fine' }, SPG.pron.fill(g.note)));
     const allOn = list.every(k => !muted.has(k));
     det.append(h('div', { class: 'setting' }, h('span', {}, 'Use this group in the games'), sw(allOn, `Use ${g.title}`, on => {
       const m = new Set(store.settings.muted || []);
@@ -195,7 +195,7 @@
         if (n < 0) { message = 'Everything in that group is already recorded.'; guide = null; redraw(); return; }
         guide.i = n; redraw();
       };
-      const order = ['prompts', 'praise', 'names', 'letters', 'sounds', 'words', 'friends', 'critters', 'purrs', 'style', 'kitchen', 'players'];
+      const order = ['prompts', 'praise', 'names', 'numbers', 'letters', 'sounds', 'words', 'friends', 'critters', 'purrs', 'style', 'kitchen', 'players'];
       const gs = order.map(id => voice.GROUPS.find(g => g.id === id)).filter(Boolean);
       const all = keys.filter(k => voice.groupOf(k));
       const btnAll = h('button', { class: 'btn', type: 'button' }, `All of them, in order (${all.length} lines)`);
@@ -358,7 +358,7 @@
       const skip = h('button', { class: 'btn quiet', type: 'button' }, 'Not now, I’ll do this later');
       skip.addEventListener('click', () => done('skip'));
       body.replaceChildren(...[h('h2', { class: 'guide-h' }, 'Welcome, grown-ups!'),
-        h('p', { class: 'lead' }, 'Little ones love hearing the people they know. Choose who will record the voices for the games, about 5 to 10 of the people closest to her. Parents, grandparents, aunts, uncles, cousins: your choice, and you can mix and match.'),
+        h('p', { class: 'lead' }, SPG.pron.fill('Little ones love hearing the people they know. Choose who will record the voices for the games, about 5 to 10 of the people closest to {her}. Parents, grandparents, aunts, uncles, cousins: your choice, and you can mix and match.')),
         h('p', { class: 'fine' }, `Tap to pick. ${picked.size} chosen. You can add more people later in Grown-ups, then Voices.`),
         chips, h('div', { class: 'vtools' }, input, addB), note ? h('p', { class: 'notice' }, note) : null,
         h('div', { class: 'guide-controls' }, go, skip)].filter(Boolean));

@@ -993,3 +993,25 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 /* tablets: one icon fewer in every row, so each is bigger and easier to hit (must match perPage() in js/app.js) */
 @media (min-width: 600px) and (min-height: 600px) { #hub-games .cards.page { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: clamp(14px, 3vmin, 34px); } #hub-games .card { font-size: clamp(1.1rem, 3.2vmin, 1.9rem); } }
 @media (min-width: 600px) and (min-height: 600px) and (orientation: portrait) { #hub-games .cards.page { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); } }
+
+/* ---- age and difficulty (Grown-ups), and the boy/girl and age pickers at setup ---- */
+.lvl-block { border-top: 3px dashed #e8dcee; padding: 12px 0 6px; }
+.lvl-block:first-of-type { border-top: 0; }
+.lvl-head { display: flex; align-items: center; gap: 12px; }
+.lvl-head canvas { width: 52px; height: 52px; border-radius: 50%; background: var(--butter); }
+.lvl-head .name { font-weight: 700; font-size: 1.2rem; }
+.lvl-head .stat { color: var(--ink-soft); font-size: .95rem; font-weight: 600; }
+.lvl-line { display: flex; flex-direction: column; gap: 0; padding: 6px 0; border-top: 2px dotted #efe3f3; }
+.lvl-line b { font-size: 1.02rem; }
+.setup .seg { margin: 4px 0 6px; }
+.setup .seg-btn { min-width: 52px; min-height: 48px; }
+#gender-pick .seg-btn { flex: 1; font-size: 1.25rem; }
+@media (orientation: landscape) and (max-height: 520px) { .setup .field-label .fine { display: none; } .setup .seg-btn { min-height: 40px; font-size: 1rem; padding: .3em .9em; } }
+
+/* ---- Letter Garden: eight activities (two more for numbers), and the counting cards ---- */
+.lg-modes { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); max-width: 1200px; }
+@media (orientation: portrait) { .lg-modes { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); max-height: none; } }
+@media (max-height: 520px) and (orientation: landscape) { .lg-modes { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); align-items: stretch; } }
+.lg-numcard { display: block; width: min(94vw, 900px); height: min(36vh, 360px); margin-bottom: clamp(8px, 2vh, 20px); touch-action: none; flex: none; }
+.lg-num .lg-opt { padding: 8px 18px; }
+@media (max-height: 520px) and (orientation: landscape) { .lg-numcard { height: min(40vh, 150px); margin-bottom: 6px; } }

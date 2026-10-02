@@ -18,14 +18,14 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 126 short lines.
+1. **Cheering** and **Prompts**: about 135 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
 
 ## Cheering
 
-Said after she does something well. Turn down how often in the "Praise" setting.
+Said after something is done well. Turn down how often in the "Praise" setting.
 
 | File | Say |
 |---|---|
@@ -37,7 +37,7 @@ Said after she does something well. Turn down how often in the "Praise" setting.
 
 ## Prompts and instructions
 
-Short lines that tell her what to do.
+Short lines that tell {her} what to do.
 
 | File | Say |
 |---|---|
@@ -82,11 +82,14 @@ Short lines that tell her what to do.
 | `cook-add.mp3` | Put it in the bowl! |
 | `cook-stir.mp3` | Stir, stir, stir! |
 | `cook-roll.mp3` | Roll the dough flat! |
-| `cook-cut.mp3` | Pick a friend and press it in! |
+| `cook-cut.mp3` | Pick a cutter, then touch the dough! |
+| `cook-cutsand.mp3` | Pick a cutter, then touch the sandwich! |
+| `cook-oven-on.mp3` | First, turn the oven on! Touch it! |
+| `cook-squirt.mp3` | Squeeze the sauce anywhere you like! |
 | `cook-drop.mp3` | Put some dough on the tray! |
 | `cook-pour.mp3` | Pour the batter in! |
 | `cook-bake.mp3` | Into the oven! Touch the tray! |
-| `cook-ding.mp3` | Ding! It is ready! Touch the oven! |
+| `cook-ding.mp3` | It is ready! Touch the oven! |
 | `cook-grill.mp3` | Put it on the grill! |
 | `cook-flip.mp3` | Flip it over! |
 | `cook-stack.mp3` | Stack it up! Pick the glowing one! |
@@ -99,11 +102,17 @@ Short lines that tell her what to do.
 | `cook-yum.mp3` | Yum yum! |
 | `cook-wrong.mp3` | Try the glowing one! |
 | `cook-done.mp3` | You cooked it! Delicious! |
-| `num-1.mp3` | One! |
-| `num-2.mp3` | Two! |
-| `num-3.mp3` | Three! |
-| `num-4.mp3` | Four! |
-| `num-5.mp3` | Five! |
+| `count-touch.mp3` | Touch each one to count! |
+| `count-how.mp3` | How many are there? |
+| `count-find.mp3` | Touch the number! |
+| `math-plus.mp3` | plus |
+| `math-minus.mp3` | take away |
+| `math-is.mp3` | is |
+| `math-sum.mp3` | How many altogether? |
+| `math-left.mp3` | How many are left? |
+| `math-more.mp3` | One more makes |
+| `math-start.mp3` | Let us add and take away! |
+| `count-start.mp3` | Let us count! |
 | `color-red.mp3` | Red! |
 | `color-blue.mp3` | Blue! |
 | `color-yellow.mp3` | Yellow! |
@@ -163,6 +172,34 @@ Short lines that tell her what to do.
 | `hello.mp3` | Hello! |
 | `welcome-home.mp3` | Welcome home, |
 
+## Numbers (0 to 20)
+
+Said when counting and adding: "One!", "Two!"... Say just the number.
+
+| File | Say |
+|---|---|
+| `num-0.mp3` | Zero! |
+| `num-1.mp3` | One! |
+| `num-2.mp3` | Two! |
+| `num-3.mp3` | Three! |
+| `num-4.mp3` | Four! |
+| `num-5.mp3` | Five! |
+| `num-6.mp3` | Six! |
+| `num-7.mp3` | Seven! |
+| `num-8.mp3` | Eight! |
+| `num-9.mp3` | Nine! |
+| `num-10.mp3` | Ten! |
+| `num-11.mp3` | Eleven! |
+| `num-12.mp3` | Twelve! |
+| `num-13.mp3` | Thirteen! |
+| `num-14.mp3` | Fourteen! |
+| `num-15.mp3` | Fifteen! |
+| `num-16.mp3` | Sixteen! |
+| `num-17.mp3` | Seventeen! |
+| `num-18.mp3` | Eighteen! |
+| `num-19.mp3` | Nineteen! |
+| `num-20.mp3` | Twenty! |
+
 ## Names in the name pickers
 
 Said when a name button is touched (player nicknames and pet names) and in "Welcome home, ...".
@@ -214,7 +251,7 @@ Said when a name button is touched (player nicknames and pet names) and in "Welc
 
 ## Style Studio names
 
-Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".
+Said when a friend, a hairstyle or a piece of clothing is touched in the dress-up game, like "A ball gown!" or "Fairy wings!".
 
 | File | Say |
 |---|---|
@@ -386,7 +423,7 @@ Said when she touches a friend, a hairstyle or a piece of clothing in the dress-
 
 ## Sprout Kitchen names
 
-Said when she touches an ingredient, a cutter shape, a recipe or a food group in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".
+Said when an ingredient, a cutter shape, a recipe or a food group is touched in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".
 
 | File | Say |
 |---|---|
@@ -602,7 +639,7 @@ Said when a new garden friend appears.
 
 ## Critter noises (make the sound!)
 
-Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.
+Played when a garden friend is tapped. Just make the noise, like a bee buzz or a frog ribbit.
 
 | File | Say |
 |---|---|
@@ -623,7 +660,7 @@ Played when she taps a garden friend. Just make the noise, like a bee buzz or a 
 
 ## Purring and happy sounds
 
-Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.
+Played while a pet is stroked in the close-up view in Pet Care (it loops while the pet is petted). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.
 
 | File | Say |
 |---|---|

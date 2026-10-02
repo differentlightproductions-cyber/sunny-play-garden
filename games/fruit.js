@@ -89,7 +89,8 @@
       cv.addEventListener('pointermove', e => this.move(e));
       for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) cv.addEventListener(t, e => this.up(e));
     }
-    get big() { return store.settings.fruitAge === 'big'; }
+    get tier() { return SPG.level.tier('fruit'); }
+    get big() { return this.tier >= 3; }   // older kids: sly water balloons
 
     /* ------------------------------------------------------------ the theme picker */
     buildThemeUI() {
@@ -259,7 +260,7 @@
 
     spawn() {
       const count = Math.random() < .2 ? 2 + (Math.random() < .4 ? 1 : 0) : 1;
-      const r0 = Math.max(28, Math.min(68, Math.min(this.w * .09, this.h * .085)));
+      const r0 = Math.max(28, Math.min(68, Math.min(this.w * .09, this.h * .085))) * (this.tier === 1 ? 1.18 : 1);
       const g = this.h * 1.05, mid = this.w * (.22 + Math.random() * .56);
       const apex = this.h * (.55 + Math.random() * .22);
       // sometimes one of them is glowing (a bonus), and for big kids sometimes one is a water balloon
@@ -277,7 +278,7 @@
           wow: 0, blink: Math.random() * 4, glow: i === glowAt, balloon: i === balloonAt, hue: Math.floor(Math.random() * 3)
         });
       }
-      this.spawnIn = 1.2 + Math.random() * .8;
+      this.spawnIn = (1.2 + Math.random() * .8) * (this.tier === 1 ? 1.4 : this.tier === 3 ? .78 : 1);
     }
 
     sceneAt(total) { const L = ['meadow', 'beach', 'farm', 'sunset', 'autumn', 'night', 'snow', 'city']; return L[Math.floor((total || 0) / 40) % L.length]; }
@@ -290,7 +291,7 @@
       if (this.fruits.length === 0) this.spawnIn = Math.min(this.spawnIn, .35);
       if (this.spawnIn <= 0) this.spawn();
       if ((this.starIn -= dt) <= 0) { this.spawnStar(); this.starIn = 22 + Math.random() * 16; }
-      const g = this.h * 1.05 * (this.bag.theme === 'space' ? .7 : 1);
+      const g = this.h * 1.05 * (this.bag.theme === 'space' ? .7 : 1) * (this.tier === 1 ? .82 : 1);
       for (const f of this.fruits) {
         f.x += f.vx * dt; f.y += f.vy * dt; f.vy += g * dt; f.rotation += f.vr * dt; f.blink -= dt;
         let near = false; for (const st of this.ptrs.values()) if (Math.hypot(f.x - st.last.x, f.y - st.last.y) < f.r * 2.4) near = true;

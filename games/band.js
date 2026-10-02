@@ -14,7 +14,8 @@
     { sp: 'cat', inst: 'xylo', note: 2, col: '#ffd54a' }, { sp: 'fox', inst: 'flute', note: 3, col: '#7fd4f5' },
     { sp: 'frog', inst: 'bell', note: 5, col: '#a6e05a' }, { sp: 'panda', inst: 'piano', note: 4, col: '#b58cf0' }
   ];
-  const COPY_MAX = 5, REC_MAX = 10;
+  const REC_MAX = 10;
+  const copyMax = () => [0, 3, 5, 7][SPG.level.tier('band')];   // the longest tune to copy, by age tier
 
   // little instruments, drawn in front of a friend. (0, 0) = the friend's feet, u = friend height / 10.
   function instrument(c, kind, u, hit) {
@@ -147,7 +148,7 @@
           sfx.win(); this.mem.forEach(m => { m.hop = 1; });
           this.fx.burst(this.w / 2, this.h * .3, 22, { colors: BAND.map(b => b.col), speed: 300, g: 380, life: 1.2, size: 7 * this.ui, shape: 'star', up: 180 });
           if (Math.random() < .6) voice.praise();
-          c.len = Math.min(COPY_MAX, c.len + 1);
+          c.len = Math.min(copyMax(), c.len + 1);
         }
       } else {   // nothing is lost: everyone gently shakes and the tune plays again
         this.mem.forEach(m => { m.shake = 1; });

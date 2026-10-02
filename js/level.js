@@ -1,0 +1,54 @@
+// Age and difficulty. Every player has either an exact age (2 to 7) or an age group, chosen by a grown-up (at setup, or later in
+// Grown-ups > Age and difficulty). Each game asks `SPG.level.tier('rain')` and gets 1 (easiest), 2 (the original game) or 3 (older kids).
+//  - An age group is a predefined plan: every game uses that group's tier.
+//  - An exact age is a curated mix: each game steps up at its own age (RULE), so a 5-year-old might play the maths at tier 3 and
+//    the Fruit Splash balloons still at tier 2.
+// Saved on the player as `level`: { mode: 'group', group: 'tiny' | 'little' | 'big' } or { mode: 'age', age: 2..7 }.
+// A player with no choice (or an old save) is "Little kid", which is exactly how the games always played.
+(() => {
+  const SPG = window.SPG, store = SPG.store;
+
+  const GROUPS = [
+    { id: 'tiny', name: 'Toddler', ages: '2–3', tier: 1 },
+    { id: 'little', name: 'Little kid', ages: '3–5', tier: 2 },
+    { id: 'big', name: 'Big kid', ages: '6–7', tier: 3 }
+  ];
+  const AGES = [2, 3, 4, 5, 6, 7];
+  // the exact age at which each game steps up to tier 2 and to tier 3 (age 2 is always tier 1)
+  const RULE = { letters: [3, 6], numbers: [3, 5], math: [3, 5], fruit: [3, 6], rain: [3, 5], fire: [3, 5], band: [3, 5], train: [3, 6], puzzle: [3, 5], hide: [3, 6], garden: [3, 6], cook: [3, 5] };
+  // what each game does at each tier (shown to grown-ups)
+  const GAMES = [
+    ['letters', 'Letter Garden', ['Always three choices in the find-it games', 'Three choices, then four with practice', 'Four choices every time, look-alike letters allowed']],
+    ['numbers', 'Letter Garden: Numbers', ['Count 1 to 3 (then to 5), touching each one', 'Count up to 10', 'Count up to 20 in rows of five']],
+    ['math', 'Letter Garden: Add and take away', ['One more: adding within 5 with pictures', 'Adding within 10 and taking away within 5', 'Adding and taking away within 20']],
+    ['fruit', 'Fruit Splash', ['Slower fruit', 'Happy fruit, nothing is ever lost', 'Faster fruit and sly water balloons (they cost 5 points)']],
+    ['rain', 'Rain Bucket', ['The bucket fills quickly (6 drops)', 'Rainbow every 8 drops', 'A fuller bucket (14 drops) and faster rain']],
+    ['fire', 'Fire Rescue', ['One or two small flames in each building', 'Several flames in each building', 'Nearly every window is on fire, and flames flare back up if they are left alone']],
+    ['band', 'Bunny Band', ['Copy tunes of up to 3 notes', 'Copy tunes of up to 5 notes', 'Copy tunes of up to 7 notes']],
+    ['train', 'Choo-Choo Train', ['Colors and shapes, with small counts (up to 3)', 'Counts up to 4', 'Mixed signs from the start, counts up to 6']],
+    ['puzzle', 'Puzzle Pond', ['Up to 6 pieces', 'Up to 12 pieces', 'Up to 20 pieces']],
+    ['hide', 'Hide and Seek', ['Two friends in each place, the arrow comes sooner', 'Three to five friends in each place', 'At least four friends in each place, the arrow waits longer']],
+    ['garden', 'Grow a Garden', ['Plants need less water', 'The usual amount of water', 'Plants need more water']],
+    ['cook', 'Sprout Kitchen', ['Every ingredient one at a time', 'A few ingredients are counted (2)', 'Ingredients are counted up to 3']]
+  ];
+
+  const cfgOf = p => {
+    if (p && p.level && (p.level.mode === 'age' || p.level.mode === 'group')) return p.level;
+    return { mode: 'group', group: store.settings.fruitAge === 'big' ? 'big' : 'little' };   // old saves: Fruit Splash "bigger kids" meant bigger kids everywhere
+  };
+  const tierOf = (cfg, game) => {
+    if (cfg.mode === 'age') { const r = RULE[game] || [3, 6], a = +cfg.age || 4; return a < 3 ? 1 : a >= r[1] ? 3 : a >= r[0] ? 2 : 1; }
+    return (GROUPS.find(g => g.id === cfg.group) || GROUPS[1]).tier;
+  };
+
+  SPG.level = {
+    GROUPS, AGES, GAMES,
+    cfg: p => cfgOf(p || store.active),
+    // 1, 2 or 3 for this game and the active player (or the player given)
+    tier: (game, p) => tierOf(cfgOf(p || store.active), game),
+    set(p, cfg) { p.level = cfg; p.t = Date.now(); store.save(); },
+    label(p) { const c = cfgOf(p); if (c.mode === 'age') return `Age ${c.age}`; const g = GROUPS.find(x => x.id === c.group) || GROUPS[1]; return `${g.name} (${g.ages})`; },
+    // [game name, what it does for this player] for every game
+    describe(p) { const c = cfgOf(p); return GAMES.map(([id, name, d]) => [name, d[tierOf(c, id) - 1]]); }
+  };
+})();

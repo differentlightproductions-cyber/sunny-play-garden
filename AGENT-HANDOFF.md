@@ -25,3 +25,6 @@ Serve the repo (`python3 -m http.server 8123`), open `index.html`, pick a name b
 ## Ideas queued (not started)
 - Cooking: more recipes per tab, a shopping/ingredient-pick step, recipe stars shown on the hub icon, a saved "my menu" of favourite foods.
 - Hide and Seek: more places per season, friends' houses she can walk into.
+
+## Update (age levels, gender, kitchen overhaul)
+See CLAUDE.md "Age and difficulty" and "Sprout Kitchen, latest changes". Tested in headless Chromium: all 18 recipes played through at 1280x800 and 390x844, every game at three ages and three sizes, Hide and Seek map changes. Not tested by ear or on a device: the new oven bell, the soft sauce sounds, the pour/crack sounds, and the new recordings lines (`cook-oven-on`, `cook-cutsand`, `cook-squirt`, `count-*`, `math-*`, `num/0..20`; re-record via Grown-ups > Voices).

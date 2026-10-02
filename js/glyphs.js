@@ -66,7 +66,19 @@
     w: { w: 62, s: ['M4 45 L16 100 L30 60 L44 100 L56 45'] },
     x: { w: 56, s: ['M6 45 L50 100', 'M50 45 L6 100'] },
     y: { w: 56, s: ['M6 45 L28 100', 'M50 45 L26 112 C20 128 12 134 4 132'] },
-    z: { w: 52, s: ['M6 45 H46 L6 100 H46'] }
+    z: { w: 52, s: ['M6 45 H46 L6 100 H46'] },
+
+    // ---------- numbers (same handwriting, a 0 to 100 box like the capitals)
+    0: { w: 56, s: ['M28 0 A24 50 0 1 0 28 100 A24 50 0 1 0 28 0'] },
+    1: { w: 40, s: ['M6 22 L26 0 V100'] },
+    2: { w: 56, s: ['M6 26 C6 -10 52 -10 52 28 C52 50 22 70 6 100 H54'] },
+    3: { w: 54, s: ['M6 16 C14 -8 48 -6 48 24 C48 44 28 46 22 48 C50 50 54 76 46 90 C38 106 12 106 4 84'] },
+    4: { w: 56, s: ['M38 0 L4 68 H56', 'M38 30 V100'] },
+    5: { w: 54, s: ['M50 0 H12 L8 46 C20 36 50 38 50 66 C50 98 16 106 4 84'] },
+    6: { w: 56, s: ['M46 8 C20 -4 6 34 6 68 C6 110 54 110 54 72 C54 40 12 40 7 68'] },
+    7: { w: 54, s: ['M4 0 H52 L22 100'] },
+    8: { w: 56, s: ['M28 48 C6 40 6 0 28 0 C50 0 50 40 28 48 C2 56 2 100 28 100 C54 100 54 56 28 48'] },
+    9: { w: 56, s: ['M50 30 A22 28 0 1 0 50 30.01', 'M50 30 C50 70 40 100 14 100'] }
   };
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -89,7 +101,7 @@
 
   function get(ch) {
     if (!DATA[ch]) return null;
-    if (!cache[ch]) cache[ch] = { ch, w: DATA[ch].w, strokes: DATA[ch].s.map(sample), lower: ch === ch.toLowerCase() };
+    if (!cache[ch]) cache[ch] = { ch, w: DATA[ch].w, strokes: DATA[ch].s.map(sample), lower: /[a-z]/.test(ch) };   // (numbers use the 0 to 100 box like capitals)
     return cache[ch];
   }
 
@@ -147,10 +159,20 @@
     return el;
   }
 
+  // A small canvas element showing a whole number (e.g. 7 or 14) in the handwriting, `px` tall.
+  function numberCanvas(n, px, opts = {}) {
+    const text = String(n), el = document.createElement('canvas'), dpr = Math.min(window.devicePixelRatio || 1, 2), k = px / 124, gap = 12;
+    const wUnits = [...text].reduce((a, ch) => a + (get(ch) ? get(ch).w : 40) + gap, -gap) + 24, w = Math.ceil(wUnits * k);
+    el.width = Math.round(w * dpr); el.height = Math.round(px * dpr); el.style.width = w + 'px'; el.style.height = px + 'px';
+    const c = el.getContext('2d'); c.scale(dpr, dpr);
+    drawText(c, text, 12 * k, 12 * k, 100 * k, { gap: gap, width: opts.width ?? 12, color: opts.color });
+    return el;
+  }
+
   // Keep only letters we can draw, stripping accents (Zoë -> Zoe).
   function clean(name) {
     return name.normalize('NFD').replace(/[^A-Za-z]/g, '');
   }
 
-  SPG.glyphs = { get, draw, drawText, measure, canvas, clean, isDot, LETTERS: 'abcdefghijklmnopqrstuvwxyz'.split('') };
+  SPG.glyphs = { get, draw, drawText, measure, canvas, numberCanvas, clean, isDot, LETTERS: 'abcdefghijklmnopqrstuvwxyz'.split('') };
 })();

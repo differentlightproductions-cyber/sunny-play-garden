@@ -206,7 +206,12 @@
     if (/compact|espeak|robot|novelty|bad news|whisper|bubbles|boing|zarvox|trinoids|albert|fred|junior/i.test(n)) s -= 12;
     return s;
   };
-  const englishVoices = () => ('speechSynthesis' in window ? speechSynthesis.getVoices() : []).filter(v => /^en/i.test(v.lang));
+  // In the Android app the phone's own text-to-speech engine (usually Google's) is used through a plugin: an Android web view cannot
+  // be relied on for the browser's speech. On the website the browser's speech is used.
+  const nativeTTS = () => (SPG.native && SPG.native.isApp && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) || null;
+  let nativeVoices = [];
+  (async () => { const T = nativeTTS(); if (!T) return; try { const r = await T.getSupportedVoices(); nativeVoices = (r.voices || []).map((v, i) => Object.assign({}, v, { idx: i })); voiceObj = undefined; } catch (_) { /* the default voice is used */ } })();
+  const englishVoices = () => (nativeTTS() ? nativeVoices : ('speechSynthesis' in window ? speechSynthesis.getVoices() : [])).filter(v => /^en/i.test(v.lang));
   function pickVoice() {
     const online = navigator.onLine !== false, mode = (store.settings.ttsVoice || '') + (online ? '|on' : '|off');
     if (voiceObj !== undefined && voiceMode === mode) return voiceObj;
@@ -220,6 +225,14 @@
   addEventListener('online', () => { voiceObj = undefined; }); addEventListener('offline', () => { voiceObj = undefined; });
 
   function speak(text) {
+    const T = nativeTTS();
+    if (T && text) return new Promise(resolve => {
+      let done = false; const fin = () => { if (!done) { done = true; resolve(); } };
+      const v = pickVoice();
+      T.speak({ text, lang: (v && v.lang) || 'en-US', rate: .92, pitch: 1.0, volume: 1, voice: v && v.idx != null ? v.idx : undefined, queueStrategy: 0 }).then(fin, fin);
+      setTimeout(fin, 1500 + text.length * 140);
+      current = { stop: () => { try { T.stop(); } catch (_) { /* ignore */ } fin(); } };
+    });
     return new Promise(resolve => {
       if (!('speechSynthesis' in window) || !text) return resolve();
       const u = new SpeechSynthesisUtterance(text);

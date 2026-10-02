@@ -989,3 +989,7 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 .lg-mode .lg-mode-label { background: none; padding: 0; font-size: 1em; line-height: 1.25; text-align: center; white-space: nowrap; text-shadow: 0 2px 0 rgba(255, 255, 255, .8); }
 @media (max-height: 520px) and (orientation: landscape) { .lg-modes { grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr; align-items: center; } }
 .vtools select { flex: 1 1 220px; min-height: 48px; border-radius: 14px; border: 3px solid #e3d5ea; padding: 0 12px; font-size: 1.05rem; background: #fff; max-width: 100%; }
+
+/* tablets: one icon fewer in every row, so each is bigger and easier to hit (must match perPage() in js/app.js) */
+@media (min-width: 600px) and (min-height: 600px) { #hub-games .cards.page { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: clamp(14px, 3vmin, 34px); } #hub-games .card { font-size: clamp(1.1rem, 3.2vmin, 1.9rem); } }
+@media (min-width: 600px) and (min-height: 600px) and (orientation: portrait) { #hub-games .cards.page { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); } }

@@ -197,7 +197,8 @@
   }
   let hubPage = 0, hubPer = 8, hubFirst = 0, hubFrozen = false;   // hubFirst: the first game on the page she is looking at (kept steady while the screen turns)
   // Must match the grid in styles.css: tall screens (portrait, not a short landscape phone) are 3 x 3, everything else 4 x 2.
-  const perPage = () => (matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
+  // Tablets (at least 600 px both ways) show six big icons a page (3 x 2 wide, 2 x 3 tall); phones keep 8 or 9.
+  const perPage = () => (matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }

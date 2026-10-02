@@ -269,6 +269,12 @@
     warm(k = 0) { tone(300 + k * 700, .2, { type: 'triangle', vol: .13 }); if (k > .6) tone(300 + k * 1000, .18, { vol: .08, at: .12 }); },
     bubble() { tone(520 + Math.random() * 500, .1, { slide: 1.8, vol: .07 }); },
     lullaby() { [4, 2, 0].forEach((n, k) => tone(NOTES[n] * .75, .6, { at: k * .5, vol: .09 })); },
+    // Sprout Kitchen
+    ding() { tone(1568, .9, { type: 'sine', vol: .2 }); tone(2093, .6, { vol: .08, at: .02 }); },
+    sizzle() { noise(.5, { freq: 5200, q: .4, vol: .05 }); noise(.4, { freq: 3000, q: .6, vol: .03, at: .1 }); },
+    squish() { noise(.1, { freq: 420, q: 1.3, vol: .07 }); },
+    squirt() { noise(.12, { freq: 900, sweep: 2, q: 1, vol: .08 }); tone(300, .1, { slide: 1.6, vol: .05 }); },
+    roll() { noise(.08, { freq: 260, q: .8, vol: .05 }); },
     munch() { noise(.06, { freq: 1500, q: 1.2, vol: .13 }); noise(.05, { freq: 900, q: 1, vol: .1, at: .08 }); },
     // Fire Rescue's hose: one soft, steady stream of water for as long as she holds her finger down (not a series of bursts).
     // A gentle rush (filtered noise, no whistle) over a low watery body with a slow flow in it. Returns { set(0..1), off() }.

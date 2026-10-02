@@ -10,3 +10,4 @@ node_modules/
 store/
 worker/
 android-app/
+AGENT-HANDOFF.md

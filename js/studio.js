@@ -195,7 +195,7 @@
         if (n < 0) { message = 'Everything in that group is already recorded.'; guide = null; redraw(); return; }
         guide.i = n; redraw();
       };
-      const order = ['prompts', 'praise', 'names', 'letters', 'sounds', 'words', 'friends', 'critters', 'purrs', 'style', 'players'];
+      const order = ['prompts', 'praise', 'names', 'letters', 'sounds', 'words', 'friends', 'critters', 'purrs', 'style', 'kitchen', 'players'];
       const gs = order.map(id => voice.GROUPS.find(g => g.id === id)).filter(Boolean);
       const all = keys.filter(k => voice.groupOf(k));
       const btnAll = h('button', { class: 'btn', type: 'button' }, `All of them, in order (${all.length} lines)`);

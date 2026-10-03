@@ -14,11 +14,12 @@
   const lerp = (a, b, t) => a + (b - a) * t;
 
   /* ------------------------------------------------------------ faces */
-  function face(c, r, { mood = 'happy', look = 0, blink = false, cheeks = true } = {}) {
+  function face(c, r, { mood = 'happy', look = 0, blink = false, cheeks = true, noEyes = false, wide = 1 } = {}) {
     c.save();
     const ex = r * .34, ey = -r * .06, er = r * .12;
     c.lineCap = 'round';
-    if (mood === 'sleep' || blink || mood === 'cheer') {
+    if (noEyes) { /* the animal draws its own eyes (frog) */ }
+    else if (mood === 'sleep' || blink || mood === 'cheer') {
       c.strokeStyle = INK; c.lineWidth = Math.max(1.6, r * .06);
       for (const s of [-1, 1]) { c.beginPath(); c.arc(s * ex, ey + er * .5, er, Math.PI * 1.12, Math.PI * 1.88); c.stroke(); }
     } else {
@@ -32,6 +33,7 @@
       for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * r * .62, r * .2, r * .14, r * .085, 0, 0, TAU); c.fill(); }
     }
     c.strokeStyle = INK; c.lineWidth = Math.max(1.6, r * .06);
+    if (wide !== 1) { c.translate(0, r * .13); c.scale(wide, 1); c.translate(0, -r * .13); }   // a wider (frog) mouth
     if (mood === 'wow' || mood === 'cheer') {
       c.fillStyle = '#7a2f4d'; c.beginPath();
       if (mood === 'wow') c.ellipse(0, r * .3, r * .1, r * .13, 0, 0, TAU);
@@ -419,6 +421,41 @@
   }
 
   /* ------------------------------------------------------------ avatars */
+  // The frog: a wide, flat head with two eye bumps on top (same green), big eyeballs with a real upper eyelid that
+  // closes on a blink or sleep (cheer = happy arcs). Drawn before the face, which adds blush, nose and a wide smile.
+  function frogHead(c, r, mood, shut, col) {
+    const lid = '#5bb848', lidDark = '#3f9a3a', cy = -r * .6, ex = r * .5, er = r * .32, ey = r * .25;
+    for (const s of [-1, 1]) { c.fillStyle = col; c.beginPath(); c.arc(s * ex, cy, er, 0, TAU); c.fill(); }
+    c.fillStyle = col; c.beginPath(); c.ellipse(0, r * .1, r * 1.1, r * .8, 0, 0, TAU); c.fill();
+    // soft shine and a few darker spots
+    c.fillStyle = 'rgba(255,255,255,.25)'; c.beginPath(); c.ellipse(-r * .38, -r * .22, r * .26, r * .1, -.35, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(60,140,60,.28)';
+    for (const [x, y, a, b] of [[-.72, .12, .1, .07], [.74, .08, .09, .065], [-.5, .66, .08, .055], [.52, .62, .1, .06], [.02, -.18, .06, .045], [.84, .42, .06, .045]]) { c.beginPath(); c.ellipse(x * r, y * r, a * r, b * r, 0, 0, TAU); c.fill(); }
+    for (const s of [-1, 1]) {
+      c.save(); c.translate(s * ex, cy);
+      if (mood === 'cheer') {            // happy closed eyes: a green lid with a curved smile line
+        c.fillStyle = lid; c.beginPath(); c.arc(0, 0, ey * 1.05, 0, TAU); c.fill();
+        c.strokeStyle = INK; c.lineWidth = Math.max(1.6, r * .06); c.beginPath(); c.arc(0, ey * .35, ey * .62, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      } else if (shut) {                 // lid fully down, with a little curved lash line
+        c.fillStyle = lid; c.beginPath(); c.arc(0, 0, ey * 1.05, 0, TAU); c.fill();
+        c.strokeStyle = INK; c.lineWidth = Math.max(1.6, r * .055); c.beginPath(); c.arc(0, -ey * .55, ey * .85, Math.PI * .2, Math.PI * .8); c.stroke();
+      } else {
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(0, 0, ey, 0, TAU); c.fill();
+        c.fillStyle = INK; c.beginPath(); c.arc(0, ey * .12, ey * .56, 0, TAU); c.fill();
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(-ey * .2, -ey * .12, ey * .2, 0, TAU); c.fill();
+        // the upper eyelid: a darker green lid covering the top of the eyeball
+        const edge = -ey * .45, sag = ey * .25;
+        c.save(); c.beginPath(); c.arc(0, 0, ey * 1.02, 0, TAU); c.clip();
+        c.fillStyle = lid; c.beginPath(); c.moveTo(-ey * 1.1, -ey * 1.2); c.lineTo(ey * 1.1, -ey * 1.2); c.lineTo(ey * 1.1, edge); c.quadraticCurveTo(0, edge + sag * 2, -ey * 1.1, edge); c.closePath(); c.fill();
+        c.restore();
+        c.strokeStyle = lidDark; c.lineWidth = Math.max(1.4, r * .045);
+        c.beginPath(); c.moveTo(-ey * 1.0, edge); c.quadraticCurveTo(0, edge + sag * 2, ey * 1.0, edge); c.stroke();
+        c.beginPath(); c.arc(0, 0, ey * 1.02, 0, TAU); c.stroke();
+      }
+      c.restore();
+    }
+  }
+
   const AVATARS = ['bunny', 'bear', 'cat', 'fox', 'frog', 'panda'];
   function avatar(c, kind, r, o = {}) {
     c.save(); c.lineCap = 'round';
@@ -428,7 +465,8 @@
     if (kind === 'bear') for (const s of [-1, 1]) { ear(s * r * .68, -r * .66, r * .28, head); ear(s * r * .68, -r * .66, r * .14, '#f3c9a0'); }
     if (kind === 'panda') for (const s of [-1, 1]) ear(s * r * .7, -r * .7, r * .27, '#3d2c44');
     if (kind === 'cat' || kind === 'fox') for (const s of [-1, 1]) { c.fillStyle = head; c.beginPath(); c.moveTo(s * r * .85, -r * .3); c.lineTo(s * r * .6, -r * 1.05); c.lineTo(s * r * .15, -r * .75); c.closePath(); c.fill(); c.fillStyle = kind === 'cat' ? '#ffc4d6' : '#3d2c44'; c.beginPath(); c.moveTo(s * r * .7, -r * .5); c.lineTo(s * r * .6, -r * .88); c.lineTo(s * r * .33, -r * .7); c.closePath(); c.fill(); }
-    if (kind === 'frog') for (const s of [-1, 1]) { ear(s * r * .5, -r * .78, r * .3, head); ear(s * r * .5, -r * .78, r * .2, '#fff'); ear(s * r * .5, -r * .78, r * .1, '#3d2c44'); }
+    const frog = kind === 'frog', mood = o.mood || 'happy', shut = !!o.blink || mood === 'sleep';
+    if (frog) frogHead(c, r, mood, shut, head);
     const ell2 = (x, y, rx, ry, rot, col) => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, rot || 0, 0, TAU); c.fill(); };
     if (kind === 'dog') for (const s of [-1, 1]) ell2(s * r * .86, -r * .1, r * .3, r * .56, s * .3, '#a8744f');
     if (kind === 'hamster') for (const s of [-1, 1]) { ear(s * r * .62, -r * .7, r * .22, head); ear(s * r * .62, -r * .7, r * .12, '#ffc4d6'); }
@@ -444,8 +482,8 @@
     if (kind === 'trike') { c.fillStyle = '#ff9fb5'; c.beginPath(); c.arc(0, -r * .25, r * 1.22, Math.PI * .92, Math.PI * 2.08); c.closePath(); c.fill(); c.fillStyle = '#fff'; for (let i = 0; i < 7; i++) { const an = Math.PI * (1.02 + i * .16); c.beginPath(); c.arc(Math.cos(an) * r * 1.12, -r * .25 + Math.sin(an) * r * 1.12, r * .1, 0, TAU); c.fill(); } }
     if (kind === 'stego') { c.fillStyle = '#ffd54a'; for (const [x, h] of [[-.5, .4], [0, .55], [.5, .4]]) { c.beginPath(); c.moveTo(r * (x - .22), -r * .86); c.lineTo(r * x, -r * (.86 + h)); c.lineTo(r * (x + .22), -r * .86); c.closePath(); c.fill(); } }
     if (kind === 'trex') { c.fillStyle = '#58b855'; for (const x of [-.3, 0, .3]) { c.beginPath(); c.moveTo(r * (x - .12), -r * .92); c.lineTo(r * x, -r * 1.12); c.lineTo(r * (x + .12), -r * .92); c.closePath(); c.fill(); } }
-    c.fillStyle = head; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
-    c.fillStyle = 'rgba(255,255,255,.25)'; c.beginPath(); c.ellipse(-r * .4, -r * .5, r * .3, r * .13, -.5, 0, TAU); c.fill();
+    if (!frog) { c.fillStyle = head; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.25)'; c.beginPath(); c.ellipse(-r * .4, -r * .5, r * .3, r * .13, -.5, 0, TAU); c.fill(); }
     if (kind === 'trex' || kind === 'trike' || kind === 'stego' || kind === 'bronto' || kind === 'babydino') { c.fillStyle = 'rgba(255,255,255,.3)'; c.beginPath(); c.ellipse(0, r * .34, r * .58, r * .42, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(0,0,0,.18)'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * r * .16, r * .16, r * .035, r * .05, 0, 0, TAU); c.fill(); } }
     if (kind === 'trike') { c.fillStyle = '#fff6d8'; c.strokeStyle = '#d9b070'; c.lineWidth = r * .03; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(s * r * .5, -r * .5); c.lineTo(s * r * .62, -r * 1.12); c.lineTo(s * r * .3, -r * .62); c.closePath(); c.fill(); c.stroke(); } c.beginPath(); c.moveTo(-r * .1, r * .06); c.lineTo(0, -r * .4); c.lineTo(r * .1, r * .06); c.closePath(); c.fill(); c.stroke(); }
     if (kind === 'babydino') { c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.12)'; c.lineWidth = r * .03; c.beginPath(); c.moveTo(-r * .85, -r * .3); for (let i = 0; i < 5; i++) { c.lineTo(-r * .85 + (i + .5) * r * .34, -r * (.3 + (i % 2 ? .1 : .34))); c.lineTo(-r * .85 + (i + 1) * r * .34, -r * .3); } c.arc(0, -r * .3, r * .85, 0, -Math.PI, true); c.closePath(); c.fill(); c.stroke(); }
@@ -459,12 +497,13 @@
     if (kind === 'unicorn') { c.fillStyle = '#ffe680'; c.beginPath(); c.moveTo(-r * .24, -r * .84); c.lineTo(0, -r * 1.9); c.lineTo(r * .24, -r * .84); c.closePath(); c.fill(); c.strokeStyle = '#f0b429'; c.lineWidth = r * .05; for (const y of [-1.0, -1.18, -1.36]) { c.beginPath(); c.moveTo(-r * (.13 - (y + 1) * -.06), r * y); c.lineTo(r * (.13 - (y + 1) * -.06), r * y + r * .06); c.stroke(); } }
     if (kind === 'fox') { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(-r * 1, r * .1); c.quadraticCurveTo(0, r * .3, r * 1, r * .1); c.quadraticCurveTo(r * .7, r * .95, 0, r * .98); c.quadraticCurveTo(-r * .7, r * .95, -r * 1, r * .1); c.fill(); }
     if (kind === 'panda') { c.fillStyle = '#3d2c44'; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(s * r * .34, -r * .05, r * .19, r * .25, s * .4, 0, TAU); c.fill(); } }
-    face(c, r * .9, { mood: o.mood || 'happy', blink: !!o.blink, cheeks: kind !== 'panda' });
+    if (frog) { c.save(); c.translate(0, r * .1); face(c, r * .9, { mood, blink: shut, noEyes: true, wide: 1.75 }); c.restore(); }
+    else face(c, r * .9, { mood, blink: !!o.blink, cheeks: kind !== 'panda' });
     if (kind === 'panda' && !o.blink && (o.mood || 'happy') === 'happy') { c.fillStyle = '#fff'; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * r * .31, -r * .08, r * .06, 0, TAU); c.fill(); } }
     if (kind === 'duck' || kind === 'penguin' || kind === 'owl') { c.fillStyle = '#ff9d3d'; c.beginPath(); if (kind === 'owl') { c.moveTo(-r * .1, r * .1); c.lineTo(r * .1, r * .1); c.lineTo(0, r * .34); } else { c.ellipse(0, r * .2, r * .24, r * .12, 0, 0, TAU); } c.fill(); c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(-r * .06, r * .16, r * .08, r * .03, 0, 0, TAU); c.fill(); }
     else if (kind === 'elephant') { c.fillStyle = '#a4b2c8'; c.beginPath(); c.roundRect ? c.roundRect(-r * .17, r * .1, r * .34, r * .78, r * .17) : c.rect(-r * .17, r * .1, r * .34, r * .78); c.fill(); c.strokeStyle = 'rgba(0,0,0,.12)'; c.lineWidth = r * .03; for (const y of [.3, .45, .6]) { c.beginPath(); c.moveTo(-r * .15, r * y); c.lineTo(r * .15, r * y); c.stroke(); } }
     else if (kind === 'trex') { c.fillStyle = '#fff'; for (const s of [-1, 1]) for (const k of [0, 1]) { c.beginPath(); c.moveTo(s * r * (.12 + k * .16), r * .4); c.lineTo(s * r * (.2 + k * .16), r * .4); c.lineTo(s * r * (.16 + k * .16), r * .5); c.closePath(); c.fill(); } }
-    else if (kind !== 'pig') { c.fillStyle = kind === 'cat' || kind === 'fox' || kind === 'bear' || kind === 'dog' ? '#5a3f5e' : '#ff8aa3'; c.beginPath(); c.ellipse(0, r * .16, r * .07, r * .05, 0, 0, TAU); c.fill(); }
+    else if (kind !== 'pig') { const ny = frog ? r * .26 : r * .16; c.fillStyle = kind === 'cat' || kind === 'fox' || kind === 'bear' || kind === 'dog' ? '#5a3f5e' : '#ff8aa3'; c.beginPath(); c.ellipse(0, ny, r * .07, r * .05, 0, 0, TAU); c.fill(); }
     c.restore();
   }
 

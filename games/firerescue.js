@@ -220,9 +220,11 @@
       this.level = lvl; this.scenic.set(L.scene);
       this.blds = [0, 1, 2].map(i => {
         const style = L.styles[i], nWin = STYLE[style].rows * 2, pw = Math.floor(Math.random() * nWin);
-        const wins = shuffle([...Array(nWin).keys()].filter(k => k !== pw)).slice(0, nWin > 4 ? 4 : nWin - 1);
+        // how many flames: one or two for toddlers, a few for most, nearly every window and the roof for older children
+        const tier = SPG.level.tier('fire'), many = tier === 3 ? nWin - 1 : nWin > 4 ? 4 : nWin - 1;
+        const wins = shuffle([...Array(nWin).keys()].filter(k => k !== pw)).slice(0, tier === 1 ? 1 : many);
         const sites = wins.map(k => ({ site: k }));
-        if (Math.random() < .7) sites.push({ site: nWin });
+        if (Math.random() < (tier === 1 ? .3 : tier === 3 ? 1 : .7)) sites.push({ site: nWin });
         const flames = sites.map((s, j) => Object.assign(s, { heat: 1, at: this.t + .9 + i * .55 + j * .3, lit: false, out: false, seed: Math.random() * 9, steam: 0 }));
         return { pal: pals[i % pals.length], style, nWin, snow: !!L.snow, flames, geo: null, done: false, glow: 0, appear: -i * .25,
           pet: { win: pw, spec: pets[i % pets.length], state: 'wait', t: 0, readyT: 0, x: 0, y: 0, ladderT: 0, dir: 1 } };
@@ -298,12 +300,15 @@
           }
           burning += f.heat;
           const p = this.sitePos(b, f);
-          let rate = fade ? FADE_RATE : DRY_RATE;
+          const tier = SPG.level.tier('fire');
+          let rate = fade ? FADE_RATE : tier === 3 ? 0 : DRY_RATE;
           if (spraying && Math.hypot(this.aim.x - p.x, this.aim.y - (p.y - p.s * .7)) < p.s * .95 + 34 * this.ui) {
-            rate += WET_RATE;
+            rate += WET_RATE * (tier === 1 ? 1.4 : tier === 3 ? .7 : 1); f.wetT = this.t;
             if (Math.random() < dt * 9) this.fx.burst(p.x + (Math.random() - .5) * p.s * .5, p.y - p.s * .6, 1, { colors: ['#fff', '#e7f4ff'], speed: 40, g: -70, life: .7, size: p.s * .1 });
           }
           f.heat -= rate * dt;
+          // older children: a flame that is not being sprayed (and is not out yet) flares back up, so it has to be put out properly
+          if (tier === 3 && !fade && this.t - (f.wetT || -9) > 2.2 && f.heat < 1) f.heat = Math.min(1, f.heat + .1 * dt);
           if (Math.random() < dt * 1.6) this.fx.burst(p.x + (Math.random() - .5) * p.s * .4, p.y - p.s * 1.3 * f.heat, 1, { colors: ['#c6c2d6', '#dcd9e8'], speed: 10, g: -42, life: 1.7, size: p.s * .15 });
           if (f.heat <= 0) {
             f.out = true; f.heat = 0; f.steam = 1.2;

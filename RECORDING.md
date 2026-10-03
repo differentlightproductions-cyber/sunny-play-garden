@@ -18,14 +18,14 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 126 short lines.
+1. **Cheering** and **Prompts**: about 145 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
 
 ## Cheering
 
-Said after she does something well. Turn down how often in the "Praise" setting.
+Said after something is done well. Turn down how often in the "Praise" setting.
 
 | File | Say |
 |---|---|
@@ -37,7 +37,7 @@ Said after she does something well. Turn down how often in the "Praise" setting.
 
 ## Prompts and instructions
 
-Short lines that tell her what to do.
+Short lines that tell {her} what to do.
 
 | File | Say |
 |---|---|
@@ -82,28 +82,46 @@ Short lines that tell her what to do.
 | `cook-add.mp3` | Put it in the bowl! |
 | `cook-stir.mp3` | Stir, stir, stir! |
 | `cook-roll.mp3` | Roll the dough flat! |
-| `cook-cut.mp3` | Pick a friend and press it in! |
+| `cook-cut.mp3` | Pick a cutter, then touch the dough! |
+| `cook-cutsand.mp3` | Pick a cutter, then touch the sandwich! |
+| `cook-oven-on.mp3` | First, turn the oven on! Touch it! |
+| `cook-squirt.mp3` | Squeeze the sauce anywhere you like! |
 | `cook-drop.mp3` | Put some dough on the tray! |
 | `cook-pour.mp3` | Pour the batter in! |
 | `cook-bake.mp3` | Into the oven! Touch the tray! |
-| `cook-ding.mp3` | Ding! It is ready! Touch the oven! |
+| `cook-ding.mp3` | It is ready! Touch the oven! |
 | `cook-grill.mp3` | Put it on the grill! |
 | `cook-flip.mp3` | Flip it over! |
 | `cook-stack.mp3` | Stack it up! Pick the glowing one! |
 | `cook-frost.mp3` | Touch the cake with icing! |
 | `cook-decorate.mp3` | Make it pretty! |
-| `cook-shake.mp3` | Shake, shake, shake! |
-| `cook-alldone.mp3` | All done? Touch the green check! |
 | `cook-slice.mp3` | Slice it with the knife! |
 | `cook-serve.mp3` | Yummy! Touch it to take a bite! |
+| `cook-pickbun.mp3` | Pick a bun! |
+| `cook-pickbread.mp3` | Pick your bread! |
+| `cook-patties.mp3` | Put patties on the grill! One, two or three! |
+| `cook-meat.mp3` | Add the meat you like! |
+| `cook-cheese.mp3` | Add some cheese, or touch the green check! |
+| `cook-veg.mp3` | Add the veggies you like! |
+| `cook-saucetop.mp3` | Add some sauce, then put the top on! |
+| `cook-scoop.mp3` | Pick your ice cream! |
+| `cook-pizzasauce.mp3` | Spread the sauce all over! |
+| `cook-pizzacheese.mp3` | Sprinkle on the cheese! |
+| `cook-toppings.mp3` | Put your toppings anywhere you like! |
 | `cook-yum.mp3` | Yum yum! |
 | `cook-wrong.mp3` | Try the glowing one! |
 | `cook-done.mp3` | You cooked it! Delicious! |
-| `num-1.mp3` | One! |
-| `num-2.mp3` | Two! |
-| `num-3.mp3` | Three! |
-| `num-4.mp3` | Four! |
-| `num-5.mp3` | Five! |
+| `count-touch.mp3` | Touch each one to count! |
+| `count-how.mp3` | How many are there? |
+| `count-find.mp3` | Touch the number! |
+| `math-plus.mp3` | plus |
+| `math-minus.mp3` | take away |
+| `math-is.mp3` | is |
+| `math-sum.mp3` | How many altogether? |
+| `math-left.mp3` | How many are left? |
+| `math-more.mp3` | One more makes |
+| `math-start.mp3` | Let us add and take away! |
+| `count-start.mp3` | Let us count! |
 | `color-red.mp3` | Red! |
 | `color-blue.mp3` | Blue! |
 | `color-yellow.mp3` | Yellow! |
@@ -113,6 +131,7 @@ Short lines that tell her what to do.
 | `shape-triangle.mp3` | Triangle! |
 | `shape-star.mp3` | Star! |
 | `aq-start.mp3` | Touch the water to feed the fish! |
+| `aq-fresh.mp3` | A fresh new fish tank! Here are some coins to buy new fish! |
 | `aq-coin.mp3` | A shiny coin! Touch it! |
 | `aq-grow.mp3` | Your fish is growing! |
 | `aq-shop.mp3` | Spend your coins! |
@@ -162,6 +181,34 @@ Short lines that tell her what to do.
 | `break-time.mp3` | Time for a little rest! |
 | `hello.mp3` | Hello! |
 | `welcome-home.mp3` | Welcome home, |
+
+## Numbers (0 to 20)
+
+Said when counting and adding: "One!", "Two!"... Say just the number.
+
+| File | Say |
+|---|---|
+| `num-0.mp3` | Zero! |
+| `num-1.mp3` | One! |
+| `num-2.mp3` | Two! |
+| `num-3.mp3` | Three! |
+| `num-4.mp3` | Four! |
+| `num-5.mp3` | Five! |
+| `num-6.mp3` | Six! |
+| `num-7.mp3` | Seven! |
+| `num-8.mp3` | Eight! |
+| `num-9.mp3` | Nine! |
+| `num-10.mp3` | Ten! |
+| `num-11.mp3` | Eleven! |
+| `num-12.mp3` | Twelve! |
+| `num-13.mp3` | Thirteen! |
+| `num-14.mp3` | Fourteen! |
+| `num-15.mp3` | Fifteen! |
+| `num-16.mp3` | Sixteen! |
+| `num-17.mp3` | Seventeen! |
+| `num-18.mp3` | Eighteen! |
+| `num-19.mp3` | Nineteen! |
+| `num-20.mp3` | Twenty! |
 
 ## Names in the name pickers
 
@@ -214,7 +261,7 @@ Said when a name button is touched (player nicknames and pet names) and in "Welc
 
 ## Style Studio names
 
-Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".
+Only said when "Extra audio help" is on in Grown-ups. Said when a friend, a hairstyle or a piece of clothing is touched in the dress-up game, like "A ball gown!" or "Fairy wings!".
 
 | File | Say |
 |---|---|
@@ -386,13 +433,13 @@ Said when she touches a friend, a hairstyle or a piece of clothing in the dress-
 
 ## Sprout Kitchen names
 
-Said when she touches an ingredient, a cutter shape, a recipe or a food group in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".
+Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a cutter shape, a recipe or a food group is touched in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".
 
 | File | Say |
 |---|---|
 | `cookc-0.mp3` | Sweets! |
 | `cookc-1.mp3` | Sandwiches! |
-| `cookc-2.mp3` | Burgers! |
+| `cookc-2.mp3` | Burgers, hot dogs and pizza! |
 | `cookr-sugar.mp3` | Sugar cookies! |
 | `cookr-chip.mp3` | Chocolate chip cookies! |
 | `cookr-cupcake.mp3` | Cupcakes! |
@@ -401,16 +448,10 @@ Said when she touches an ingredient, a cutter shape, a recipe or a food group in
 | `cookr-sundae.mp3` | An ice cream sundae! |
 | `cookr-pbj.mp3` | Peanut butter and jelly! |
 | `cookr-toastie.mp3` | A cheese toastie! |
-| `cookr-hamcheese.mp3` | Ham and cheese! |
-| `cookr-veggie.mp3` | A veggie sandwich! |
-| `cookr-turkey.mp3` | Turkey and lettuce! |
-| `cookr-hotdog.mp3` | Hot dog pals! |
-| `cookr-hamburger.mp3` | A hamburger! |
-| `cookr-cheeseburger.mp3` | A cheeseburger! |
-| `cookr-double.mp3` | A double cheeseburger! |
-| `cookr-veggieb.mp3` | A veggie burger! |
-| `cookr-chickenb.mp3` | A chicken burger! |
-| `cookr-super.mp3` | A super burger! |
+| `cookr-sandwich.mp3` | Build a sandwich! |
+| `cookr-hotdog.mp3` | A hot dog! |
+| `cookr-burger.mp3` | Build a burger! |
+| `cookr-pizza.mp3` | Pizza! |
 | `cook-flour.mp3` | Flour! |
 | `cook-sugar.mp3` | Sugar! |
 | `cook-egg.mp3` | An egg! |
@@ -479,6 +520,38 @@ Said when she touches an ingredient, a cutter shape, a recipe or a food group in
 | `cook-sc-choc.mp3` | Chocolate ice cream! |
 | `cook-sc-mint.mp3` | Mint ice cream! |
 | `cook-sc-blueb.mp3` | Blueberry ice cream! |
+| `cook-cheddar.mp3` | Cheddar cheese! |
+| `cook-american.mp3` | American cheese! |
+| `cook-provolone.mp3` | Provolone cheese! |
+| `cook-pepperjack.mp3` | Pepper jack cheese! |
+| `cook-swiss.mp3` | Swiss cheese! |
+| `cook-bacon.mp3` | Bacon! |
+| `cook-salami.mp3` | Salami! |
+| `cook-chickenslice.mp3` | Chicken! |
+| `cook-bun-plain.mp3` | A plain bun! |
+| `cook-bun-sesame.mp3` | A sesame bun! |
+| `cook-bun-wheat.mp3` | A wheat bun! |
+| `cook-bunT-plain.mp3` | The top bun! |
+| `cook-bunT-wheat.mp3` | The top bun! |
+| `cook-bread-white.mp3` | White bread! |
+| `cook-bread-wheat.mp3` | Wheat bread! |
+| `cook-bread-rye.mp3` | Rye bread! |
+| `cook-breadT.mp3` | The top slice! |
+| `cook-breadT-wheat.mp3` | The top slice! |
+| `cook-breadT-rye.mp3` | The top slice! |
+| `cook-bbq.mp3` | Barbecue sauce! |
+| `cook-relish.mp3` | Relish! |
+| `cook-caramel.mp3` | Caramel sauce! |
+| `cook-strawsauce.mp3` | Strawberry sauce! |
+| `cook-cream.mp3` | Whipped cream! |
+| `cook-pizzasauce.mp3` | Pizza sauce! |
+| `cook-mozzarella.mp3` | Mozzarella cheese! |
+| `cook-pepperoni.mp3` | Pepperoni! |
+| `cook-mushroom.mp3` | Mushrooms! |
+| `cook-olive.mp3` | Olives! |
+| `cook-greenpepper.mp3` | Green peppers! |
+| `cook-pineapple.mp3` | Pineapple! |
+| `cook-basil.mp3` | Basil! |
 
 ## Letter names (A to Z)
 
@@ -602,7 +675,7 @@ Said when a new garden friend appears.
 
 ## Critter noises (make the sound!)
 
-Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.
+Played when a garden friend is tapped. Just make the noise, like a bee buzz or a frog ribbit.
 
 | File | Say |
 |---|---|
@@ -623,7 +696,7 @@ Played when she taps a garden friend. Just make the noise, like a bee buzz or a 
 
 ## Purring and happy sounds
 
-Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.
+Played while a pet is stroked in the close-up view in Pet Care (it loops while the pet is petted). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.
 
 | File | Say |
 |---|---|

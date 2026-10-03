@@ -31,6 +31,8 @@
     { id: 'castle', kind: 'decor', price: 30 }, { id: 'chest', kind: 'decor', price: 25 }, { id: 'weed', kind: 'decor', price: 15 }, { id: 'shell', kind: 'decor', price: 20 }
   ];
   const BOSSES = ['crab', 'octopus', 'ufo', 'shark'];
+  const FRESH_BONUS = 20;            // coins given with each new day's fresh tank (enough for two guppies)
+  const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 
   /* ------------------------------------------------------------ art */
   const eye = (c, x, y, r, look = 0, mood = 'happy') => {
@@ -214,6 +216,11 @@
       const b = this.bag = store.bag('aquarium', () => ({ coins: 0, fish: [{ sp: 'guppy', stage: 0, meals: 0 }, { sp: 'guppy', stage: 0, meals: 0 }], food: 0, more: 0, snail: 0, power: 0, decor: [], defeated: 0, since: 0, seen: 0 }));
       b.fish = b.fish || []; b.decor = b.decor || []; b.coins = b.coins || 0; b.defeated = b.defeated || 0; b.since = b.since || 0; b.seen = b.seen || 0;
       for (const k of ['food', 'more', 'snail', 'power']) b[k] = b[k] || 0;
+      // A new day is a fresh tank: two baby guppies, no upgrades (decorations stay), the coins she had plus a small welcome gift.
+      const today = dayKey();
+      this.fresh = !!(b.day && b.day !== today);
+      if (this.fresh) { b.fish = [{ sp: 'guppy', stage: 0, meals: 0 }, { sp: 'guppy', stage: 0, meals: 0 }]; for (const k of ['food', 'more', 'snail', 'power']) b[k] = 0; b.coins += FRESH_BONUS; b.since = 0; }
+      if (b.day !== today) { b.day = today; store.save(); }
       this.counter = SPG.ui.counter(host, (c, s) => { c.translate(s / 2, s / 2); coinDraw(c, s * .3, 1, 0); }, b.coins);
       this.fx = new art.Fx(); this.t = 0; this.running = false; this.idle = 0; this.tick = this.tick.bind(this);
       this.fish = b.fish.map((f, i) => this.makeFish(f, i)); this.foods = []; this.coins = []; this.bubbles = []; this.snails = []; this.shots = [];
@@ -247,7 +254,11 @@
     snailSync() {
       while (this.snails.length < this.bag.snail) this.snails.push({ x: this.w * rnd(.2, .8), dir: 1, tx: null, moving: false });
     }
-    start() { this.resize(); this.resume(); voice.say('aq-start'); }
+    start() {
+      this.resize(); this.resume();
+      if (this.fresh) { voice.say('aq-fresh'); sfx.chime(); const k = this.coinTarget; this.fx.burst(k.x, k.y + 20, 24, { colors: ['#ffd54a', '#fff', '#ffe9a0'], speed: 240, g: 160, life: 1.2, size: 8 * this.ui, shape: 'star', up: 80 }); this.counter.set(this.bag.coins); }
+      else voice.say('aq-start');
+    }
     resume() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); }
     pause() { this.running = false; cancelAnimationFrame(this.raf); this.save(); }
     destroy() { this.pause(); this.canvas.remove(); this.counter.el.remove(); }

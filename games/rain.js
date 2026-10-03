@@ -5,7 +5,7 @@
   const { art, sfx, voice, store } = SPG;
   const TAU = Math.PI * 2;
   const RAINBOW = ['#ff6b81', '#ffa64d', '#ffe066', '#7ed957', '#5cc8f2', '#8a7cf0', '#c98bf0'];
-  const BUCKET_CAPACITY = 8;
+  const CAPACITY = [0, 6, 8, 14];   // drops for a rainbow, by age tier (SPG.level)
   // A new place after every "raining cats and dogs" (every third flower): the meadow gets sunset, autumn, night, snow...
   const RAIN_SCENES = ['meadow', 'sunset', 'autumn', 'night', 'snow', 'beach', 'farm'];
   const sceneFor = flowers => RAIN_SCENES[Math.floor((flowers || 0) / 3) % RAIN_SCENES.length];
@@ -75,12 +75,12 @@
     spawn() {
       const i = Math.floor(Math.random() * this.cloudCount()), gold = Math.random() < .12, cp = this.cloudPos(i);
       this.drops.push({ x: Math.max(8, Math.min(this.w - 8, cp.x + (Math.random() - .5) * 90 * this.cs)), y: cp.y + 30 * this.cs, vy: this.h * .1, r: this.dropR * (gold ? 1.15 : .9 + Math.random() * .2), gold, blink: Math.random() * 3 });
-      this.spawnIn = (Math.max(.55, 1.0 - this.caught * .004) + Math.random() * .45) / (1 + this.stormK() * 8);   // a storm rains about nine times as much
+      this.spawnIn = (Math.max(.55, 1.0 - this.caught * .004) + Math.random() * .45) * (SPG.level.tier('rain') === 3 ? .8 : SPG.level.tier('rain') === 1 ? 1.15 : 1) / (1 + this.stormK() * 8);   // a storm rains about nine times as much
     }
 
     catchDrop(d) {
       this.caught++; this.moodT = .35; this.bag.drops = (this.bag.drops || 0) + 1; this.counter.set(this.bag.drops); store.save();
-      this.fill = Math.min(1, this.fill + (d.gold ? 2 : 1) / (BUCKET_CAPACITY * (1 + this.stormK() * 1.5)));   // (a storm fills it a bit slower per drop, so rainbows stay special)
+      this.fill = Math.min(1, this.fill + (d.gold ? 2 : 1) / (CAPACITY[SPG.level.tier('rain')] * (1 + this.stormK() * 1.5)));   // (a storm fills it a bit slower per drop, so rainbows stay special)
       this.fx.burst(d.x, this.rimY, 8, { colors: ['#9be0ff', '#fff', d.gold ? '#ffd54a' : '#5cc8f2'], speed: 190, g: 700, life: .5, size: 5, up: 200 });
       sfx.plink(this.caught);
       if (this.fill >= 1) this.celebrate();
@@ -405,7 +405,7 @@
       if (this.sunT > 0) this.sunT = Math.max(0, this.sunT - dt);
       for (let i = this.thunders.length - 1; i >= 0; i--) { this.thunders[i] -= dt; if (this.thunders[i] <= 0) { this.thunders.splice(i, 1); sfx.thunder(); } }
       if (this.pets) this.updatePets(dt);
-      const g = this.h * .22, vmax = this.h * .46;
+      const rt = SPG.level.tier('rain'), speedK = rt === 3 ? 1.25 : rt === 1 ? .85 : 1, g = this.h * .22 * speedK, vmax = this.h * .46 * speedK;
       for (const d of this.drops) { d.vy = Math.min(vmax, d.vy + g * dt); d.y += d.vy * dt; d.blink -= dt; }
       this.drops = this.drops.filter(d => {
         if (this.bucketHide < .3 && d.y + d.r * .4 >= this.rimY && d.y <= this.rimY + this.bh * .35 && Math.abs(d.x - b.x) < this.bw * .5 - d.r * .3) { this.catchDrop(d); return false; }

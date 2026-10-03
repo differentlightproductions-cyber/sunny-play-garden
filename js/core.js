@@ -10,7 +10,7 @@
   SPG.config = { recorder: true };
 
   SPG.store = (() => {
-    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { night: 'off', nightFrom: 19, nightTo: 7, voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', muted: [] }, trash: [] });
+    const fresh = () => ({ v: 1, profiles: [], activeId: null, settings: { night: 'off', nightFrom: 19, nightTo: 7, voice: true, sound: true, music: false, colorMusic: true, timer: 0, pin: '', fruitAge: 'little', playLog: { day: '', sec: 0 }, voicePref: 'mix', praise: 'some', audioHelp: false, muted: [] }, trash: [] });
     let data = fresh();
     try {
       const raw = localStorage.getItem(KEY);
@@ -64,8 +64,11 @@
       get profiles() { return data.profiles; },
       get active() { return data.profiles.find(p => p.id === data.activeId) || null; },
       setActive(id) { data.activeId = id; save(); },
-      addProfile(name, avatar) {
+      // extra: { gender: 'girl' | 'boy' | '', level: { mode: 'group', group } | { mode: 'age', age } } (both optional, both editable later in Grown-ups)
+      addProfile(name, avatar, extra = {}) {
         const p = { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: name.trim().slice(0, 16), avatar, stars: 0, data: {} };
+        if (extra.gender === 'girl' || extra.gender === 'boy') p.gender = extra.gender;
+        if (extra.level) p.level = extra.level;
         data.profiles.push(p); data.activeId = p.id; save();
         return p;
       },
@@ -128,6 +131,13 @@
     };
     return store;
   })();
+
+  // Wording for grown-up screens: {her} -> her / him / them, {their} -> her / his / their, from the player's boy or girl choice
+  // (no choice = neutral). Text read by the child never uses pronouns for the child.
+  SPG.pron = {
+    of(p) { p = p || SPG.store.active || SPG.store.profiles[0]; const g = p && p.gender; return g === 'girl' ? { her: 'her', their: 'her', child: 'girl' } : g === 'boy' ? { her: 'him', their: 'his', child: 'boy' } : { her: 'them', their: 'their', child: 'child' }; },
+    fill(text, p) { const o = SPG.pron.of(p); return String(text).replace(/\{(her|their|child)\}/g, (_, k) => o[k]); }
+  };
 
   /* ---------------------------------------------------------------- audio */
   const A = SPG.audio = {
@@ -270,10 +280,39 @@
     bubble() { tone(520 + Math.random() * 500, .1, { slide: 1.8, vol: .07 }); },
     lullaby() { [4, 2, 0].forEach((n, k) => tone(NOTES[n] * .75, .6, { at: k * .5, vol: .09 })); },
     // Sprout Kitchen
-    ding() { tone(1568, .9, { type: 'sine', vol: .2 }); tone(2093, .6, { vol: .08, at: .02 }); },
+    // A real kitchen-timer / oven bell: one hammer strike on a small bell (a bright tick, then inharmonic partials that ring and fade).
+    // ding(2) strikes it twice, like an oven timer.
+    ding(n = 1) {
+      for (let k = 0; k < n; k++) {
+        const at = k * .62, f = 1568;
+        noise(.03, { freq: 6500, q: 1.2, vol: .07, at });
+        tone(f, 1.6, { type: 'sine', vol: .17, at }); tone(f * 2.756, .9, { type: 'sine', vol: .08, at }); tone(f * 5.404, .45, { type: 'sine', vol: .035, at }); tone(f * 1.003, 1.4, { type: 'sine', vol: .05, at });
+      }
+    },
     sizzle() { noise(.5, { freq: 5200, q: .4, vol: .05 }); noise(.4, { freq: 3000, q: .6, vol: .03, at: .1 }); },
     squish() { noise(.1, { freq: 420, q: 1.3, vol: .07 }); },
-    squirt() { noise(.12, { freq: 900, sweep: 2, q: 1, vol: .08 }); tone(300, .1, { slide: 1.6, vol: .05 }); },
+    // Sauce bottles: soft and wet, never beepy. squirt() is one gentle squelch (a dollop); squeeze() is a quiet continuous
+    // squeeze for as long as a finger drags. Returns { set(level 0..1), off() }.
+    squirt() { noise(.16, { freq: 520, sweep: .55, q: .35, vol: .05 }); noise(.1, { freq: 260, q: .4, vol: .035, at: .03 }); },
+    squeeze() {
+      const c = A.ctx; if (!c || !SPG.store.settings.sound) return { set() {}, off() {} };
+      if (!noiseBuf) { noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      const t = c.currentTime, s = c.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.playbackRate.value = .55; s.loopStart = Math.random() * .4;
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = .5;
+      const g = c.createGain(); g.gain.setValueAtTime(.0001, t);
+      const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 5.5; lg.gain.value = .01; lfo.connect(lg); lg.connect(g.gain);
+      s.connect(lp); lp.connect(g); g.connect(A.master); s.start(t); lfo.start(t);
+      let off = false;
+      return {
+        set(level) { if (!off) { g.gain.setTargetAtTime(.012 + .028 * level, c.currentTime, .08); lp.frequency.setTargetAtTime(380 + 420 * level, c.currentTime, .1); } },
+        off() { if (off) return; off = true; const n = c.currentTime; g.gain.cancelScheduledValues(n); g.gain.setTargetAtTime(.0001, n, .06); s.stop(n + .4); lfo.stop(n + .4); }
+      };
+    },
+    // a cookie cutter pressed through dough: a soft thump and a tiny metal tick
+    cut() { tone(150, .12, { type: 'sine', vol: .13, slide: .6 }); noise(.04, { freq: 2600, q: 2, vol: .045 }); noise(.08, { freq: 500, q: .6, vol: .04, at: .02 }); },
+    crack() { noise(.04, { freq: 3200, q: 1.6, vol: .12 }); noise(.07, { freq: 1700, q: 1, vol: .08, at: .045 }); tone(240, .06, { type: 'triangle', vol: .05 }); },
+    // a spoonful of grains falling (salt, pepper, sprinkles)
+    shake() { for (let i = 0; i < 4; i++) noise(.05, { freq: 4200 + i * 500, q: 1.5, vol: .025, at: i * .05 }); },
     roll() { noise(.08, { freq: 260, q: .8, vol: .05 }); },
     munch() { noise(.06, { freq: 1500, q: 1.2, vol: .13 }); noise(.05, { freq: 900, q: 1, vol: .1, at: .08 }); },
     // Fire Rescue's hose: one soft, steady stream of water for as long as she holds her finger down (not a series of bursts).

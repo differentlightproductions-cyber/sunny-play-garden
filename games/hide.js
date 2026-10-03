@@ -194,6 +194,8 @@
   const seasonNow = () => { const m = new Date().getMonth() + 1; return m === 12 || m <= 2 ? 'winter' : m <= 5 ? 'spring' : m <= 8 ? 'summer' : 'autumn'; };
   const mixHex = (a, b, k) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * k).toString(16).padStart(2, '0')).join(''); };
   const FRIENDS = ['bunny', 'cat', 'bear', 'fox', 'frog', 'panda', 'dog', 'hamster', 'duck', 'lamb', 'mouse', 'penguin', 'elephant', 'unicorn', 'babydino'];
+  // Every kind of friend, so that nobody hiding in a later place is the same kind as a friend who already tags along (19 hide in one adventure, 21 kinds exist).
+  const ALL_FRIENDS = FRIENDS.concat(['pig', 'owl', 'trike', 'stego', 'bronto', 'trex']);
   // The five places. Each is a square map with a trail from the west gate to the east gate, houses beside it, a special landmark near the
   // east gate, and friends hiding. They never change; only the season (spring, summer, autumn, winter) changes how they look.
   const MAPS = [
@@ -317,10 +319,23 @@
     loadMap(i, from) {
       this.mi = i; this.bag.map = i; const M = this.M = MAPS[i], L = this.L = layoutFor(M, i);
       this.pal = palette(M, this.season);
-      let pr = this.bag.maps[M.id]; if (!pr || pr.loop !== this.bag.loop) pr = this.bag.maps[M.id] = { loop: this.bag.loop, found: [], chk: [], done: false };
+      let pr = this.bag.maps[M.id]; if (!pr || pr.loop !== this.bag.loop) pr = this.bag.maps[M.id] = { loop: this.bag.loop, found: [], chk: [], done: false, kinds: null };
+      const legacy = !pr.kinds && (pr.found.length || pr.chk.length);   // progress saved before the kinds were saved with it
       this.progress = pr;
-      const R = rng(hash(M.id + ':' + this.bag.loop)), idx = L.spots.map((_, k) => k).sort(() => R() - .5).slice(0, M.friends), kinds = FRIENDS.slice().sort(() => R() - .5);
-      this.friendAt = new Map(idx.map((si, k) => [si, kinds[(k + i * 3) % kinds.length]]));
+      // how many friends hide here: fewer for toddlers, one more for big kids (a friend already found always stays)
+      const t = SPG.level.tier('hide'), want = t === 1 ? Math.max(2, M.friends - 1) : t === 3 ? Math.max(M.friends, 4) : M.friends;   // 2-4 / 3-5 / 4-5: at most 21 friends in a whole adventure, and there are 21 kinds
+      const R = rng(hash(M.id + ':' + this.bag.loop)), order = L.spots.map((_, k) => k).sort(() => R() - .5);
+      const idx = order.slice(0, want); for (const k of pr.found) if (!idx.includes(k)) idx.push(k);
+      // Who hides where is decided once for each place and then saved, and never repeats a kind from the earlier places in this adventure
+      // (so the friends that tag along are never "replaced" by lookalikes in the next place).
+      // (kinds are added one by one as a place needs them, so a later place can always find kinds nobody before it used)
+      const before = new Set(); for (let j = 0; j < i; j++) { const q = this.bag.maps[MAPS[j].id]; if (q && q.loop === this.bag.loop && q.kinds) q.kinds.forEach(k => before.add(k)); }
+      if (!pr.kinds) { pr.kinds = []; if (legacy) { const old = FRIENDS.slice().sort(() => R() - .5); pr.kinds = FRIENDS.map((_, k) => old[(k + i * 3) % old.length]).slice(0, M.friends); } }   // a save from before: exactly who was hiding
+      if (pr.kinds.length < idx.length) {
+        const RK = rng(hash('kinds:' + M.id + ':' + this.bag.loop)), pool = ALL_FRIENDS.slice().sort(() => RK() - .5);
+        for (const k of pool.filter(k => !before.has(k)).concat(pool.filter(k => before.has(k)))) { if (pr.kinds.length >= idx.length) break; if (!pr.kinds.includes(k)) pr.kinds.push(k); }
+      }
+      this.friendAt = new Map(idx.map((si, k) => [si, pr.kinds[k % pr.kinds.length]]));
       this.spots = L.spots.map((o, k) => ({ fx: o.fx, fy: o.fy, idx: k, kind: this.pal.defs[k % this.pal.defs.length][0], pal: this.pal.defs[k % this.pal.defs.length][1], friend: this.friendAt.has(k) ? { kind: this.friendAt.get(k), found: pr.found.includes(k) } : null, checked: pr.chk.includes(k), shake: 0, halo: 0, haloK: 0 }));
       this.lands = L.lands.map(o => Object.assign({ spin: 0, pulse: 0 }, o));
       this.state = 'play'; this.stateT = 0; this.wonK = 0; this.since = 0; this.goal = null; this.want = null; this.fx.p.length = 0; this.flyers = [];
@@ -615,10 +630,11 @@
       const S = this.S, me = this.me; let tx, ty, alpha, T = null, gold = false;
       if (this.progress.done) { const g = this.gateE; tx = g.x; ty = g.y; alpha = this.since > 3 ? Math.min(1, (this.since - 3) / 2) : 0; gold = true; if (Math.hypot(tx - me.x, ty - me.y) < S * 2.5) return; }
       else {
-        if (this.since < 6) return;
+        const wait = SPG.level.tier('hide') === 1 ? 3 : SPG.level.tier('hide') === 3 ? 10 : 6;
+        if (this.since < wait) return;
         let best = null, bd = 1e9; for (const sp of this.spots) if (sp.friend && !sp.friend.found) { const d = Math.hypot(sp.x - me.x, sp.y - me.y); if (d < bd) { bd = d; best = sp; } }
         if (!best || bd < S * 1.5) return;
-        tx = best.x; ty = best.y; alpha = clamp(1 - bd / (this.WW * .55), .2, 1) * Math.min(1, (this.since - 6) / 2); T = TEMP(clamp(1 - bd / (this.WW * .28), 0, 1));
+        tx = best.x; ty = best.y; alpha = clamp(1 - bd / (this.WW * .55), .2, 1) * Math.min(1, (this.since - wait) / 2); T = TEMP(clamp(1 - bd / (this.WW * .28), 0, 1));
       }
       const dx = tx - me.x, dy = ty - me.y, a = Math.atan2(dy, dx), r = Math.min(this.w, this.h) * .36;
       const x = this.w / 2 + Math.cos(a) * r * (this.w / this.h > 1 ? 1.5 : 1), y = this.h * .5 + Math.sin(a) * r;

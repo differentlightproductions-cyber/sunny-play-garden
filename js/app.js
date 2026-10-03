@@ -72,7 +72,13 @@
   /* ------------------------------------------------------------ setup */
   const NICKS = SPG.voice.PICK_NAMES.nicks;
   let pickedAvatar = art.AVATARS[0];
-  let nickGrid = null;
+  let nickGrid = null, pickedGender = '', pickedAge = 0;
+  // a row of toggle buttons (the same look as the switches in Grown-ups): pick one, tap it again to un-pick
+  function chipRow(host, options, get, set) {
+    const paint = () => [...host.children].forEach((b, i) => b.setAttribute('aria-pressed', String(get() === options[i][0])));
+    host.replaceChildren(...options.map(([val, label]) => { const b = h('button', { type: 'button', class: 'seg-btn' }, label); b.addEventListener('click', () => { set(get() === val ? (typeof val === 'number' ? 0 : '') : val); SPG.sfx.tap(); paint(); }); return b; }));
+    paint();
+  }
   function openSetup(canCancel) {
     const pick = $('avatar-pick');
     const used = new Set(store.profiles.map(p => p.avatar));
@@ -82,6 +88,9 @@
       b.addEventListener('click', () => { pickedAvatar = kind; [...pick.children].forEach(x => x.setAttribute('aria-pressed', String(x === b))); SPG.sfx.tap(); });
       return b;
     }));
+    pickedGender = ''; pickedAge = 0;
+    chipRow($('gender-pick'), [['girl', 'Girl'], ['boy', 'Boy']], () => pickedGender, v => { pickedGender = v; });
+    chipRow($('age-pick'), SPG.level.AGES.map(a => [a, String(a)]), () => pickedAge, v => { pickedAge = v; });
     $('setup-restore').classList.toggle('hidden', store.profiles.length > 0);
     $('name-input').value = ''; $('name-field').classList.add('hidden'); $('type-name').classList.remove('hidden');
     nickGrid = SPG.ui.nameGrid(NICKS, () => { $('name-input').value = ''; });
@@ -99,7 +108,7 @@
     const name = input.value.trim() || (nickGrid && nickGrid.value) || '';
     if (!name) { const t = $('nick-pick'); t.animate([{ transform: 'translateX(-8px)' }, { transform: 'translateX(8px)' }, { transform: 'none' }], { duration: 250 }); SPG.sfx.oops(); return; }
     input.blur();
-    const first = store.profiles.length === 0, p = store.addProfile(name, pickedAvatar);
+    const first = store.profiles.length === 0, p = store.addProfile(name, pickedAvatar, { gender: pickedGender, level: pickedAge ? { mode: 'age', age: pickedAge } : null });
     // the very first time, grown-ups are asked to choose the family voices (5-10 people) before play starts
     if (first && SPG.config.recorder && !store.settings.voiceIntroDone) {
       store.settings.voiceIntroDone = true; store.save();
@@ -349,6 +358,7 @@
       sw.setAttribute('aria-checked', String(store.settings[key]));
       SPG.music.sync();
       if (store.settings[key] && (key === 'sound' || key === 'voice')) { key === 'sound' ? SPG.sfx.chime() : voice.say('hello'); }
+      if (store.settings[key] && key === 'audioHelp') voice.say('cookc/0');   // a sample: "Sweets!"
     });
     return h('div', { class: 'setting' }, h('span', {}, label), sw);
   }
@@ -490,12 +500,13 @@
     players.append(add);
 
     body.replaceChildren(
-      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music'), toggle('Coloring Book music', 'colorMusic')),
+      h('section', { style: 'border-top:0;padding-top:0' }, h('h3', {}, 'Sound'), toggle('Voice prompts', 'voice'), toggle('Extra audio help', 'audioHelp'), h('p', { class: 'fine' }, 'For children who need more help hearing what things are: the games also say the name of each menu item, ingredient, piece of clothing or shop item as it is touched, and speak a little slower. Off by default, so the games stay quiet and calm.'), toggle('Sound effects', 'sound'), toggle('Soft background music', 'music'), toggle('Coloring Book music', 'colorMusic')),
       voicesSection(),
       timerSection(),
       pinSection(),
       nightSection(),
-      fruitSection(),
+      levelSection(),
+      photoSection(),
       backupSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
@@ -616,17 +627,41 @@
     return sec;
   }
 
-  function fruitSection() {
-    const cur = store.settings.fruitAge === 'big' ? 'big' : 'little';
-    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Fruit Splash age' });
-    for (const [id, label] of [['little', 'Little kids'], ['big', 'Bigger kids']]) {
-      const b = h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': String(cur === id) }, label);
-      b.addEventListener('click', () => { store.settings.fruitAge = id; store.save(); renderParent(); });
-      seg.append(b);
+  // Age and difficulty (and boy or girl, for the wording of grown-up screens), one block for each player
+  function levelSection() {
+    const sec = h('section', {}, h('h3', {}, 'Age and difficulty'),
+      h('p', {}, 'Pick an exact age and each game picks its own mix of easier and harder things, or pick an age group and every game uses that group\u2019s settings. Open \u201CWhat the games do\u201D to see exactly what changes. Nothing is ever lost or failed at any level.'));
+    for (const p of store.profiles) {
+      const cfg = SPG.level.cfg(p), redo = () => renderParent();
+      const block = h('div', { class: 'lvl-block' }, h('div', { class: 'lvl-head' }, avatarCanvas(p.avatar, 104), h('div', { class: 'name' }, p.name, h('div', { class: 'stat' }, SPG.level.label(p)))));
+      const row = (label, rowEl) => h('div', {}, h('p', { class: 'fine' }, label), rowEl);
+      const gSeg = h('div', { class: 'seg', role: 'group', 'aria-label': `Boy or girl for ${p.name}` });
+      chipRow(gSeg, [['girl', 'Girl'], ['boy', 'Boy']], () => p.gender || '', v => { if (v) p.gender = v; else delete p.gender; p.t = Date.now(); store.save(); redo(); });
+      const mSeg = h('div', { class: 'seg', role: 'group', 'aria-label': `How to set the level for ${p.name}` });
+      chipRow(mSeg, [['age', 'Pick an age'], ['group', 'Pick an age group']], () => cfg.mode, v => { if (!v) return; SPG.level.set(p, v === 'age' ? { mode: 'age', age: cfg.mode === 'age' ? cfg.age : 4 } : { mode: 'group', group: cfg.mode === 'group' ? cfg.group : 'little' }); redo(); });
+      const cSeg = h('div', { class: 'seg', role: 'group', 'aria-label': `Level for ${p.name}` });
+      if (cfg.mode === 'age') chipRow(cSeg, SPG.level.AGES.map(a => [a, String(a)]), () => cfg.age, v => { if (v) { SPG.level.set(p, { mode: 'age', age: v }); redo(); } });
+      else chipRow(cSeg, SPG.level.GROUPS.map(g => [g.id, `${g.name} (${g.ages})`]), () => cfg.group, v => { if (v) { SPG.level.set(p, { mode: 'group', group: v }); redo(); } });
+      const det = h('details', { class: 'vgroup' }, h('summary', {}, 'What the games do'), ...SPG.level.describe(p).map(([g, d]) => h('div', { class: 'lvl-line' }, h('b', {}, g), h('span', { class: 'fine' }, d))));
+      block.append(row('Boy or girl', gSeg), row('How should the level be chosen?', mSeg), row(cfg.mode === 'age' ? 'Age' : 'Age group', cSeg), det);
+      sec.append(block);
     }
-    return h('section', {}, h('h3', {}, 'Fruit Splash age'),
-      h('p', {}, 'Little kids: only happy fruit, nothing is ever lost. Bigger kids: water balloons float up too. Popping one shakes the screen, splashes water everywhere and takes 5 fruit points away (never stars).'),
-      seg);
+    return sec;
+  }
+
+  // Kitchen photos: the camera button in Sprout Kitchen keeps photos in the game's own album; a grown-up can also let them go to the device's photos
+  function photoSection() {
+    const app = SPG.native && SPG.native.isApp, ios = safe.isIOS && !app;
+    const sw = h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': String(!!store.settings.photoSave), 'aria-label': 'Save kitchen photos to this device' });
+    sw.addEventListener('click', () => { store.settings.photoSave = !store.settings.photoSave; store.save(); sw.setAttribute('aria-checked', String(store.settings.photoSave)); });
+    const count = h('p', { class: 'fine' }, 'Counting photos…');
+    if (SPG.photos) SPG.photos.count().then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
+    const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear(); renderParent(); });
+    return h('section', {}, h('h3', {}, 'Photos and pictures'),
+      h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made. Photos are always kept in the kitchen\u2019s own photo album, on this device only.'),
+      h('p', {}, app ? 'In the Coloring Book the Save picture button always puts the finished picture into this phone\u2019s photo gallery (album \u201CSprout Park\u201D). Every picture also stays in the Coloring Book\u2019s own gallery.' : 'In the Coloring Book the Save picture button downloads the picture to this device. Every picture also stays in the Coloring Book\u2019s own gallery.'),
+      ios ? h('p', { class: 'fine' }, 'On iPhone and iPad the photos stay in the kitchen album.') : h('div', { class: 'setting' }, h('span', {}, app ? 'Also save them to this phone\u2019s photo gallery (album \u201CSprout Park\u201D)' : 'Also save them to this device (as a download)'), sw),
+      count, clear);
   }
 
   function pinSection() {

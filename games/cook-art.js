@@ -112,12 +112,6 @@
   const BUN = '#e8a85c', BREAD = '#f3d9a4', CRUST = '#d9a45c';
   const ING = {
     bell(c, s) { c.fillStyle = '#ffd54a'; c.beginPath(); c.moveTo(-s * .5, s * .3); c.quadraticCurveTo(-s * .5, -s * .5, 0, -s * .5); c.quadraticCurveTo(s * .5, -s * .5, s * .5, s * .3); c.closePath(); c.fill(); c.fillStyle = '#ffe98a'; c.beginPath(); c.ellipse(-s * .18, -s * .12, s * .1, s * .22, .3, 0, TAU); c.fill(); box(c, -s * .6, s * .28, s * 1.2, s * .12, '#e0a01e', s * .05); circ(c, 0, s * .5, s * .12, '#e0a01e'); circ(c, 0, -s * .55, s * .08, '#e0a01e'); },
-    flour(c, s) { c.fillStyle = '#e8d9bf'; c.beginPath(); c.moveTo(-s * .38, s * .45); c.lineTo(-s * .42, -s * .35); c.quadraticCurveTo(0, -s * .52, s * .42, -s * .35); c.lineTo(s * .38, s * .45); c.closePath(); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(-s * .4, -s * .3); c.quadraticCurveTo(0, -s * .48, s * .4, -s * .3); c.lineTo(s * .38, s * .0); c.lineTo(-s * .38, s * .0); c.closePath(); c.fill(); box(c, -s * .24, s * .02, s * .48, s * .26, '#f4c542', s * .05); c.fillStyle = '#c98b15'; art.star(c, 0, s * .15, s * .09, '#c98b15', 0); },
-    sugar(c, s) { box(c, -s * .34, -s * .28, s * .68, s * .74, 'rgba(210,235,255,.55)', s * .1); box(c, -s * .34, -s * .28, s * .68, s * .3, '#fff', s * .1); for (let i = 0; i < 14; i++) circ(c, (rnd(i) - .5) * s * .5, s * (.05 + rnd(i + 3) * .34), s * .022, '#fff'); box(c, -s * .38, -s * .38, s * .76, s * .12, '#ff9ec8', s * .05); },
-    egg(c, s) { c.fillStyle = '#fff6e6'; c.beginPath(); c.moveTo(0, -s * .48); c.bezierCurveTo(s * .46, -s * .4, s * .46, s * .46, 0, s * .46); c.bezierCurveTo(-s * .46, s * .46, -s * .46, -s * .4, 0, -s * .48); c.fill(); c.strokeStyle = 'rgba(200,170,120,.5)'; c.lineWidth = s * .03; c.stroke(); c.save(); c.translate(0, s * .05); art.face(c, s * .34, {}); c.restore(); shine(c, -s * .2, -s * .22, s * .06, s * .12, -.3, .6); },
-    butter(c, s) { box(c, -s * .42, -s * .2, s * .84, s * .42, '#ffe27a', s * .06); box(c, -s * .42, -s * .2, s * .84, s * .14, '#fff3b0', s * .06); box(c, -s * .42, s * .02, s * .84, s * .22, '#c0c8d4', s * .05); box(c, -s * .42, s * .02, s * .84, s * .06, '#e0e6ee', s * .03); },
-    milk(c, s) { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(-s * .26, s * .46); c.lineTo(-s * .26, -s * .12); c.lineTo(-s * .26, -s * .12); c.lineTo(0, -s * .46); c.lineTo(s * .26, -s * .12); c.lineTo(s * .26, s * .46); c.closePath(); c.fill(); c.fillStyle = '#7fd4f5'; c.fillRect(-s * .26, s * .0, s * .52, s * .28); c.fillStyle = '#e8f6ff'; c.beginPath(); c.moveTo(0, -s * .46); c.lineTo(s * .26, -s * .12); c.lineTo(0, -s * .06); c.lineTo(-s * .26, -s * .12); c.closePath(); c.fill(); circ(c, 0, s * .14, s * .09, '#fff'); },
-    chips(c, s) { for (const [x, y] of [[-.22, .12], [.18, .15], [0, -.14], [-.3, -.2], [.28, -.15], [.02, .32]]) { c.fillStyle = '#5a3a2a'; c.beginPath(); c.moveTo(x * s, (y - .14) * s); c.lineTo((x + .12) * s, (y + .1) * s); c.lineTo((x - .12) * s, (y + .1) * s); c.closePath(); c.fill(); shine(c, (x - .03) * s, (y - .02) * s, s * .025, s * .04, -.4, .35); } },
     cheese(c, s) { c.fillStyle = '#ffd54a'; c.beginPath(); c.moveTo(-s * .42, s * .26); c.lineTo(s * .44, s * .1); c.lineTo(-s * .3, -s * .34); c.closePath(); c.fill(); c.fillStyle = '#ffe582'; c.beginPath(); c.moveTo(-s * .42, s * .26); c.lineTo(s * .44, s * .1); c.lineTo(s * .44, s * .24); c.lineTo(-s * .42, s * .4); c.closePath(); c.fill(); for (const [x, y, r] of [[-.12, .08, .07], [.1, .14, .05], [-.24, .2, .04]]) circ(c, x * s, y * s, r * s, '#e8b22a'); },
     lettuce(c, s) { c.fillStyle = '#7ed957'; c.beginPath(); for (let i = 0; i <= 12; i++) { const a = i / 12 * TAU, k = 1 + (i % 2 ? -.12 : .1); const x = Math.cos(a) * s * .44 * k, y = Math.sin(a) * s * .34 * k; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.closePath(); c.fill(); c.strokeStyle = '#a8f07a'; c.lineWidth = s * .04; c.beginPath(); c.moveTo(-s * .3, 0); c.quadraticCurveTo(0, -s * .12, s * .3, 0); c.stroke(); c.beginPath(); c.moveTo(0, -s * .22); c.lineTo(0, s * .22); c.stroke(); },
     tomato(c, s) { circ(c, 0, s * .02, s * .42, '#e8433f'); circ(c, 0, s * .02, s * .34, '#ff6b5a'); for (let i = 0; i < 5; i++) { const a = i * TAU / 5; ell(c, Math.cos(a) * s * .17, s * .02 + Math.sin(a) * s * .17, s * .07, s * .04, '#ffd0a8', a); } shine(c, -s * .18, -s * .2, s * .08, s * .04, -.7, .5); },
@@ -143,12 +137,6 @@
     pbutter(c, s) { box(c, -s * .34, -s * .2, s * .68, s * .62, '#c98b4a', s * .08); box(c, -s * .38, -s * .32, s * .76, s * .16, '#e8c18a', s * .05); box(c, -s * .26, -s * .02, s * .52, s * .26, '#fff3d6', s * .05); circ(c, 0, s * .11, s * .07, '#c98b4a'); },
     jelly(c, s) { box(c, -s * .34, -s * .2, s * .68, s * .62, '#b8326a', s * .08); box(c, -s * .38, -s * .32, s * .76, s * .16, '#e8e0f0', s * .05); box(c, -s * .26, -s * .02, s * .52, s * .26, '#fff', s * .05); circ(c, 0, s * .11, s * .08, '#ff6b9d'); },
     syrup(c, s) { c.fillStyle = '#b8651a'; rr(c, -s * .22, -s * .18, s * .44, s * .62, s * .1); c.fill(); c.fillStyle = '#d98b3a'; rr(c, -s * .22, -s * .18, s * .16, s * .6, s * .08); c.fill(); box(c, -s * .12, -s * .38, s * .24, s * .24, '#f4e0a0', s * .04); box(c, -s * .18, s * .06, s * .36, s * .22, '#fff', s * .04); },
-    strawberry(c, s) { c.fillStyle = '#e8433f'; c.beginPath(); c.moveTo(0, s * .46); c.bezierCurveTo(-s * .55, s * .1, -s * .4, -s * .4, 0, -s * .3); c.bezierCurveTo(s * .4, -s * .4, s * .55, s * .1, 0, s * .46); c.fill(); for (const [x, y] of [[-.15, -.05], [.12, 0], [0, .18], [-.2, .15], [.2, .16], [0, -.12]]) { c.fillStyle = '#ffe27a'; c.beginPath(); c.ellipse(x * s, y * s, s * .02, s * .03, 0, 0, TAU); c.fill(); } c.fillStyle = '#4fb86a'; for (const a of [-.9, -.3, .3, .9]) { c.save(); c.translate(0, -s * .3); c.rotate(a); c.beginPath(); c.ellipse(0, -s * .06, s * .05, s * .12, 0, 0, TAU); c.fill(); c.restore(); } },
-    blueberry(c, s) { circ(c, 0, 0, s * .22, '#4a5fb8'); circ(c, 0, 0, s * .16, '#6a7fd8'); c.fillStyle = '#34408a'; c.beginPath(); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * TAU / 5; c.lineTo(Math.cos(a) * s * .07, s * -.02 + Math.sin(a) * s * .07); } c.closePath(); c.fill(); shine(c, -s * .08, -s * .1, s * .04, s * .02, -.7, .5); },
-    cherry(c, s) { c.strokeStyle = '#5a8a3a'; c.lineWidth = s * .04; c.beginPath(); c.moveTo(0, s * .1); c.quadraticCurveTo(s * .1, -s * .3, s * .22, -s * .42); c.stroke(); circ(c, 0, s * .2, s * .24, '#c8203a'); circ(c, 0, s * .2, s * .18, '#e8435a'); shine(c, -s * .08, s * .1, s * .05, s * .03, -.7, .6); },
-    sprinkles(c, s) { box(c, -s * .18, -s * .4, s * .36, s * .8, '#fff', s * .08); for (let i = 0; i < 12; i++) { c.save(); c.translate((rnd(i) - .5) * s * .24, -s * .3 + rnd(i + 5) * s * .7); c.rotate(rnd(i + 8) * 3); box(c, -s * .045, -s * .015, s * .09, s * .03, ['#ff6b81', '#ffd54a', '#5cc8f2', '#7ed957', '#b58cf0'][i % 5], s * .01); c.restore(); } },
-    candy(c, s) { for (const [x, y, col] of [[-.2, -.12, '#ff6b81'], [.18, -.1, '#5cc8f2'], [0, .16, '#ffd54a'], [-.24, .18, '#7ed957'], [.26, .16, '#b58cf0']]) { circ(c, x * s, y * s, s * .13, col); shine(c, (x - .04) * s, (y - .04) * s, s * .03, s * .02, -.7, .6); } },
-    candle(c, s) { box(c, -s * .08, -s * .12, s * .16, s * .55, '#7fd4f5', s * .03); for (let i = 0; i < 4; i++) box(c, -s * .08, -s * .06 + i * s * .12, s * .16, s * .04, '#fff', 0); ell(c, 0, -s * .24, s * .07, s * .12, '#ff9d3d'); ell(c, 0, -s * .22, s * .035, s * .07, '#ffe27a'); },
     star(c, s) { art.star(c, 0, 0, s * .34, '#ffd54a', 0); },
     cone(c, s) { tri(c, [[-s * .26, -s * .1], [s * .26, -s * .1], [0, s * .5]], '#e8b878'); c.strokeStyle = '#c98b4a'; c.lineWidth = s * .03; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(-s * .2 + i * s * .13, -s * .1); c.lineTo(-s * .06 + i * s * .06, s * .3); c.stroke(); } },
     salt(c, s) { box(c, -s * .2, -s * .12, s * .4, s * .54, 'rgba(220,235,250,.8)', s * .06); box(c, -s * .22, -s * .3, s * .44, s * .2, '#b9c4d4', s * .08); for (const x of [-.08, 0, .08]) circ(c, x * s, -s * .2, s * .02, '#6a7a90'); for (let i = 0; i < 8; i++) circ(c, (rnd(i) - .5) * s * .26, s * (.06 + rnd(i + 3) * .3), s * .018, '#fff'); },
@@ -166,6 +154,419 @@
   const SCOOPS = { vanilla: '#fff1c4', strawb: '#ff9ec8', choc: '#8a5a3a', mint: '#9fe6c0', blueb: '#a8b8f0' };
   for (const [id, col] of Object.entries(SCOOPS)) ING['sc-' + id] = SCOOP(col);
   const NAME = { flour: 'Flour', sugar: 'Sugar', egg: 'An egg', butter: 'Butter', milk: 'Milk', chips: 'Chocolate chips', cheese: 'Cheese', lettuce: 'Lettuce', tomato: 'Tomato', onion: 'Onion', pickle: 'Pickle', cucumber: 'Cucumber', avocado: 'Avocado', carrot: 'Carrot', ham: 'Ham', turkey: 'Turkey', patty: 'A burger patty', beanpatty: 'A veggie patty', chicken: 'A chicken patty', bunB: 'The bottom bun', bunT: 'The top bun', bread: 'Bread', hotbun: 'A hot dog bun', sausage: 'A sausage', pancake: 'Pancake', toast: 'Toast', butterpat: 'A pat of butter', batter: 'Batter', hotbunBack: 'A hot dog bun', bunny: 'Bunny', bear: 'Bear', cat: 'Kitty', fox: 'Fox', frog: 'Frog', panda: 'Panda', dino: 'Dinosaur', unicorn: 'Unicorn', flower: 'Flower', heart: 'Heart', ketchup: 'Ketchup', mustard: 'Mustard', mayo: 'Mayo', pbutter: 'Peanut butter', jelly: 'Jelly', syrup: 'Syrup', strawberry: 'A strawberry', blueberry: 'Blueberries', cherry: 'A cherry', sprinkles: 'Sprinkles', candy: 'Candy', candle: 'A candle', star: 'A star', cone: 'A cone', salt: 'Salt', pepper: 'Pepper', dough: 'Dough', 'ice-pink': 'Pink icing', 'ice-blue': 'Blue icing', 'ice-yellow': 'Yellow icing', 'ice-white': 'White icing', 'ice-choc': 'Chocolate icing', 'ice-green': 'Green icing', 'ice-purple': 'Purple icing', 'sc-vanilla': 'Vanilla ice cream', 'sc-strawb': 'Strawberry ice cream', 'sc-choc': 'Chocolate ice cream', 'sc-mint': 'Mint ice cream', 'sc-blueb': 'Blueberry ice cream' };
+
+  /* ---------------------------------------------------------------- round 2: clearer tray pictures (flat, rounded, a little shading) */
+  const lin = (c, x0, y0, x1, y1, stops) => { const g = c.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, col]) => g.addColorStop(o, col)); return g; };
+  const edge = (c, col, w) => { c.strokeStyle = col; c.lineWidth = w; c.lineJoin = c.lineCap = 'round'; c.stroke(); };
+  const soft = (c, x, y, rx, ry, a = .16) => { c.fillStyle = `rgba(80,40,20,${a})`; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fill(); };
+  const spark4 = (c, x, y, r, col) => { c.fillStyle = col; c.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 - Math.PI / 2, k = i % 2 ? r * .3 : r; i ? c.lineTo(x + Math.cos(a) * k, y + Math.sin(a) * k) : c.moveTo(x + Math.cos(a) * k, y + Math.sin(a) * k); } c.closePath(); c.fill(); };
+  const poly = (c, pts, col) => { c.fillStyle = col; c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fill(); };
+
+  // a paper flour sack: folded and stitched top (closed) or rolled-down open mouth with a mound of flour; wheat mark on a label
+  function flourSack(c, s, open) {
+    soft(c, 0, s * .48, s * .44, s * .07);
+    const body = () => { c.beginPath(); c.moveTo(-s * .33, -s * .2); c.bezierCurveTo(-s * .43, s * .04, -s * .43, s * .34, -s * .37, s * .44); c.quadraticCurveTo(0, s * .51, s * .37, s * .44); c.bezierCurveTo(s * .43, s * .34, s * .43, s * .04, s * .33, -s * .2); c.closePath(); };
+    c.fillStyle = lin(c, -s * .4, 0, s * .4, 0, [[0, '#f3e3c0'], [.5, '#ead5a8'], [1, '#cfae76']]); body(); c.fill(); edge(c, '#b3905a', s * .02);
+    c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.moveTo(-s * .31, -s * .12); c.quadraticCurveTo(-s * .37, s * .12, -s * .32, s * .36); c.lineTo(-s * .26, s * .36); c.quadraticCurveTo(-s * .31, s * .1, -s * .26, -s * .12); c.closePath(); c.fill();
+    // label with a wheat ear
+    box(c, -s * .22, -s * .06, s * .44, s * .42, '#fffaf0', s * .09); c.strokeStyle = '#d9b46a'; c.lineWidth = s * .015; rr(c, -s * .22, -s * .06, s * .44, s * .42, s * .09); c.stroke();
+    c.strokeStyle = '#b9811a'; c.lineWidth = s * .03; c.lineCap = 'round'; c.beginPath(); c.moveTo(0, s * .32); c.lineTo(0, s * .0); c.stroke();
+    for (const [y, a] of [[.18, .6], [.1, .6], [.02, .6]]) for (const sg of [-1, 1]) ell(c, sg * s * .055, y * s, s * .038, s * .075, '#e0a42a', sg * a);
+    ell(c, 0, -s * .02, s * .036, s * .075, '#e8b23c');
+    if (!open) {
+      c.fillStyle = lin(c, 0, -s * .44, 0, -s * .14, [[0, '#f9edcf'], [1, '#e6cd9c']]); c.beginPath(); c.moveTo(-s * .36, -s * .17); c.lineTo(-s * .33, -s * .4); c.quadraticCurveTo(-s * .17, -s * .46, 0, -s * .43); c.quadraticCurveTo(s * .17, -s * .46, s * .33, -s * .4); c.lineTo(s * .36, -s * .17); c.quadraticCurveTo(0, -s * .1, -s * .36, -s * .17); c.closePath(); c.fill(); edge(c, '#b3905a', s * .02);
+      c.strokeStyle = 'rgba(160,120,60,.5)'; c.lineWidth = s * .016; c.beginPath(); c.moveTo(-s * .34, -s * .3); c.quadraticCurveTo(0, -s * .24, s * .34, -s * .3); c.stroke();
+      c.strokeStyle = '#d6483f'; c.lineWidth = s * .022; c.setLineDash([s * .045, s * .035]); c.beginPath(); c.moveTo(-s * .33, -s * .25); c.quadraticCurveTo(0, -s * .19, s * .33, -s * .25); c.stroke(); c.setLineDash([]);
+      for (const [x, y, r] of [[-.2, -.37, .02], [.12, -.34, .016], [.24, -.28, .014]]) circ(c, x * s, y * s, r * s, 'rgba(255,255,255,.95)');
+    } else {
+      c.fillStyle = '#c9a56e'; c.beginPath(); c.ellipse(0, -s * .2, s * .35, s * .1, 0, 0, TAU); c.fill();
+      c.fillStyle = '#fbfbfd'; c.beginPath(); c.ellipse(0, -s * .22, s * .3, s * .075, 0, 0, TAU); c.fill();
+      c.beginPath(); c.moveTo(-s * .27, -s * .22); c.bezierCurveTo(-s * .2, -s * .5, s * .2, -s * .5, s * .27, -s * .22); c.closePath(); c.fill();
+      c.fillStyle = '#e7e9f2'; c.beginPath(); c.moveTo(s * .08, -s * .4); c.bezierCurveTo(s * .2, -s * .36, s * .26, -s * .28, s * .27, -s * .22); c.quadraticCurveTo(s * .12, -s * .18, s * .06, -s * .3); c.closePath(); c.fill();
+      shine(c, -s * .1, -s * .36, s * .08, s * .03, -.4, .8);
+      c.strokeStyle = '#f6e7c6'; c.lineWidth = s * .05; c.lineCap = 'round'; c.beginPath(); c.ellipse(0, -s * .2, s * .35, s * .1, 0, .08, Math.PI - .08); c.stroke(); edge(c, '#b3905a', s * .014);
+    }
+    // a little flour dusting on the ground and in the air
+    ell(c, s * .08, s * .5, s * .34, s * .045, 'rgba(255,255,255,.92)'); ell(c, s * .3, s * .46, s * .12, s * .04, '#fff');
+    for (const [x, y, r] of [[.4, .38, .02], [.45, .3, .014], [-.42, .42, .018], [-.36, .5, .02], [.18, .53, .014]]) circ(c, x * s, y * s, r * s, 'rgba(255,255,255,.95)');
+  }
+  // a glass sugar canister full of white crystals; open = lid off (leaning on the counter) and a heap of sugar showing
+  function sugarJar(c, s, open) {
+    soft(c, 0, s * .48, s * .42, s * .07);
+    const glass = () => { c.beginPath(); c.moveTo(-s * .3, -s * .22); c.lineTo(-s * .3, s * .34); c.quadraticCurveTo(-s * .3, s * .47, -s * .17, s * .47); c.lineTo(s * .17, s * .47); c.quadraticCurveTo(s * .3, s * .47, s * .3, s * .34); c.lineTo(s * .3, -s * .22); c.closePath(); };
+    c.fillStyle = lin(c, -s * .3, 0, s * .3, 0, [[0, 'rgba(215,236,252,.95)'], [.5, 'rgba(236,247,255,.9)'], [1, 'rgba(188,218,242,.95)']]); glass(); c.fill();
+    c.save(); glass(); c.clip();
+    c.fillStyle = '#fdfdff'; c.beginPath(); c.moveTo(-s * .4, -s * .06); c.quadraticCurveTo(-s * .12, open ? -s * .3 : -s * .1, 0, open ? -s * .3 : -s * .08); c.quadraticCurveTo(s * .14, open ? -s * .3 : -s * .1, s * .4, -s * .06); c.lineTo(s * .4, s * .6); c.lineTo(-s * .4, s * .6); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(160,200,235,.4)'; c.fillRect(s * .16, -s * .3, s * .2, s * .9);
+    for (let i = 0; i < 90; i++) { const x = (rnd(i + 1) - .5) * s * .54, y = -s * .16 + rnd(i + 7) * s * .62, r = s * (.014 + rnd(i + 5) * .016); c.save(); c.translate(x, y); c.rotate(rnd(i + 3) * 1.5); c.fillStyle = '#fff'; c.strokeStyle = 'rgba(150,190,225,.75)'; c.lineWidth = s * .008; c.beginPath(); c.moveTo(0, -r * 1.3); c.lineTo(r, 0); c.lineTo(0, r * 1.3); c.lineTo(-r, 0); c.closePath(); c.fill(); c.stroke(); c.restore(); }
+    c.restore();
+    glass(); edge(c, '#86abca', s * .022);
+    c.fillStyle = 'rgba(255,255,255,.7)'; rr(c, -s * .25, -s * .14, s * .045, s * .5, s * .02); c.fill();
+    if (!open) {
+      box(c, -s * .34, -s * .36, s * .68, s * .16, '#ff8fb8', s * .06); box(c, -s * .34, -s * .36, s * .68, s * .05, '#ffb8d2', s * .03);
+      c.fillStyle = '#ff6fa2'; c.beginPath(); c.ellipse(0, -s * .4, s * .09, s * .05, 0, 0, TAU); c.fill(); box(c, -s * .03, -s * .43, s * .06, s * .06, '#ff6fa2', s * .02);
+    } else {
+      c.fillStyle = '#fdfdff'; c.beginPath(); c.moveTo(-s * .27, -s * .2); c.bezierCurveTo(-s * .24, -s * .42, s * .2, -s * .46, s * .27, -s * .2); c.closePath(); c.fill(); c.strokeStyle = 'rgba(150,190,225,.75)'; c.lineWidth = s * .014; c.stroke();
+      c.fillStyle = 'rgba(190,215,240,.45)'; c.beginPath(); c.moveTo(s * .1, -s * .38); c.bezierCurveTo(s * .2, -s * .34, s * .26, -s * .26, s * .27, -s * .2); c.lineTo(s * .1, -s * .2); c.closePath(); c.fill();
+      for (let i = 0; i < 14; i++) { const x = (rnd(i + 40) - .5) * s * .4, y = -s * .22 - rnd(i + 44) * s * .13 * (1 - Math.abs(x) / (s * .22)); c.save(); c.translate(x, y); c.rotate(rnd(i) * 3); c.strokeStyle = 'rgba(150,190,225,.8)'; c.lineWidth = s * .008; c.strokeRect(-s * .014, -s * .014, s * .028, s * .028); c.restore(); }
+      box(c, -s * .34, -s * .24, s * .68, s * .04, 'rgba(255,255,255,.0)', 0);
+    }
+    spark4(c, s * .38, -s * .26, s * .09, '#8cc8f2'); spark4(c, -s * .4, -s * .1, s * .06, '#8cc8f2');
+  }
+  const eggPath = (c, w, h) => { c.beginPath(); c.moveTo(0, -h); c.bezierCurveTo(w * .6, -h, w, -h * .12, w, h * .24); c.bezierCurveTo(w, h * .72, w * .56, h, 0, h); c.bezierCurveTo(-w * .56, h, -w, h * .72, -w, h * .24); c.bezierCurveTo(-w, -h * .12, -w * .6, -h, 0, -h); c.closePath(); };
+  // a real egg: cream to light brown, soft shading, a few speckles. Height is about .92 s.
+  function drawEgg(c, s, col = '#f2d6a6') {
+    c.save(); const w = s * .35, h = s * .46;
+    eggPath(c, w, h); c.fillStyle = shade(col, -.2); c.fill();
+    c.save(); c.translate(-w * .09, -h * .06); c.scale(.9, .92); eggPath(c, w, h); c.fillStyle = col; c.fill(); c.restore();
+    c.save(); c.translate(-w * .18, -h * .13); c.scale(.6, .6); eggPath(c, w, h); c.fillStyle = shade(col, .22); c.globalAlpha = .55; c.fill(); c.restore();
+    for (let i = 0; i < 9; i++) { const a = rnd(i + 4) * TAU, r = rnd(i + 9) * .7; circ(c, Math.cos(a) * w * r * .8, h * .12 + Math.sin(a) * h * r * .7, s * (.008 + rnd(i) * .008), 'rgba(160,110,60,.4)'); }
+    eggPath(c, w, h); edge(c, shade(col, -.38), s * .016);
+    ell(c, -s * .13, -s * .15, s * .045, s * .1, '#fff', .4); c.globalAlpha = 1; c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.ellipse(-s * .13, -s * .15, s * .04, s * .09, .4, 0, TAU); c.fill();
+    c.restore();
+  }
+  // a butter stick lying down, the left half still in its paper and the end of the paper folded back
+  function drawButter(c, s, o = {}) {
+    const paper = o.paper !== false;
+    soft(c, s * .06, s * .27, s * .52, s * .06);
+    poly(c, [[s * .44, -s * .02], [s * .54, -s * .16], [s * .54, s * .12], [s * .44, s * .3]], '#e6b232');       // end face
+    box(c, -s * .44, -s * .02, s * .88, s * .32, '#ffdc5e', s * .035);                                          // front
+    c.fillStyle = 'rgba(255,255,255,.35)'; rr(c, -s * .4, s * .0, s * .8, s * .05, s * .02); c.fill();
+    poly(c, [[-s * .44, -s * .02], [s * .44, -s * .02], [s * .54, -s * .16], [-s * .34, -s * .16]], '#fff2a8');   // top
+    c.strokeStyle = 'rgba(210,160,30,.35)'; c.lineWidth = s * .012; c.beginPath(); c.moveTo(s * .3, -s * .1); c.lineTo(s * .44, -s * .1); c.stroke();
+    if (paper) {
+      poly(c, [[-s * .44, -s * .02], [s * .02, -s * .02], [s * .12, -s * .16], [-s * .34, -s * .16]], '#fffdf6');
+      box(c, -s * .44, -s * .02, s * .46, s * .32, '#f6f2e8', s * .03);
+      box(c, -s * .44, s * .08, s * .46, s * .1, '#f0b429', 0); box(c, -s * .44, s * .08, s * .46, s * .03, '#ffd36a', 0);
+      box(c, -s * .36, s * .21, s * .22, s * .035, '#cfc7b4', s * .015); box(c, -s * .36, s * .0, s * .3, s * .035, '#cfc7b4', s * .015);
+      // the folded-back end: a little triangle of paper hanging off the front, showing its inside
+      poly(c, [[s * .02, -s * .02], [s * .02, s * .3], [s * .18, s * .12]], '#e9e3d2');
+      poly(c, [[s * .02, -s * .02], [s * .02, s * .3], [s * .09, s * .2]], 'rgba(150,130,90,.25)');
+      c.strokeStyle = '#c4b99f'; c.lineWidth = s * .014; c.beginPath(); c.moveTo(s * .02, -s * .02); c.lineTo(s * .02, s * .3); c.moveTo(s * .02, s * .3); c.lineTo(s * .18, s * .12); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.moveTo(-s * .44, -s * .02); c.lineTo(s * .02, -s * .02); c.lineTo(s * .06, -s * .08); c.lineTo(-s * .4, -s * .08); c.closePath(); c.fill();
+    }
+  }
+  // a milk carton with a gable top and a blue band
+  function drawMilk(c, s) {
+    soft(c, s * .06, s * .47, s * .36, s * .06);
+    poly(c, [[s * .1, -s * .06], [s * .3, -s * .14], [s * .3, s * .38], [s * .1, s * .46]], '#d3e3f2');
+    poly(c, [[s * .1, s * .12], [s * .3, s * .06], [s * .3, s * .26], [s * .1, s * .32]], '#4aa0dc');
+    box(c, -s * .3, -s * .06, s * .4, s * .52, '#fff', s * .015);
+    c.fillStyle = 'rgba(190,215,238,.45)'; c.fillRect(-s * .3, -s * .06, s * .05, s * .52);
+    box(c, -s * .3, s * .12, s * .4, s * .2, '#6cc2f2', 0); box(c, -s * .3, s * .12, s * .4, s * .04, '#9ad8f8', 0);
+    c.fillStyle = '#fff'; c.beginPath(); c.moveTo(-s * .1, s * .15); c.bezierCurveTo(-s * .03, s * .21, -s * .05, s * .3, -s * .1, s * .3); c.bezierCurveTo(-s * .15, s * .3, -s * .17, s * .21, -s * .1, s * .15); c.fill();   // a milk drop
+    poly(c, [[-s * .3, -s * .06], [s * .1, -s * .06], [-s * .1, -s * .3]], '#f1f7fc');                       // gable end
+    poly(c, [[s * .1, -s * .06], [-s * .1, -s * .3], [s * .1, -s * .38], [s * .3, -s * .14]], '#dbe9f6');     // roof slope
+    poly(c, [[-s * .1, -s * .3], [s * .1, -s * .38], [s * .1, -s * .44], [-s * .1, -s * .36]], '#fff');      // the fin along the ridge
+    c.strokeStyle = '#9fbad4'; c.lineWidth = s * .018; c.lineJoin = c.lineCap = 'round'; c.beginPath(); c.moveTo(-s * .3, -s * .06); c.lineTo(-s * .1, -s * .3); c.lineTo(s * .1, -s * .38); c.lineTo(s * .3, -s * .14); c.lineTo(s * .3, s * .38); c.lineTo(s * .1, s * .46); c.lineTo(-s * .3, s * .46); c.closePath(); c.stroke();
+    c.beginPath(); c.moveTo(-s * .3, -s * .06); c.lineTo(s * .1, -s * .06); c.lineTo(s * .3, -s * .14); c.moveTo(s * .1, -s * .06); c.lineTo(s * .1, s * .46); c.moveTo(-s * .1, -s * .3); c.lineTo(s * .1, -s * .06); c.stroke();
+  }
+  const chipPath = (c, r) => { c.beginPath(); c.moveTo(0, -r * 1.0); c.bezierCurveTo(r * .2, -r * .55, r * .92, -r * .3, r * .92, r * .38); c.bezierCurveTo(r * .92, r * .98, -r * .92, r * .98, -r * .92, r * .38); c.bezierCurveTo(-r * .92, -r * .3, -r * .2, -r * .55, 0, -r * 1.0); c.closePath(); };
+  // one chocolate chip (a teardrop with a pointed top)
+  function drawChip(c, x, y, r, rot = 0, col = '#5a3320') {
+    c.save(); c.translate(x, y); c.rotate(rot);
+    c.save(); c.translate(0, r * .1); chipPath(c, r); c.fillStyle = shade(col, -.45); c.fill(); c.restore();
+    chipPath(c, r); c.fillStyle = col; c.fill();
+    c.save(); c.translate(-r * .2, -r * .06); c.scale(.55, .6); chipPath(c, r); c.fillStyle = shade(col, .25); c.globalAlpha = .6; c.fill(); c.restore();
+    shine(c, -r * .3, r * .1, r * .1, r * .2, .3, .5);
+    c.restore();
+  }
+  function chipPile(c, s) {
+    soft(c, 0, s * .4, s * .42, s * .06);
+    const lay = [[-.06, -.28, .1], [-.22, -.12, -.3], [.12, -.14, .9], [-.4, .06, 1.2], [-.1, .02, .15], [.2, .04, -.6], [.4, .1, .5], [-.3, .24, -.9], [-.05, .22, .3], [.18, .24, 1.4], [.38, .3, -.2], [-.44, .3, .4]];
+    for (const [x, y, rot] of lay) drawChip(c, x * s * .78, (y * .86 + .03) * s, s * .12, rot);
+  }
+
+  /* ---------------------------------------------------------------- measuring cups and a spoon: centred, size s, tilt in radians */
+  function drawMeasure(c, kind, s, fill = 0, col = '#ffffff', tilt = 0) {
+    fill = clamp(fill == null ? 0 : fill, 0, 1);
+    c.save(); c.rotate(tilt || 0); c.lineJoin = c.lineCap = 'round';
+    if (kind === 'tbsp') {
+      // a steel tablespoon seen from above, bowl on the left
+      c.fillStyle = 'rgba(80,40,20,.14)'; c.beginPath(); c.ellipse(-s * .26 + s * .03, s * .05, s * .2, s * .15, 0, 0, TAU); c.fill();
+      c.beginPath(); c.moveTo(-s * .08, -s * .03); c.lineTo(s * .44, -s * .045); c.quadraticCurveTo(s * .5, 0, s * .44, s * .045); c.lineTo(-s * .08, s * .03); c.closePath();
+      c.fillStyle = lin(c, 0, -s * .05, 0, s * .05, [[0, '#eef2f8'], [1, '#a8b4c6']]); c.fill(); edge(c, '#8996ab', s * .014);
+      ell(c, -s * .27, 0, s * .2, s * .14, '#8996ab'); ell(c, -s * .27, 0, s * .185, s * .125, lin(c, -s * .4, -s * .12, -s * .15, s * .12, [[0, '#f4f7fb'], [1, '#bcc7d7']]));
+      ell(c, -s * .27, s * .01, s * .15, s * .095, '#d9e1ed');
+      if (fill > .02) { const k = Math.sqrt(fill); ell(c, -s * .27, s * .01, s * .15 * k, s * .095 * k, col); c.fillStyle = shade(col, .3); c.globalAlpha = .6; c.beginPath(); c.ellipse(-s * .295, -s * .012, s * .07 * k, s * .035 * k, -.3, 0, TAU); c.fill(); c.globalAlpha = 1; if (fill > .8) { c.fillStyle = col; c.beginPath(); c.ellipse(-s * .27, -s * .02, s * .12, s * .07, 0, Math.PI, 0); c.fill(); shine(c, -s * .3, -s * .045, s * .05, s * .02, -.3, .45); } }
+      shine(c, -s * .36, -s * .06, s * .05, s * .02, -.5, .8); c.fillStyle = '#fff'; c.globalAlpha = .7; rr(c, s * .0, -s * .02, s * .38, s * .014, s * .007); c.fill(); c.globalAlpha = 1;
+      c.restore(); return;
+    }
+    const k = kind === 'half' ? .78 : 1, hw1 = s * .31 * k, hw0 = s * .26 * k, top = -s * .32 * k, bot = s * .32 * k, hh = bot - top;
+    const glass = () => { c.beginPath(); c.moveTo(-hw1, top); c.lineTo(-hw0, bot - s * .06 * k); c.quadraticCurveTo(-hw0, bot, -hw0 + s * .06 * k, bot); c.lineTo(hw0 - s * .06 * k, bot); c.quadraticCurveTo(hw0, bot, hw0, bot - s * .06 * k); c.lineTo(hw1, top); c.closePath(); };
+    c.fillStyle = 'rgba(80,40,20,.12)'; c.beginPath(); c.ellipse(s * .04, bot + s * .02, hw0 * 1.1, s * .04 * k, 0, 0, TAU); c.fill();
+    // handle
+    const hc = kind === 'half' ? '#ff8fb0' : 'rgba(120,175,215,.95)';
+    c.strokeStyle = hc; c.lineWidth = s * .085 * k; c.beginPath(); c.moveTo(hw1 - s * .02, top + s * .1 * k); c.bezierCurveTo(hw1 + s * .36 * k, top + s * .02 * k, hw1 + s * .34 * k, bot - s * .14 * k, hw0 * .96, bot - s * .14 * k); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.45)'; c.lineWidth = s * .022 * k; c.beginPath(); c.moveTo(hw1 + s * .02, top + s * .09 * k); c.bezierCurveTo(hw1 + s * .3 * k, top + s * .03 * k, hw1 + s * .3 * k, bot - s * .2 * k, hw0 * .98, bot - s * .19 * k); c.stroke();
+    // the back of the glass, then what is inside, then the front
+    c.fillStyle = 'rgba(222,240,252,.45)'; glass(); c.fill();
+    if (fill > .005) {
+      const Ly = bot - fill * hh * .96, wy = Ly * Math.cos(tilt || 0);
+      c.save(); glass(); c.clip(); c.rotate(-(tilt || 0));
+      c.fillStyle = col; c.fillRect(-s, wy, s * 2, s);
+      c.fillStyle = shade(col, .28); c.globalAlpha = .55; c.fillRect(-s, wy, s * 2, s * .03 * k); c.globalAlpha = 1;
+      c.fillStyle = shade(col, -.12); c.globalAlpha = .35; c.fillRect(hw1 * .45, wy, s, s); c.globalAlpha = 1;
+      c.restore();
+    }
+    c.fillStyle = 'rgba(235,247,255,.28)'; glass(); c.fill();
+    glass(); edge(c, 'rgba(105,155,195,.95)', s * .024 * k);
+    c.fillStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.moveTo(-hw1 + s * .045 * k, top + s * .06 * k); c.lineTo(-hw0 + s * .04 * k, bot - s * .14 * k); c.lineTo(-hw0 + s * .075 * k, bot - s * .14 * k); c.lineTo(-hw1 + s * .08 * k, top + s * .06 * k); c.closePath(); c.fill();
+    // measuring lines (and the rim lip)
+    c.strokeStyle = 'rgba(60,110,160,.9)'; c.lineWidth = s * .02 * k; c.lineCap = 'round';
+    const marks = kind === 'half' ? [.5, 1] : [.25, .5, .75, 1];
+    for (const m of marks) { const y = bot - m * hh * .96, x = hw0 + (hw1 - hw0) * m, L = (m === .5 || m === 1) ? .2 : .12; c.beginPath(); c.moveTo(x - s * .05 * k, y); c.lineTo(x - s * (.05 + L) * k, y); c.stroke(); }
+    c.restore();
+  }
+
+  /* ---------------------------------------------------------------- ingredients laid out on the counter */
+  function drawEggCarton(c, s, n) {
+    n = clamp(Math.round(n == null ? 3 : n), 0, 3);
+    soft(c, s * .02, s * .34, s * .56, s * .07);
+    box(c, -s * .5, -s * .56, s * 1.0, s * .5, '#b8a07c', s * .05); box(c, -s * .45, -s * .52, s * .9, s * .42, '#cdb792', s * .04);
+    box(c, -s * .3, -s * .4, s * .6, s * .12, '#e8dcc2', s * .03);
+    box(c, -s * .5, -s * .08, s * 1.0, s * .4, '#dccaa8', s * .06);
+    const xs = [-.31, 0, .31];
+    const has = n === 1 ? [1] : n === 2 ? [0, 2] : n === 3 ? [0, 1, 2] : [];
+    for (const x of xs) ell(c, x * s, -s * .04, s * .14, s * .06, '#b39b76');
+    for (const i of has) { c.save(); c.translate(xs[i] * s, -s * .24); drawEgg(c, s * .56, i === 1 ? '#f3dcb0' : '#f0d3a0'); c.restore(); }
+    c.fillStyle = '#dccaa8'; c.beginPath(); c.moveTo(-s * .5, -s * .02); for (let i = 0; i < 3; i++) { const x0 = -s * .5 + i * s * .333, x1 = x0 + s * .333; c.quadraticCurveTo((x0 + x1) / 2, s * -.1, x1, -s * .02); } c.lineTo(s * .5, s * .26); c.quadraticCurveTo(s * .5, s * .32, s * .44, s * .32); c.lineTo(-s * .44, s * .32); c.quadraticCurveTo(-s * .5, s * .32, -s * .5, s * .26); c.closePath(); c.fill();
+    c.strokeStyle = '#b39b76'; c.lineWidth = s * .015; c.lineJoin = 'round'; c.stroke();
+    c.strokeStyle = 'rgba(160,130,90,.45)'; c.lineWidth = s * .014; for (const x of [-.167, .167]) { c.beginPath(); c.moveTo(x * s, -s * .02); c.lineTo(x * s, s * .3); c.stroke(); }
+  }
+  function drawButterPlate(c, s, n) {
+    n = clamp(Math.round(n == null ? 1 : n), 0, 4);
+    ell(c, s * .02, s * .34, s * .52, s * .17, 'rgba(80,40,20,.14)');
+    ell(c, 0, s * .3, s * .5, s * .17, '#d7e4f2'); ell(c, 0, s * .28, s * .5, s * .165, '#f4f8fd'); ell(c, 0, s * .29, s * .38, s * .11, '#e6eef8');
+    for (let i = 0; i < n; i++) { c.save(); c.translate((i % 2 ? .05 : -.04) * s, s * (.2 - i * .17)); c.scale(.66, .66); drawButter(c, s, { paper: i === 0 }); c.restore(); }
+    if (!n) { poly(c, [[-.3 * s, .26 * s], [.1 * s, .2 * s], [.3 * s, .3 * s], [-.1 * s, .38 * s]], '#f6f2e8'); }
+  }
+  function drawChipBowl(c, s) {
+    soft(c, 0, s * .4, s * .5, s * .07);
+    ell(c, 0, s * .0, s * .45, s * .13, '#6aaed8');
+    c.save(); c.translate(0, -s * .1); chipPile(c, s * .78); c.restore();
+    c.fillStyle = lin(c, -s * .45, 0, s * .45, 0, [[0, '#93d4f5'], [.5, '#7cc6f0'], [1, '#5aa6d8']]); c.beginPath(); c.moveTo(-s * .46, s * .0); c.quadraticCurveTo(-s * .44, s * .42, 0, s * .44); c.quadraticCurveTo(s * .44, s * .42, s * .46, s * .0); c.quadraticCurveTo(0, s * .14, -s * .46, s * .0); c.closePath(); c.fill(); edge(c, '#4a90c0', s * .018);
+    c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = s * .035; c.beginPath(); c.moveTo(-s * .4, s * .07); c.quadraticCurveTo(-s * .38, s * .25, -s * .2, s * .34); c.stroke();
+    for (const [x, y] of [[-.16, .24], [.04, .3], [.22, .22], [.34, .12]]) circ(c, x * s, y * s, s * .028, 'rgba(255,255,255,.85)');
+  }
+  function drawPile(c, id, n, s) {
+    c.save();
+    if (id === 'egg') drawEggCarton(c, s, n);
+    else if (id === 'flour') flourSack(c, s, true);
+    else if (id === 'sugar') sugarJar(c, s, true);
+    else if (id === 'butter') drawButterPlate(c, s, n);
+    else if (id === 'milk') { drawMilk(c, s); poly(c, [[-s * .1, -s * .3], [s * .0, -s * .335], [s * .0, -s * .4], [-s * .1, -s * .36]], '#cfe0ef'); }
+    else if (id === 'chips') drawChipBowl(c, s);
+    else if (ING[id]) ING[id](c, s);
+    c.restore();
+  }
+
+  /* ---------------------------------------------------------------- the six pantry tray pictures */
+  ING.flour = (c, s) => flourSack(c, s, false);
+  ING.sugar = (c, s) => sugarJar(c, s, false);
+  ING.egg = (c, s) => drawEgg(c, s);
+  ING.butter = (c, s) => drawButter(c, s);
+  ING.milk = (c, s) => drawMilk(c, s);
+  ING.chips = (c, s) => chipPile(c, s);
+
+  /* ---------------------------------------------------------------- sprinkles */
+  const SPRINKLE_KINDS = ['rainbow', 'choc', 'pastel', 'stars', 'hearts', 'dots'];
+  const SPR_COL = { rainbow: '#ff6b81', choc: '#6a3d22', pastel: '#ffb8d8', stars: '#ffd54a', hearts: '#ff5a7a', dots: '#5cc8f2' };
+  const SPR_PAL = { rainbow: ['#ff6b81', '#ffd54a', '#5cc8f2', '#7ed957', '#b58cf0', '#ff9d3d'], choc: ['#4a2a18', '#6a3d22', '#8a5530'], pastel: ['#ffb8d8', '#bfe3ff', '#d2f2b8', '#fff0a8', '#dcc8ff'], stars: ['#ffd54a', '#ff8fb8', '#7fd4f5', '#b58cf0'], hearts: ['#ff5a7a', '#ffa8c4', '#ff8fb8', '#e8337a'], dots: ['#ff6b81', '#ffd54a', '#5cc8f2', '#7ed957', '#b58cf0', '#ff9d3d'] };
+  // ONE sprinkle piece. s = its length (rods) or about its width (round, star, heart); col optional; rot radians
+  function drawSprinkle(c, kind, s, col, rot = 0) {
+    col = col || SPR_COL[kind] || SPR_COL.rainbow; if (kind === 'stars' || kind === 'hearts' || kind === 'dots') s *= 1.12;
+    c.save(); c.rotate(rot || 0); c.lineJoin = c.lineCap = 'round';
+    if (kind === 'stars') { c.beginPath(); starPath(c, s * .6, .5); c.lineWidth = s * .16; c.strokeStyle = shade(col, -.15); c.stroke(); c.fillStyle = col; c.fill(); shine(c, -s * .12, -s * .1, s * .08, s * .045, -.6, .6); }
+    else if (kind === 'hearts') { c.save(); c.translate(0, -s * .1); c.beginPath(); heartPath(c, s * .44); c.lineWidth = s * .12; c.strokeStyle = shade(col, -.18); c.stroke(); c.fillStyle = col; c.fill(); shine(c, -s * .15, -s * .02, s * .08, s * .045, -.7, .6); c.restore(); }
+    else if (kind === 'dots') { circ(c, 0, 0, s * .42, shade(col, -.2)); circ(c, -s * .02, -s * .03, s * .37, col); shine(c, -s * .13, -s * .15, s * .1, s * .05, -.7, .7); }
+    else { box(c, -s / 2, -s * .17, s, s * .34, shade(col, -.2), s * .17); box(c, -s / 2, -s * .17, s, s * .24, col, s * .12); c.fillStyle = 'rgba(255,255,255,.5)'; rr(c, -s * .38, -s * .12, s * .6, s * .06, s * .03); c.fill(); }
+    c.restore();
+  }
+  // a zoomed-in heap of sprinkles of one kind
+  function sprHeapDraw(c, s, kind, count) {
+    const pal = SPR_PAL[kind], items = [];
+    soft(c, 0, s * .38, s * .44, s * .06);
+    for (let i = 0; i < count; i++) { const x = (rnd(i * 3 + 1) - .5) * .88, hmax = .7 * Math.pow(Math.max(0, 1 - (x / .46) * (x / .46)), .6), y = .36 - Math.pow(rnd(i * 3 + 2), .85) * hmax; items.push([x, y, i]); }
+    items.sort((a, b) => a[1] - b[1]);
+    const sz = kind === 'stars' ? .21 : kind === 'hearts' ? .2 : kind === 'dots' ? .15 : .24;
+    for (const [x, y, i] of items) { c.save(); c.translate(x * s, y * s); drawSprinkle(c, kind, s * sz, pal[i % pal.length], rnd(i * 7 + 5) * Math.PI); c.restore(); }
+  }
+  ING.sprinkles = (c, s) => { const items = []; const pal = SPR_PAL.rainbow; soft(c, 0, s * .38, s * .44, s * .06); for (let i = 0; i < 60; i++) { const x = (rnd(i * 3 + 1) - .5) * .88, hmax = .7 * Math.pow(Math.max(0, 1 - (x / .46) * (x / .46)), .6), y = .36 - Math.pow(rnd(i * 3 + 2), .85) * hmax; items.push([x, y, i]); } items.sort((a, b) => a[1] - b[1]); for (const [x, y, i] of items) { c.save(); c.translate(x * s, y * s); const k = i % 11 === 0 ? 'stars' : i % 9 === 4 ? 'dots' : 'rainbow'; drawSprinkle(c, k, s * (k === 'stars' ? .2 : k === 'dots' ? .14 : .24), pal[i % pal.length], rnd(i * 7 + 5) * Math.PI); c.restore(); } };
+  for (const k of SPRINKLE_KINDS) ING['spr-' + k] = (c, s) => sprHeapDraw(c, s, k, k === 'stars' || k === 'hearts' ? 30 : 52);
+
+  /* ---------------------------------------------------------------- candies */
+  const CANDY_KINDS = ['dot', 'star', 'heart', 'flower', 'moon', 'gem'];
+  const CANDY_COL = { dot: '#5cc8f2', star: '#ffd54a', heart: '#ff6b81', flower: '#ff9ed0', moon: '#ffe27a', gem: '#8fd8ff' };
+  const CANDY_PAL = { dot: ['#ff6b81', '#5cc8f2', '#ffd54a'], star: ['#ffd54a', '#ff9d3d', '#ff8fb8'], heart: ['#ff6b81', '#ff9ed0', '#e8337a'], flower: ['#ff9ed0', '#ffd54a', '#b58cf0'], moon: ['#ffe27a', '#bfe3ff', '#ffc4dc'], gem: ['#8fd8ff', '#c9a8ff', '#8fe070'] };
+  // ONE candy. s = its radius (about half its width); col optional
+  function drawCandy(c, kind, s, col) {
+    col = col || CANDY_COL[kind] || CANDY_COL.dot;
+    const dk = shade(col, -.22), lt = shade(col, .45);
+    c.save(); c.lineJoin = c.lineCap = 'round';
+    if (kind === 'star') { c.beginPath(); starPath(c, s * .95, .5); c.lineWidth = s * .26; c.strokeStyle = dk; c.stroke(); c.fillStyle = col; c.fill(); c.save(); c.translate(-s * .06, -s * .06); c.beginPath(); starPath(c, s * .5, .5); c.fillStyle = lt; c.globalAlpha = .55; c.fill(); c.restore(); }
+    else if (kind === 'heart') { c.save(); c.translate(0, -s * .08); c.beginPath(); heartPath(c, s * .86); c.lineWidth = s * .24; c.strokeStyle = dk; c.stroke(); c.fillStyle = col; c.fill(); shine(c, -s * .38, -s * .06, s * .2, s * .1, -.7, .65); c.restore(); }
+    else if (kind === 'flower') { for (let i = 0; i < 5; i++) { const a = i * TAU / 5 - Math.PI / 2; circ(c, Math.cos(a) * s * .55, Math.sin(a) * s * .55, s * .42, dk); } for (let i = 0; i < 5; i++) { const a = i * TAU / 5 - Math.PI / 2; circ(c, Math.cos(a) * s * .55, Math.sin(a) * s * .55, s * .37, col); shine(c, Math.cos(a) * s * .55 - s * .1, Math.sin(a) * s * .55 - s * .1, s * .09, s * .05, -.7, .5); } circ(c, 0, 0, s * .3, '#ffd54a'); circ(c, -s * .03, -s * .03, s * .22, '#ffe98a'); }
+    else if (kind === 'moon') { const R = s, ri = s * .82, d = s * .5, x = (d * d + R * R - ri * ri) / (2 * d), y = Math.sqrt(R * R - x * x), a = Math.atan2(y, x), b = Math.atan2(y, x - d); c.save(); c.rotate(-.5); c.beginPath(); c.arc(0, 0, R, -a, a, true); c.arc(d, 0, ri, b, TAU - b, false); c.closePath(); c.lineWidth = s * .22; c.strokeStyle = dk; c.stroke(); c.fillStyle = col; c.fill(); c.fillStyle = lt; c.globalAlpha = .6; c.beginPath(); c.ellipse(-s * .6, -s * .35, s * .1, s * .26, .6, 0, TAU); c.fill(); c.restore(); }
+    else if (kind === 'gem') { const P = [[-.5, -.2], [-.28, -.55], [.28, -.55], [.5, -.2], [0, .62]].map(([x, y]) => [x * s * 1.7, y * s * 1.5]); c.beginPath(); P.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.lineWidth = s * .2; c.strokeStyle = dk; c.stroke(); c.fillStyle = col; c.fill(); poly(c, [P[0], P[1], [0, P[1][1]], [-.18 * s, P[0][1]]], lt); poly(c, [P[1], P[2], [.18 * s, P[0][1]], [-.18 * s, P[0][1]]], shade(col, .2)); poly(c, [P[2], P[3], [.18 * s, P[0][1]]], shade(col, .05)); poly(c, [P[0], [-.18 * s, P[0][1]], P[4]], shade(col, -.06)); poly(c, [[-.18 * s, P[0][1]], [.18 * s, P[0][1]], P[4]], shade(col, -.14)); poly(c, [[.18 * s, P[0][1]], P[3], P[4]], shade(col, -.24)); spark4(c, -s * .4, -s * .5, s * .22, '#fff'); }
+    else { circ(c, 0, s * .06, s * .98, dk); circ(c, 0, 0, s * .92, col); c.fillStyle = shade(col, .2); c.beginPath(); c.arc(0, 0, s * .66, Math.PI * 1.05, Math.PI * 1.85); c.lineWidth = s * .0; c.fill(); circ(c, -s * .02, -s * .02, s * .62, col); shine(c, -s * .33, -s * .36, s * .22, s * .11, -.7, .7); circ(c, s * .3, s * .32, s * .07, 'rgba(255,255,255,.55)'); }
+    c.restore();
+  }
+  for (const k of CANDY_KINDS) ING['cdy-' + k] = (c, s) => { const pal = CANDY_PAL[k], r = s * (k === 'dot' ? .19 : k === 'gem' ? .15 : .18); for (const [x, y, i] of [[-.2, .12, 1], [.2, .14, 2], [0, -.18, 0]]) { c.save(); c.translate(x * s, y * s); c.rotate((i - 1) * .35); drawCandy(c, k, r, pal[i]); c.restore(); } };
+  ING.candy = (c, s) => { const ks = ['dot', 'star', 'heart', 'flower', 'gem']; [[-.22, -.14, 0], [.2, -.16, 1], [0, .0, 2], [-.24, .22, 3], [.24, .2, 4]].forEach(([x, y, i]) => { c.save(); c.translate(x * s, y * s); drawCandy(c, ks[i], s * (ks[i] === 'gem' ? .11 : .15), CANDY_PAL[ks[i]][i % 3]); c.restore(); }); };
+
+  /* ---------------------------------------------------------------- birthday candles */
+  const CANDLE_KINDS = [
+    { id: 'pink', name: 'Pink stripes', style: 'stripe', a: '#ff8fbe', b: '#ffffff' },
+    { id: 'blue', name: 'Blue swirl', style: 'spiral', a: '#6cc6f2', b: '#ffffff' },
+    { id: 'dots', name: 'Purple dots', style: 'dots', a: '#b58cf0', b: '#ffffff' },
+    { id: 'gold', name: 'Golden glitter', style: 'glitter', a: '#f2c042', b: '#fff6c8' },
+    { id: 'rainbow', name: 'Rainbow', style: 'bands', a: '#ff6b81', b: '#ffd54a', cols: ['#ff6b81', '#ff9d3d', '#ffd54a', '#7ed957', '#5cc8f2', '#b58cf0'] },
+    { id: 'one', name: 'Number one', style: 'one', a: '#7ed957', b: '#ffffff' },
+    { id: 'star', name: 'Star candle', style: 'star', a: '#ff9d3d', b: '#ffffff' },
+    { id: 'twist', name: 'Twisted', style: 'twist', a: '#ffd54a', b: '#ff8f5a' },
+    { id: 'hearts', name: 'Hearts', style: 'hearts', a: '#ff5a7a', b: '#ffffff' }
+  ];
+  function flameArt(c, s, x, y) {
+    c.save(); c.translate(x, y); c.rotate(Math.sin(Date.now() / 170) * .05);
+    const g = c.createRadialGradient(0, -s * .02, 0, 0, -s * .02, s * .3); g.addColorStop(0, 'rgba(255,214,110,.55)'); g.addColorStop(1, 'rgba(255,214,110,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, -s * .02, s * .3, 0, TAU); c.fill();
+    for (const [k, col] of [[1, '#ff9d3d'], [.68, '#ffd54a'], [.34, '#fff6cc']]) { c.fillStyle = col; c.beginPath(); c.moveTo(0, -s * .17 * k); c.bezierCurveTo(s * .1 * k, -s * .06 * k, s * .09 * k, s * .08 * k + (1 - k) * s * .02, 0, s * .08 * k + (1 - k) * s * .03); c.bezierCurveTo(-s * .09 * k, s * .08 * k + (1 - k) * s * .02, -s * .1 * k, -s * .06 * k, 0, -s * .17 * k); c.fill(); }
+    c.restore();
+  }
+  function drawCandle(c, id, s, lit) {
+    const K = CANDLE_KINDS.find(q => q.id === id) || CANDLE_KINDS[1];
+    c.save(); c.lineJoin = c.lineCap = 'round';
+    const thin = K.style === 'twist' ? .78 : 1, hw = s * .095 * thin, yt = -s * .14, yb = s * .46;
+    let top = yt;
+    const shadeBody = () => { c.fillStyle = 'rgba(255,255,255,.42)'; c.fillRect(-hw * .8, yt - s * .02, hw * .32, yb - yt + s * .04); c.fillStyle = 'rgba(60,20,40,.16)'; c.fillRect(hw * .45, yt - s * .02, hw * .6, yb - yt + s * .04); };
+    if (K.style === 'one') {
+      const one = () => { c.beginPath(); c.moveTo(-s * .11, -s * .2); c.lineTo(s * .11, -s * .2); c.lineTo(s * .11, s * .34); c.lineTo(s * .24, s * .34); c.quadraticCurveTo(s * .27, s * .34, s * .27, s * .37); c.lineTo(s * .27, s * .43); c.quadraticCurveTo(s * .27, s * .46, s * .24, s * .46); c.lineTo(-s * .24, s * .46); c.quadraticCurveTo(-s * .27, s * .46, -s * .27, s * .43); c.lineTo(-s * .27, s * .37); c.quadraticCurveTo(-s * .27, s * .34, -s * .24, s * .34); c.lineTo(-s * .11, s * .34); c.lineTo(-s * .11, -s * .02); c.lineTo(-s * .27, s * .04); c.lineTo(-s * .27, -s * .1); c.closePath(); };
+      one(); c.fillStyle = K.a; c.fill(); c.save(); one(); c.clip(); c.fillStyle = 'rgba(255,255,255,.4)'; c.fillRect(-s * .27, -s * .25, s * .09, s * .8); for (const [x, y] of [[0, -.1], [0, .08], [0, .24], [-.2, -.02]]) circ(c, x * s, y * s, s * .028, K.b); c.fillStyle = 'rgba(30,70,20,.2)'; c.fillRect(s * .04, -s * .25, s * .3, s * .8); c.restore(); one(); edge(c, shade(K.a, -.35), s * .016);
+      top = -s * .2;
+    } else {
+      c.save(); rr(c, -hw, yt, hw * 2, yb - yt, s * .03); c.clip(); c.fillStyle = K.a; c.fillRect(-hw, yt, hw * 2, yb - yt);
+      if (K.style === 'stripe' || K.style === 'star') { c.fillStyle = K.b; for (let y = yt - s * .1; y < yb + s * .1; y += s * .125) poly(c, [[-hw * 1.2, y + s * .045], [hw * 1.2, y - s * .045], [hw * 1.2, y + s * .02], [-hw * 1.2, y + s * .11]], K.b); }
+      else if (K.style === 'spiral') { c.strokeStyle = K.b; c.lineWidth = s * .03; for (let y = yt - s * .12; y < yb + s * .1; y += s * .1) { c.beginPath(); c.moveTo(-hw * 1.2, y + s * .06); c.quadraticCurveTo(0, y + s * .0, hw * 1.2, y - s * .06); c.stroke(); } }
+      else if (K.style === 'dots') { let r = 0; for (let y = yt + s * .06; y < yb; y += s * .1, r++) for (const x of r % 2 ? [-.05, .05] : [0]) circ(c, x * s + (r % 2 ? 0 : 0), y, s * .022, K.b); }
+      else if (K.style === 'glitter') { for (let i = 0; i < 20; i++) circ(c, (rnd(i + 2) - .5) * hw * 1.7, yt + rnd(i + 9) * (yb - yt), s * (.008 + rnd(i) * .008), '#fff'); }
+      else if (K.style === 'bands') { const n = K.cols.length, h = (yb - yt) / n; K.cols.forEach((col, i) => { c.fillStyle = col; c.fillRect(-hw, yt + i * h, hw * 2, h + 1); }); }
+      else if (K.style === 'hearts') { let r = 0; for (let y = yt + s * .08; y < yb - s * .02; y += s * .13, r++) { c.save(); c.translate((r % 2 ? .035 : -.03) * s, y); c.fillStyle = K.b; c.beginPath(); heartPath(c, s * .03); c.fill(); c.restore(); } }
+      else if (K.style === 'twist') { c.strokeStyle = K.b; c.lineWidth = s * .055; for (let y = yt - s * .15; y < yb + s * .15; y += s * .13) { c.beginPath(); c.moveTo(-hw * 1.4, y + s * .09); c.lineTo(hw * 1.4, y - s * .09); c.stroke(); } }
+      shadeBody(); c.restore();
+      rr(c, -hw, yt, hw * 2, yb - yt, s * .03); edge(c, shade(K.a, -.35), s * .014);
+      if (K.style === 'glitter') { spark4(c, -hw * 1.5, yt + s * .12, s * .05, '#fff3b0'); spark4(c, hw * 1.55, yt + s * .34, s * .04, '#fff3b0'); }
+      if (K.style === 'star') { c.save(); c.translate(0, yt - s * .01); c.beginPath(); starPath(c, s * .15, .5); c.lineWidth = s * .05; c.strokeStyle = '#d99a12'; c.stroke(); c.fillStyle = '#ffd54a'; c.fill(); shine(c, -s * .04, -s * .04, s * .03, s * .018, -.7, .7); c.restore(); top = yt - s * .09; }
+    }
+    c.strokeStyle = '#5a3a2a'; c.lineWidth = s * .022; c.beginPath(); c.moveTo(0, top); c.lineTo(0, top - s * .06); c.stroke();
+    if (lit) flameArt(c, s, 0, top - s * .15);
+    c.restore();
+  }
+  for (const k of CANDLE_KINDS) ING['cnd-' + k.id] = (c, s) => { c.save(); c.translate(0, s * .02); drawCandle(c, k.id, s * .95, true); c.restore(); };
+  ING.candle = (c, s) => drawCandle(c, 'blue', s, true);
+
+  /* ---------------------------------------------------------------- fruit */
+  const FRUIT_KINDS = ['strawberry', 'blueberry', 'cherry', 'raspberry', 'banana', 'kiwi', 'orange', 'grape'];
+  const leafAt = (c, x, y, rx, ry, rot, col) => { ell(c, x, y, rx, ry, col, rot); c.strokeStyle = 'rgba(255,255,255,.3)'; c.lineWidth = rx * .25; c.beginPath(); c.moveTo(x - Math.sin(rot) * ry * .9, y + Math.cos(rot) * ry * .9); c.lineTo(x + Math.sin(rot) * ry * .9, y - Math.cos(rot) * ry * .9); c.stroke(); };
+  ING.strawberry = (c, s) => {
+    const body = () => { c.beginPath(); c.moveTo(0, s * .47); c.bezierCurveTo(-s * .55, s * .12, -s * .44, -s * .4, 0, -s * .3); c.bezierCurveTo(s * .44, -s * .4, s * .55, s * .12, 0, s * .47); c.closePath(); };
+    c.fillStyle = lin(c, -s * .4, 0, s * .45, 0, [[0, '#f0525a'], [.55, '#e23a44'], [1, '#bf2a3a']]); body(); c.fill(); edge(c, '#a82234', s * .016);
+    for (const [x, y] of [[-.2, -.12], [.0, -.16], [.2, -.1], [-.28, .06], [-.1, .04], [.1, .06], [.28, .08], [-.18, .22], [0, .2], [.18, .22], [-.07, .35], [.08, .35]]) { c.save(); c.translate(x * s, y * s); c.rotate(x * 1.2); ell(c, 0, 0, s * .022, s * .036, '#ffe27a'); c.restore(); }
+    shine(c, -s * .22, -s * .12, s * .05, s * .12, .3, .45);
+    for (const a of [-1.15, -.6, 0, .6, 1.15]) { c.save(); c.translate(0, -s * .3); c.rotate(a); c.fillStyle = '#4fb86a'; c.beginPath(); c.ellipse(0, -s * .03, s * .06, s * .15, 0, 0, TAU); c.fill(); c.restore(); }
+    circ(c, 0, -s * .3, s * .05, '#3c9a55'); c.strokeStyle = '#3c9a55'; c.lineWidth = s * .04; c.beginPath(); c.moveTo(0, -s * .32); c.lineTo(s * .03, -s * .46); c.stroke();
+  };
+  ING.blueberry = (c, s) => {
+    circ(c, 0, s * .02, s * .24, '#34408a'); circ(c, 0, 0, s * .22, lin(c, -s * .15, -s * .2, s * .15, s * .2, [[0, '#6a7fd8'], [1, '#3c4aa6']]));
+    c.fillStyle = 'rgba(190,205,255,.28)'; c.beginPath(); c.ellipse(-s * .04, -s * .06, s * .17, s * .14, 0, 0, TAU); c.fill();
+    c.fillStyle = '#29306e'; c.beginPath(); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * TAU / 5; c.lineTo(Math.cos(a) * s * .085, s * .0 + Math.sin(a) * s * .085); const b = a + TAU / 10; c.lineTo(Math.cos(b) * s * .035, Math.sin(b) * s * .035); } c.closePath(); c.fill(); circ(c, 0, 0, s * .02, '#6a7fd8');
+    shine(c, -s * .1, -s * .12, s * .045, s * .024, -.7, .6);
+  };
+  ING.cherry = (c, s) => {
+    c.strokeStyle = '#5a8a3a'; c.lineWidth = s * .04; c.lineCap = 'round'; c.beginPath(); c.moveTo(0, s * .0); c.quadraticCurveTo(s * .08, -s * .3, s * .22, -s * .42); c.stroke();
+    leafAt(c, s * .3, -s * .38, s * .09, s * .16, 1.0, '#4fb86a');
+    circ(c, 0, s * .2, s * .26, '#a8182e'); circ(c, 0, s * .19, s * .23, lin(c, -s * .15, s * .0, s * .2, s * .42, [[0, '#f0485f'], [1, '#c8203a']]));
+    c.fillStyle = 'rgba(120,10,30,.35)'; c.beginPath(); c.ellipse(0, s * .0, s * .05, s * .025, 0, 0, TAU); c.fill();
+    shine(c, -s * .09, s * .1, s * .05, s * .09, .4, .6);
+  };
+  ING.raspberry = (c, s) => {
+    ell(c, 0, s * .06, s * .33, s * .4, '#8e1236');
+    const rows = [[-.26, [-.1, .1]], [-.11, [-.2, 0, .2]], [.05, [-.27, -.09, .09, .27]], [.2, [-.18, 0, .18]], [.33, [0]]];
+    for (const [y, xs] of rows) xs.forEach((x, j) => { const px = x * s, py = y * s; circ(c, px, py, s * .108, '#b3123e'); circ(c, px - s * .005, py - s * .008, s * .097, '#e0204f'); circ(c, px - s * .03, py - s * .035, s * .035, '#ff7a98'); circ(c, px + s * .035, py + s * .04, s * .02, '#a30f38'); });
+    for (const a of [-1, 0, 1]) leafAt(c, a * s * .14, -s * .38, s * .05, s * .11, a * .9 + (a ? 0 : 0), '#4fb86a');
+  };
+  ING.banana = (c, s) => {
+    const rnd5 = r => { c.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * TAU, k = r * (1 + .05 * Math.cos(5 * a + .6)); const x = Math.cos(a) * k, y = Math.sin(a) * k * .96; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.closePath(); };
+    rnd5(s * .42); c.fillStyle = '#d9a82a'; c.fill(); rnd5(s * .39); c.fillStyle = '#f6d84e'; c.fill();
+    rnd5(s * .33); c.fillStyle = '#fff3c0'; c.fill(); rnd5(s * .27); c.fillStyle = '#fffbe6'; c.fill();
+    c.strokeStyle = 'rgba(224,186,80,.55)'; c.lineWidth = s * .016; c.beginPath(); for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + i * TAU / 3; c.moveTo(Math.cos(a) * s * .04, Math.sin(a) * s * .04); c.lineTo(Math.cos(a) * s * .24, Math.sin(a) * s * .24); } c.stroke();
+    for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + .2; circ(c, Math.cos(a) * s * .1, Math.sin(a) * s * .1, s * .018, '#7a5a30'); }
+    circ(c, 0, 0, s * .026, '#7a5a30'); shine(c, -s * .24, -s * .2, s * .07, s * .022, -.6, .65);
+  };
+  ING.kiwi = (c, s) => {
+    ell(c, 0, 0, s * .43, s * .39, '#8a5a2c'); for (let i = 0; i < 24; i++) { const a = rnd(i) * TAU; circ(c, Math.cos(a) * s * .41, Math.sin(a) * s * .37, s * .012, '#a87a44'); }
+    ell(c, 0, 0, s * .39, s * .35, '#a9dd5e'); ell(c, 0, 0, s * .34, s * .3, lin(c, 0, -s * .3, 0, s * .3, [[0, '#c4ec78'], [1, '#86c83e']]));
+    c.strokeStyle = 'rgba(235,255,200,.7)'; c.lineWidth = s * .014; for (let i = 0; i < 18; i++) { const a = i * TAU / 18; c.beginPath(); c.moveTo(Math.cos(a) * s * .1, Math.sin(a) * s * .09); c.lineTo(Math.cos(a) * s * .3, Math.sin(a) * s * .27); c.stroke(); }
+    ell(c, 0, 0, s * .12, s * .105, '#f5fae0');
+    for (let i = 0; i < 20; i++) { const a = i * TAU / 20 + .1, r = .17 + (i % 2) * .035; c.save(); c.translate(Math.cos(a) * s * r, Math.sin(a) * s * r * .92); c.rotate(a); ell(c, 0, 0, s * .026, s * .014, '#2a2a20'); c.restore(); }
+    shine(c, -s * .2, -s * .16, s * .07, s * .025, -.6, .45);
+  };
+  ING.orange = (c, s) => {
+    // half an orange, flat side up, round side down: rind, pith, juicy wedges
+    c.save(); c.translate(0, -s * .22);
+    const half = r => { c.beginPath(); c.moveTo(-r, 0); c.arc(0, 0, r, Math.PI, 0, true); c.closePath(); };
+    half(s * .48); c.fillStyle = '#ee8a12'; c.fill(); half(s * .45); c.fillStyle = '#ff9d1c'; c.fill(); half(s * .4); c.fillStyle = '#fff1c8'; c.fill(); half(s * .36); c.fillStyle = '#ffb02e'; c.fill();
+    c.strokeStyle = '#fff1c8'; c.lineWidth = s * .035; c.lineCap = 'round'; for (let i = 1; i < 5; i++) { const a = i * Math.PI / 5; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a) * s * .37, Math.sin(a) * s * .37); c.stroke(); }
+    for (let i = 0; i < 5; i++) { const a = (i + .5) * Math.PI / 5; c.fillStyle = 'rgba(255,230,140,.7)'; c.beginPath(); c.ellipse(Math.cos(a) * s * .22, Math.sin(a) * s * .22, s * .04, s * .1, a - Math.PI / 2, 0, TAU); c.fill(); }
+    c.restore();
+  };
+  ING.grape = (c, s) => {
+    c.strokeStyle = '#7a5a30'; c.lineWidth = s * .04; c.lineCap = 'round'; c.beginPath(); c.moveTo(0, -s * .24); c.quadraticCurveTo(s * .02, -s * .38, s * .1, -s * .46); c.stroke();
+    leafAt(c, s * .18, -s * .36, s * .1, s * .17, 1.1, '#4fb86a');
+    const g = [[-.22, -.1], [0, -.14], [.22, -.1], [-.12, .1], [.12, .1], [0, .3]];
+    for (const [x, y] of g) { circ(c, x * s, y * s, s * .17, '#5a2f8c'); circ(c, x * s, y * s, s * .15, lin(c, x * s - s * .1, y * s - s * .1, x * s + s * .1, y * s + s * .12, [[0, '#a278d8'], [1, '#6a3aa0']])); shine(c, x * s - s * .06, y * s - s * .07, s * .035, s * .02, -.7, .65); }
+  };
+  Object.assign(NAME, { raspberry: 'A raspberry', banana: 'A banana', kiwi: 'A kiwi', orange: 'An orange', grape: 'Grapes' });
+
+  /* ---------------------------------------------------------------- icing colours, piping pen, paint bucket */
+  const ICING12 = { pink: '#ff9ec8', red: '#e8433f', orange: '#ff9d3d', yellow: '#ffe066', mint: '#9fe6c0', green: '#6fcf5a', sky: '#7fd4f5', blue: '#4a78e0', purple: '#b58cf0', white: '#ffffff', chocolate: '#7a4a2a', black: '#2e2a33' };
+  function drawIcingPen(c, s, col = '#ff9ec8') {
+    c.save(); c.translate(-s * .03, s * .0); c.rotate(.3); c.lineJoin = c.lineCap = 'round';
+    const dk = shade(col, -.38), lt = shade(col, .45);
+    const bag = () => { c.beginPath(); c.moveTo(-s * .22, -s * .22); c.lineTo(s * .22, -s * .22); c.quadraticCurveTo(s * .2, s * .0, s * .06, s * .26); c.lineTo(-s * .06, s * .26); c.quadraticCurveTo(-s * .2, s * .0, -s * .22, -s * .22); c.closePath(); };
+    c.fillStyle = 'rgba(80,40,20,.13)'; c.save(); c.translate(s * .05, s * .05); bag(); c.fill(); c.restore();
+    c.fillStyle = lin(c, -s * .22, 0, s * .22, 0, [[0, lt], [.4, col], [1, shade(col, -.2)]]); bag(); c.fill(); edge(c, dk, s * .024);
+    c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.moveTo(-s * .16, -s * .18); c.quadraticCurveTo(-s * .15, s * .0, -s * .05, s * .18); c.lineTo(-s * .015, s * .16); c.quadraticCurveTo(-s * .09, -s * .02, -s * .1, -s * .18); c.closePath(); c.fill();
+    // the gathered, twisted-and-tied top
+    c.fillStyle = shade(col, -.12); c.beginPath(); c.moveTo(-s * .22, -s * .22); c.lineTo(-s * .26, -s * .34); c.lineTo(-s * .13, -s * .3); c.lineTo(-s * .08, -s * .4); c.lineTo(s * .0, -s * .31); c.lineTo(s * .08, -s * .4); c.lineTo(s * .13, -s * .3); c.lineTo(s * .26, -s * .34); c.lineTo(s * .22, -s * .22); c.closePath(); c.fill(); edge(c, dk, s * .02);
+    box(c, -s * .24, -s * .26, s * .48, s * .06, '#fff', s * .03); c.strokeStyle = '#d6d0c4'; c.lineWidth = s * .01; rr(c, -s * .24, -s * .26, s * .48, s * .06, s * .03); c.stroke();
+    // nozzle
+    poly(c, [[-s * .07, s * .24], [s * .07, s * .24], [s * .045, s * .35], [-s * .045, s * .35]], '#d3dbe6'); c.strokeStyle = '#8996ab'; c.lineWidth = s * .016; c.beginPath(); c.moveTo(-s * .07, s * .24); c.lineTo(-s * .045, s * .35); c.lineTo(s * .045, s * .35); c.lineTo(s * .07, s * .24); c.closePath(); c.stroke();
+    c.beginPath(); for (const x of [-.03, 0, .03]) { c.moveTo(x * s, s * .26); c.lineTo(x * s * .7, s * .34); } c.stroke();
+    // a swirl of icing coming out
+    for (const [y, rx, k] of [[.46, .15, -.14], [.42, .12, -.05], [.385, .085, .05], [.35, .05, .12]]) { c.fillStyle = shade(col, k); c.beginPath(); c.ellipse(0, y * s, rx * s, s * .043, 0, 0, TAU); c.fill(); c.strokeStyle = dk; c.lineWidth = s * .01; c.stroke(); }
+    c.restore();
+  }
+  function drawPaintBucket(c, s, col = '#ff9ec8') {
+    c.save(); c.translate(s * .08, s * .1); c.scale(.88, .88);
+    const dk = shade(col, -.3), lt = shade(col, .4);
+    ell(c, -s * .12, s * .44, s * .38, s * .08, dk); ell(c, -s * .12, s * .42, s * .36, s * .07, col); shine(c, -s * .22, s * .4, s * .12, s * .02, 0, .5);
+    // the pour
+    c.fillStyle = col; c.beginPath(); c.moveTo(-s * .26, -s * .16); c.bezierCurveTo(-s * .3, s * .1, -s * .26, s * .26, -s * .26, s * .4); c.lineTo(-s * .12, s * .4); c.bezierCurveTo(-s * .12, s * .25, -s * .14, s * .0, -s * .12, -s * .2); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.45)'; rr(c, -s * .24, -s * .02, s * .03, s * .3, s * .015); c.fill();
+    // the bucket, tipped
+    c.save(); c.translate(s * .12, -s * .2); c.rotate(-.8); c.lineJoin = c.lineCap = 'round';
+    c.strokeStyle = '#7d8aa0'; c.lineWidth = s * .03; c.beginPath(); c.arc(0, -s * .22, s * .24, Math.PI * 1.05, Math.PI * 1.95); c.stroke();
+    const body = () => { c.beginPath(); c.moveTo(-s * .26, -s * .22); c.lineTo(-s * .2, s * .26); c.quadraticCurveTo(-s * .2, s * .3, -s * .16, s * .3); c.lineTo(s * .16, s * .3); c.quadraticCurveTo(s * .2, s * .3, s * .2, s * .26); c.lineTo(s * .26, -s * .22); c.closePath(); };
+    c.fillStyle = lin(c, -s * .26, 0, s * .26, 0, [[0, '#e2e8f1'], [.4, '#c3cddb'], [1, '#97a4ba']]); body(); c.fill(); edge(c, '#7d8aa0', s * .02);
+    c.save(); body(); c.clip(); c.fillStyle = col; c.fillRect(-s * .3, -s * .02, s * .6, s * .16); c.fillStyle = 'rgba(255,255,255,.4)'; c.fillRect(-s * .3, -s * .02, s * .6, s * .03); c.restore();
+    c.strokeStyle = 'rgba(125,138,160,.8)'; c.lineWidth = s * .015; c.beginPath(); c.moveTo(-s * .24, -s * .12); c.lineTo(s * .24, -s * .12); c.moveTo(-s * .21, s * .2); c.lineTo(s * .21, s * .2); c.stroke();
+    ell(c, 0, -s * .22, s * .26, s * .06, '#7d8aa0'); ell(c, 0, -s * .22, s * .235, s * .05, col); shine(c, -s * .08, -s * .23, s * .08, s * .012, 0, .55);
+    c.restore();
+    c.restore();
+  }
+  for (const [k, col] of Object.entries(ICING12)) ING['pen-' + k] = (c, s) => drawIcingPen(c, s, col);
+  ING.paintbucket = (c, s) => drawPaintBucket(c, s, '#ff9ec8');
+  Object.assign(NAME, Object.fromEntries([...SPRINKLE_KINDS.map(k => ['spr-' + k, { rainbow: 'Rainbow sprinkles', choc: 'Chocolate sprinkles', pastel: 'Pastel sprinkles', stars: 'Star sprinkles', hearts: 'Heart sprinkles', dots: 'Round sprinkles' }[k]]), ...CANDY_KINDS.map(k => ['cdy-' + k, { dot: 'A candy', star: 'A star candy', heart: 'A heart candy', flower: 'A flower candy', moon: 'A moon candy', gem: 'A gem candy' }[k]]), ...CANDLE_KINDS.map(k => ['cnd-' + k.id, k.name + ' candle'])]));
 
   // Flat layers for stacking (drawn centered, width w); the second number is the layer's height as a fraction of w.
   const LAYER = {
@@ -400,8 +801,8 @@
     for (const s of deco.strokes || []) { if (o.beads) { let acc = 0; s.pts.forEach(([x, y], i) => { if (i) { const [px, py] = s.pts[i - 1], d = Math.hypot(x - px, y - py) * R; for (acc += d; acc >= R * .07; acc -= R * .07) { const k = 1 - (acc - R * .07) / Math.max(1e-6, d), bx = (px + (x - px) * Math.min(1, k)) * R, by = (py + (y - py) * Math.min(1, k)) * R; circ(c, bx, by + R * .012, R * .05, shade(s.col, -.15)); circ(c, bx, by, R * .045, s.col); circ(c, bx - R * .012, by - R * .014, R * .016, 'rgba(255,255,255,.6)'); } } else { circ(c, x * R, y * R, R * .045, s.col); } }); continue; } c.strokeStyle = s.col; c.lineWidth = R * .075; c.lineCap = c.lineJoin = 'round'; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R, y * R) : c.moveTo(x * R, y * R)); c.stroke(); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = R * .02; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R - R * .015, y * R - R * .02) : c.moveTo(x * R - R * .015, y * R - R * .02)); c.stroke(); }
     for (const d of deco.dots || []) {
       c.save(); c.translate(d.x * R, d.y * R); c.rotate(d.rot || 0);
-      if (d.id === 'sprinkles') { box(c, -R * .07, -R * .02, R * .14, R * .045, d.col, R * .02); }
-      else if (d.id === 'candy') { circ(c, 0, 0, R * .075, d.col); shine(c, -R * .02, -R * .02, R * .025, R * .015, -.7, .6); }
+      if (d.id === 'sprinkles') drawSprinkle(c, d.kind || 'rainbow', R * .14, d.col, 0);
+      else if (d.id === 'candy') drawCandy(c, d.kind || 'dot', R * .075, d.col);
       else if (d.id === 'chips') { tri(c, [[0, -R * .08], [R * .07, R * .06], [-R * .07, R * .06]], '#5a3a2a'); }
       else if (d.id === 'star') art.star(c, 0, 0, R * .12, '#ffd54a', d.rot || 0);
       else if (d.id === 'cherry') { c.scale(R * .004, R * .004); ING.cherry(c, 60); }
@@ -454,14 +855,15 @@
   function drawFlatDots(c, dots, W, y) {
     for (const d of dots || []) {
       c.save(); c.translate(d.x * W, y + d.y * W); c.rotate(d.rot || 0);
-      if (d.id === 'sprinkles') box(c, -W * .035, -W * .01, W * .07, W * .022, d.col || '#ff6b81', W * .01);
-      else if (d.id === 'candy') { circ(c, 0, 0, W * .035, d.col || '#5cc8f2'); shine(c, -W * .01, -W * .01, W * .012, W * .007, -.7, .6); }
+      if (d.id === 'sprinkles') drawSprinkle(c, d.kind || 'rainbow', W * .07, d.col, 0);
+      else if (d.id === 'candy') drawCandy(c, d.kind || 'dot', W * .035, d.col);
       else if (d.id === 'star') art.star(c, 0, 0, W * .06, '#ffd54a', 0);
       else if (d.id === 'cherry') { c.translate(0, -W * .05); ING.cherry(c, W * .2); }
       else if (d.id === 'strawberry') { c.translate(0, -W * .03); ING.strawberry(c, W * .17); }
       else if (d.id === 'blueberry') { c.translate(0, -W * .02); ING.blueberry(c, W * .16); }
       else if (d.id === 'onion') { c.translate(0, -W * .01); ING.onion(c, W * .15); }
-      else if (d.id === 'candle') { c.translate(0, -W * .04); ING.candle(c, W * .2); }
+      else if (d.id === 'candle') { c.translate(0, -W * .04); drawCandle(c, d.kind || 'blue', W * .2, true); }
+      else if (['raspberry', 'banana', 'kiwi', 'orange', 'grape'].includes(d.id)) { c.translate(0, -W * .02); ING[d.id](c, W * .16); }
       else if (d.id === 'chips') tri(c, [[0, -W * .03], [W * .025, W * .02], [-W * .025, W * .02]], '#5a3a2a');
       c.restore();
     }
@@ -543,18 +945,18 @@
   }
   const pizzaClip = (c, R) => { c.beginPath(); c.ellipse(0, -R * .01, R * 1.25 * .86, R * .82 * .84, 0, 0, TAU); c.clip(); };
   // toppings put exactly where she touched: x, y in units of the food's size R (from where drawPiece draws it)
-  const TOP_SZ = { cherry: .62, strawberry: .5, blueberry: .42, candle: .7, onion: .4, star: .5, pepperoni: .36, mushroom: .34, olive: .3, greenpepper: .34, pineapple: .32, basil: .32, cream: .4 };
+  const TOP_SZ = { cherry: .62, strawberry: .5, blueberry: .42, candle: .7, onion: .4, star: .5, pepperoni: .36, mushroom: .34, olive: .3, greenpepper: .34, pineapple: .32, basil: .32, cream: .4, raspberry: .46, banana: .44, kiwi: .44, orange: .46, grape: .46 };
   const TOP_K = { cupcake: 1, cookie: 1, cake: .62, stack: .5, sundae: .46, hotdog: .52, pizza: .55 };
   function drawTops(c, p, Rr) {
     const R = Rr * (TOP_K[p.type] || 1), Rp = Rr;
     for (const d of p.tops || []) {
       c.save(); c.translate(d.x * Rp, d.y * Rp); c.rotate(d.rot || 0);
-      if (d.id === 'sprinkles') box(c, -R * .07, -R * .02, R * .14, R * .045, d.col || '#ff6b81', R * .02);
-      else if (d.id === 'candy') { circ(c, 0, 0, R * .08, d.col || '#5cc8f2'); shine(c, -R * .025, -R * .025, R * .028, R * .016, -.7, .6); }
+      if (d.id === 'sprinkles') drawSprinkle(c, d.kind || 'rainbow', R * .14, d.col, 0);
+      else if (d.id === 'candy') drawCandy(c, d.kind || 'dot', R * .08, d.col);
       else if (d.id === 'chips') tri(c, [[0, -R * .08], [R * .07, R * .06], [-R * .07, R * .06]], '#4a2a1a');
       else if (d.id === 'shred') { if (p.baked > .5) { c.globalAlpha = .9; ell(c, 0, 0, Rp * .17, Rp * .11, '#ffe9a6', d.rot); c.globalAlpha = .55; ell(c, Rp * .03, Rp * .01, Rp * .05, Rp * .03, '#f0b84a', 0); } else box(c, -Rp * .06, -Rp * .014, Rp * .12, Rp * .028, d.col || '#fff8e0', Rp * .014); }
       else if (d.id === 'cream') { c.rotate(-(d.rot || 0)); for (const [y, r] of [[0, .14], [-.07, .1], [-.13, .065], [-.17, .035]]) { circ(c, 0, y * R, r * R, '#f2efe8'); circ(c, -r * R * .25, y * R - r * R * .25, r * R * .55, '#fff'); } }
-      else if (d.id === 'candle') { c.rotate(-(d.rot || 0)); c.translate(0, -R * .16); ING.candle(c, R * TOP_SZ.candle); }
+      else if (d.id === 'candle') { c.rotate(-(d.rot || 0)); c.translate(0, -R * .16); drawCandle(c, d.kind || 'blue', R * TOP_SZ.candle * (d.kind === 'one' ? .8 : 1), true); }
       else if (d.id === 'relish') { for (let i = 0; i < 7; i++) ell(c, (rnd(i + 1) - .5) * R * .22, (rnd(i + 4) - .5) * R * .08, R * .03, R * .015, i % 3 ? '#5fae3a' : '#9ad85a', rnd(i) * 3); }
       else if (d.id === 'pepperoni' && p.baked > .5) { c.scale(1, .7); ING.pepperoni(c, R * TOP_SZ.pepperoni); c.fillStyle = 'rgba(120,30,20,.25)'; c.beginPath(); c.arc(0, 0, R * .1, 0, TAU); c.fill(); }
       else if (ING[d.id]) { if (['pepperoni', 'olive', 'greenpepper', 'pineapple', 'basil', 'mushroom'].includes(d.id)) c.scale(1, .72); ING[d.id](c, R * (TOP_SZ[d.id] || .4)); }
@@ -685,5 +1087,5 @@
     c.drawImage(oc, x - S / 2 / dpr, y - S / 2 / dpr, S / dpr, S / dpr);
   }
 
-  SPG.cookArt = { F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU };
+  SPG.cookArt = { F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, SPRINKLE_KINDS, drawSprinkle, CANDY_KINDS, drawCandy, CANDLE_KINDS, drawCandle, FRUIT_KINDS, ICING12, drawIcingPen, drawPaintBucket, drawMeasure, drawPile, drawEgg, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU };
 })();

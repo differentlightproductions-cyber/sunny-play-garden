@@ -108,9 +108,9 @@
       SPG.cookGame = this;
       try { if (document.fonts) for (const w of [400, 600, 700]) document.fonts.load(`${w} 24px Fredoka`); } catch (_) { /* the fallback font is fine */ }
       const cv = this.canvas, at = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * this.w / r.width, y: (e.clientY - r.top) * this.h / r.height, id: e.pointerId }; };
-      cv.addEventListener('pointerdown', e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* optional */ } SPG.audio.unlock(); if (this.ptr) return; this.ptr = e.pointerId; this.down(at(e)); });
+      cv.addEventListener('pointerdown', e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* optional */ } SPG.audio.unlock(); if (this.ptr && !e.isPrimary) return; if (this.ptr && this.drag) { this.drag.it.drag = false; this.drag.it.back = true; this.drag = null; } this.ptr = e.pointerId; this.down(at(e)); });
       cv.addEventListener('pointermove', e => { if (this.ptr === e.pointerId) { e.preventDefault(); this.move(at(e)); } });
-      for (const n of ['pointerup', 'pointercancel']) cv.addEventListener(n, e => { if (this.ptr === e.pointerId) { this.ptr = null; this.up(at(e)); } });
+      for (const n of ['pointerup', 'pointercancel', 'lostpointercapture']) cv.addEventListener(n, e => { if (this.ptr === e.pointerId) { this.ptr = null; this.up(at(e)); } });
     }
 
     /* ------------------------------------------------------------ layout */
@@ -231,7 +231,7 @@
       const cb = this.checkBtn();
       if (cb && Math.hypot(p.x - cb.x, p.y - cb.y) < cb.r * 1.25) { sfx.tap(); if (H[this.st.k].check) H[this.st.k].check(this, this.st); else this.finish(.1); return; }
       const ch = this.chefPos();
-      if (Math.hypot(p.x - ch.x, p.y - ch.y) < ch.r * 1.2) { sfx.squeak(); this.said = {}; this.hintSay(); this.chefBounce = 1; return; }
+      if (Math.hypot(p.x - ch.x, p.y - ch.y) < ch.r * 1.3) { sfx.boing(); this.hintSay(); this.chefBounce = 1; this.emote = { t: 0, col: ['#ff6b9d', '#ffd54a', '#7fd4f5'][Math.floor(Math.random() * 3)] }; return; }
       for (const it of this.tray) {
         if (it.used || it.fly) continue;
         if (Math.hypot(p.x - it.x, p.y - it.y) < it.r * 1.3) {
@@ -251,7 +251,7 @@
       if (this.screen !== 'cook') return;
       if (this.drag) {
         const d = this.drag, it = d.it; this.drag = null; it.drag = false;
-        const tap = d.moved < 14, s = this.st; let res = false;
+        const tap = d.moved < 24 || it.y > this.h - this.th - it.r * .2, s = this.st; let res = false;
         if (s && !s.fin && H[s.k].drop) res = H[s.k].drop(this, s, it, it.x, it.y, tap);
         if (res === true) { if (it.once) it.used = true; }
         else { if (res === 'wrong') { this.wiggle(it); sfx.boing(); this.say('cook-wrong', 9); this.idle = 99; } else if (res === 'full') { this.wiggle(it); sfx.oops(); this.idle = 99; } it.back = true; }
@@ -277,6 +277,19 @@
       if (k === 'grill' && sp.free) { voice.say('cook-patties'); return; }
       let key = { add: 'cook-add', stir: 'cook-stir', roll: 'cook-roll', cut: sp.target === 'piece' ? 'cook-cutsand' : 'cook-cut', fill: sp.what === 'dough' ? 'cook-drop' : 'cook-pour', bake: s.state === 'cold' ? 'cook-oven-on' : s.state === 'ding' ? 'cook-ding' : 'cook-bake', grill: 'cook-grill', stack: 'cook-stack', decorate: sp.mode === 'frost' ? 'cook-frost' : (sp.tools || []).some(t => SAUCES.includes(t)) ? 'cook-squirt' : 'cook-decorate', slice: 'cook-slice', serve: 'cook-serve' }[k];
       voice.say(key);
+    }
+    tip() {
+      const s = this.st; if (!s) return null; const k = s.k, sp = s.spec, slow = Math.floor(this.t / 3.5);
+      const happy = () => { if (s.happyT == null) s.happyT = this.t; return this.t - s.happyT < 3 ? 'HAPPY' : null; };
+      if (k === 'decorate' && sp.mode !== 'frost' && sp.mode !== 'cover') { const used = s.usedTools || new Set(), left = sp.tools.filter(t => !used.has(t)); if (s.acts >= s.need && (used.size >= Math.min(3, sp.tools.length) || !left.length)) return happy(); return (left.length ? left : sp.tools)[slow % (left.length || sp.tools.length)]; }
+      if (k === 'build') { if (s.end && (s.n >= 2 || s.n >= s.max)) return s.end; if (!s.end && s.n >= Math.min(2, s.max)) return happy(); const used = s.usedItems || new Set(), left = s.items.filter(t => !used.has(t) && t !== s.end); return left.length ? left[slow % left.length] : (s.end || null); }
+      if (k === 'add') return (s.left && s.left[0]) || sp.ids[0];
+      if (k === 'grill') return sp.free ? sp.ids[0] : sp.id;
+      if (k === 'stack') return sp.order[Math.min(s.i, sp.order.length - 1)];
+      if (k === 'cut') return this.cutters[0];
+      if (k === 'decorate') return this.tool || sp.tools[0];
+      if (k === 'pick') return sp.opts[0];
+      return null;
     }
     wantIds() { const s = this.st; return s && H[s.k].want ? H[s.k].want(this, s) || [] : []; }
   }
@@ -379,9 +392,13 @@
       s.cuts.push({ shape: s.cutter, x: at.x, y: at.y, t: 0, pressed: false });
       g.pieces = s.cuts.map(c => s.sandwich ? { type: 'stack', shape: c.shape, layers: s.base.layers.map(l => ({ ...l })) } : { type: 'cookie', shape: c.shape, baked: 0 });
       g.idle = 0; if (s.cuts.length >= s.minDone) { s.canDone = true; g.st.canDone = true; }
-      if (s.cuts.length >= s.max) g.finish(1.2);
+      if (s.cuts.length >= s.max) H.cut.pack(g, s);
       return true;
     },
+    // all cut: the shapes go onto a baking tray that slides in, and the leftover dough is squished into a ball and put away in a tub
+    check(g, s) { H.cut.pack(g, s); },
+    pack(g, s) { if (s.sandwich) { g.finish(1.2); return; } if (s.packT != null) return; s.packT = 0; s.canDone = false; g.finish(3.1); sfx.whoosh(); },
+    trayPos(g, s, i) { const n = s.cuts.length, P = [[-.3, -.15], [0, -.15], [.3, -.15], [-.3, .17], [0, .17], [.3, .17]], q = n <= 3 ? [[-.3, 0], [0, 0], [.3, 0]][i] : P[i]; return g.P(q[0], q[1] + .02); },
     // touching a cutter picks it (and says its name once); dragging one onto the dough cuts where it is let go
     drop(g, s, it, x, y, tap) {
       s.cutter = it.id; g.tool = it.id;
@@ -398,7 +415,8 @@
         if (t0 < .34 && c.t >= .34) sfx.pat();
       }
       if (s.nope) { s.nope.t += dt; if (s.nope.t > .5) s.nope = null; }
-      if (s.fin) s.scrap = Math.min(1, s.scrap + dt * 2.2);
+      if (s.fin && s.packT == null) s.scrap = Math.min(1, s.scrap + dt * 2.2);
+      if (s.packT != null) { const a = s.packT; s.packT += dt; const b = s.packT; for (const [at, f] of [[.9, () => sfx.whoosh()], [1.35, () => sfx.pat()], [1.7, () => sfx.snap()], [2.05, () => sfx.whoosh()]]) if (a < at && b >= at) f(); }
       if (!s.fin && s.cuts.length === 0 && g.idle > 14) { g.idle = 8; }
     },
     draw(g, s, c) {
@@ -417,11 +435,31 @@
         c.fillStyle = 'rgba(255,255,255,.35)'; rr(c, a.x - hh * .78, a.y - hh * .8, hh * .9, hh * .18, hh * .08); c.fill();
         for (const [k, l] of lay.entries()) for (const [dx, dy, rx, ry] of [[-.85, .2 + k * .1, .14, .08], [.9, -.3 + k * .12, .12, .07], [-.3, .92, .16, .07]]) { c.fillStyle = LCOL[l.id] || '#f0c36a'; c.beginPath(); c.ellipse(a.x + dx * hh, a.y + dy * hh, hh * rx, hh * ry, 0, 0, TAU); c.fill(); }
         c.restore();
-      } else { drawSheet(g, c, 1, DOUGH); c.save(); c.globalAlpha = fade; c.restore(); }
+      } else if (s.packT == null) drawSheet(g, c, 1, DOUGH);
+      else {
+        const P = s.packT, U2 = g.U, ball = { x: g.bx - U2 * .3, y: g.by + U2 * .2 }, tub = { x: g.bx - U2 * .3, y: g.by + U2 * .26 };
+        const tx = lerp(g.w + U2 * .6, g.bx, ease(clamp((P - .25) / .7, 0, 1))); pan(c, tx, g.by + U2 * .02, U2 * .92, U2 * .66);
+        const e1 = ease(clamp(P / .7, 0, 1));
+        if (P < .75) { c.save(); c.translate(lerp(0, ball.x - g.bx, e1), lerp(0, ball.y - g.by, e1)); c.translate(g.bx, g.by); c.scale(1 - e1 * .8, 1 - e1 * .8); c.translate(-g.bx, -g.by); c.globalAlpha = 1 - e1 * .2; drawSheet(g, c, 1, DOUGH); c.restore(); }
+        // the tub: comes in, the ball drops in, the lid goes on, and it slides away to the fridge
+        const bin = ease(clamp((P - .55) / .45, 0, 1)), bout = ease(clamp((P - 2.0) / .6, 0, 1)), bxx = lerp(-U2 * .4, tub.x, bin) - bout * (tub.x + U2 * .5);
+        const drop = ease(clamp((P - 1.05) / .3, 0, 1)), lid = ease(clamp((P - 1.4) / .3, 0, 1));
+        if (P >= .55) {
+          const bw = U2 * .3, bh = U2 * .17;
+          c.save(); c.translate(bxx, tub.y);
+          c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.ellipse(4, bh * .55, bw * .55, bh * .18, 0, 0, TAU); c.fill();
+          c.fillStyle = 'rgba(200,232,250,.9)'; rr(c, -bw / 2, -bh / 2, bw, bh, bh * .22); c.fill(); c.strokeStyle = '#8cc4e4'; c.lineWidth = 3; rr(c, -bw / 2, -bh / 2, bw, bh, bh * .22); c.stroke();
+          if (P >= .75) { const by2 = lerp(ball.y - tub.y - U2 * .02, bh * .05, drop); c.save(); c.beginPath(); c.rect(-bw / 2, -U2, bw, U2 + bh * .45); c.clip(); c.translate(lerp(ball.x - tub.x, 0, drop) + (bxx - tub.x) * 0, by2); ING.dough(c, U2 * .2); c.restore(); }
+          c.fillStyle = 'rgba(255,255,255,.35)'; rr(c, -bw * .44, -bh * .38, bw * .3, bh * .12, bh * .06); c.fill();
+          const ly = lerp(-bh * 1.4, -bh * .52, lid), la = lerp(-.5, 0, lid); c.save(); c.translate(0, ly); c.rotate(la * (P < 1.4 ? 1 : 1)); c.globalAlpha = P < 1.1 ? clamp((P - .55) / .3, 0, 1) : 1; box(c, -bw * .53, -bh * .12, bw * 1.06, bh * .24, '#ff8ab3', bh * .1); box(c, -bw * .18, -bh * .22, bw * .36, bh * .12, '#ff6b9d', bh * .05); c.restore();
+          c.restore();
+        } else if (P >= .7) { c.save(); c.translate(ball.x, ball.y); ING.dough(c, U2 * .2); c.restore(); }
+      }
       // the cut-out shapes: a groove where the cutter pressed, then the shape popping up and settling
       const slots = s.sandwich && s.fin ? g.slots(s.cuts.length) : null;
       s.cuts.forEach((k, i) => {
         const u = k.t; let x = k.x, y = k.y, R = rc;
+        if (s.packT != null) { const e = ease(clamp((s.packT - .95) / .65, 0, 1)), tp = H.cut.trayPos(g, s, i); x = lerp(k.x, tp.x, e); y = lerp(k.y, tp.y, e) - Math.sin(e * Math.PI) * g.U * .06; c.save(); c.translate(x, y); cookieShape(c, k.shape, R, DOUGH, { speckle: true }); c.restore(); return; }
         if (slots) { const e = ease(clamp(s.scrap * 1.3, 0, 1)); x = lerp(k.x, slots[i].x, e); y = lerp(k.y, slots[i].y, e); R = lerp(rc, slots[i].r * .9, e); }
         c.save(); c.translate(x, y);
         if (u >= .17) { c.fillStyle = s.sandwich ? 'rgba(120,80,40,.5)' : shade(DOUGH, -.4); shapeFill(c, k.shape, R, R * .08); }
@@ -691,7 +729,7 @@
       if (s.fin) return false; const sp = s.spec, end = it.id === s.end;
       if (!end && s.n >= s.max) return 'full';
       if (!tap && (y > g.y1 + 4 || Math.abs(x - g.bx) > g.U * .7)) return false;
-      if (!end) s.n++;
+      if (!end) { s.n++; (s.usedItems || (s.usedItems = new Set())).add(it.id); }
       const B = g.foodBase(), topY = B.y - pieceHeight(g.piece, g.R1) - g.R1 * .1, p = g.piece, id = it.id;
       g.ingFly(id, tap ? it.x : x, tap ? it.y : y, B.x, topY, () => {
         if (sp.scoop) p.scoops.push({ id: id.slice(3), drop: 1 }); else p.layers.push({ id: layerFor(id), drop: 1, seed: p.layers.length * 7 });
@@ -801,7 +839,7 @@
       H.decorate.act(g, s);
     },
     // the green check appears once there is enough on it (it never says "all done": she decides that by touching the check)
-    act(g, s) { s.acts++; const first = !s.canDone; if (s.spec.mode === 'cover') return; if (s.spec.mode !== 'frost') { s.canDone = s.acts >= s.need; if (s.canDone && first) sfx.plink(4); } else if (g.pieces.every(q => q.frost)) g.finish(.9); },
+    act(g, s) { s.acts++; (s.usedTools || (s.usedTools = new Set())).add(g.tool); const first = !s.canDone; if (s.spec.mode === 'cover') return; if (s.spec.mode !== 'frost') { s.canDone = s.acts >= s.need; if (s.canDone && first) sfx.plink(4); } else if (g.pieces.every(q => q.frost)) g.finish(.9); },
     dot(g, pc, id, lx, ly, i) {
       const col = id === 'sprinkles' || id === 'candy' ? SPRINKLE[Math.floor(Math.random() * 5)] : null, rot = ['sprinkles', 'star', 'pepperoni', 'olive', 'greenpepper', 'pineapple', 'basil', 'mushroom'].includes(id) ? Math.random() * 3 - 1.5 : (Math.random() - .5) * .3;
       (pc.tops = pc.tops || []).push({ id, x: lx, y: ly, col, rot });   // exactly where she touched
@@ -834,35 +872,60 @@
     }
   };
 
+  // Eating: every touch takes one small bite exactly where she touched, with tooth marks and crumbs on the plate. Where the food is
+  // was measured from its own picture, so every last bit can be eaten; a food is finished when nothing is left, about nine bites each.
+  const CRUMB = { cookie: ['#d9a05a', '#e8c88a'], cupcake: ['#e8b868', '#fff3d6'], cake: ['#e8b868', '#fff3d6'], stack: ['#e8a85c', '#f7ddb0'], hotdog: ['#e8a85c', '#c0583a'], sundae: ['#fff1c4', '#ff9ec8'], pizza: ['#e6c48a', '#d8342c'] };
+  function eatPoints(g, p) {
+    const R = 50, S = 260, cv = document.createElement('canvas'); cv.width = cv.height = S; const o = cv.getContext('2d');
+    o.translate(S / 2, S / 2 + pieceBase(p, R)); drawPiece(o, p, R);
+    const d = o.getImageData(0, 0, S, S).data, out = [], step = 7;
+    for (let y = step / 2; y < S; y += step) for (let x = step / 2; x < S; x += step) if (d[(Math.floor(y) * S + Math.floor(x)) * 4 + 3] > 140) out.push([(x - S / 2) / R, (y - S / 2) / R]);
+    return out;
+  }
+  function drawEatenAt(g, c, p, x, y, R) {
+    if (!p.bites || !p.bites.length) { drawPieceAt(c, p, x, y, R); return; }
+    const dpr = g.dpr || 1, S = Math.ceil(R * 5 * dpr), oc = g.oc; if (oc.width !== S) { oc.width = S; oc.height = S; }
+    const o = oc.getContext('2d'); o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, S, S); o.setTransform(dpr, 0, 0, dpr, S / 2, S / 2);
+    o.save(); o.translate(0, pieceBase(p, R)); drawPiece(o, p, R); o.restore();
+    o.globalCompositeOperation = 'destination-out'; o.fillStyle = '#000';
+    for (const b of p.bites) { o.beginPath(); o.arc(b.x * R, b.y * R, b.r * R, 0, TAU); o.fill(); for (let k = -2; k <= 2; k++) { const a = b.a + k * .42; o.beginPath(); o.arc((b.x + Math.cos(a) * b.r) * R, (b.y + Math.sin(a) * b.r) * R, b.r * R * .26, 0, TAU); o.fill(); } }
+    o.globalCompositeOperation = 'source-over';
+    c.drawImage(oc, x - S / 2 / dpr, y - S / 2 / dpr, S / dpr, S / dpr);
+  }
   H.serve = {
     enter(g, s) {
-      s.total = g.pieces.reduce((a, p) => { p.bites = []; p.gone = false; return a + bitesFor(p, g.pieces.length); }, 0); s.n = 0; g.setTray([]);
+      g.crumbs = []; s.n = 0; g.setTray([]);
+      for (const p of g.pieces) { p.bites = []; p.gone = false; p.left = eatPoints(g, p); p.full = Math.max(1, p.left.length); const area = p.full * (7 / 50) ** 2; p.br = clamp(Math.sqrt(area / (9 * Math.PI * .8)), .16, .5); }
       g.fx.burst(g.bx, g.by, 30, { colors: ['#ffd54a', '#fff', '#ff9ec8'], speed: 300, g: 200, life: 1, size: 7, shape: 'star' }); sfx.chime();
     },
     down(g, s, p) {
-      if (s.fin || g.finishedAll) return; const sl = g.slots();
-      for (let i = 0; i < g.pieces.length; i++) {
-        const pc = g.pieces[i], q = sl[i]; if (pc.gone) continue; const flat = ['stack', 'hotdog', 'sundae'].includes(pc.type), R = q.r, hh = pieceHeight(pc, R), cy = q.y;
-        if (Math.abs(p.x - q.x) < R * 1.25 && Math.abs(p.y - cy) < Math.max(R * 1.1, hh * .6)) {
-          const k = pc.bites.length, a = Math.atan2((p.y - cy) * (flat ? .5 : 1), p.x - q.x) + (Math.random() - .5) * .6;
-          pc.bites.push({ x: Math.cos(a) * R * (flat ? .95 : .82), y: Math.sin(a) * R * (flat ? .35 : .82), r: R * (.34 + k * .07) });
-          sfx.crunch(); g.fx.burst(p.x, p.y, 12, { colors: ['#d9a05a', '#fff3d6', '#e8c88a'], speed: 140, g: 500, life: .5, size: 4 }); g.bounce = 1; s.n++;
-          if (pc.bites.length >= bitesFor(pc, g.pieces.length)) { pc.gone = true; g.fx.burst(q.x, q.y, 20, { colors: ['#ffd54a', '#ff9ec8', '#fff'], speed: 240, g: 300, life: .8, size: 6, shape: 'star' }); }
-          if (s.n % 2 === 1) voice.say('cook-yum');
-          if (s.n >= s.total) { g.recipeDone(); s.fin = true; s.finT = 99; }
-          return;
-        }
-      }
+      if (s.fin || g.finishedAll) return; const sl = g.slots(); let best = null;
+      g.pieces.forEach((pc, i) => {
+        if (pc.gone) return; const q = sl[i], lx = (p.x - q.x) / q.r, ly = (p.y - q.y) / q.r; let near = null, nd = 1e9;
+        for (const pt of pc.left) { const d = Math.hypot(pt[0] - lx, pt[1] - ly); if (d < nd) { nd = d; near = pt; } }
+        if (near && nd < pc.br * 1.6 && (!best || nd < best.d)) best = { pc, q, lx, ly, near, d: nd };
+      });
+      if (!best) return;
+      const { pc, q } = best, r = pc.br * (.9 + Math.random() * .15), cx = best.d < r * .6 ? best.lx : best.near[0], cy = best.d < r * .6 ? best.ly : best.near[1];
+      pc.bites.push({ x: cx, y: cy, r, a: Math.atan2(-cy, -cx) });
+      pc.left = pc.left.filter(pt => Math.hypot(pt[0] - cx, pt[1] - cy) > r * 1.02);
+      const sx = q.x + cx * q.r, sy = q.y + cy * q.r, cols = CRUMB[pc.type] || CRUMB.stack, pl = g.plate();
+      sfx.crunch(); g.fx.burst(sx, sy, 12, { colors: cols, speed: 140, g: 500, life: .55, size: 4 }); g.bounce = 1; s.n++;
+      for (let i = 0; i < 3; i++) g.crumbs.push({ x: (sx - pl.x) / g.U + (Math.random() - .5) * .12, y: (Math.min(sy + q.r * .4, pl.y + pl.r * .4) - pl.y) / g.U + Math.random() * .05, r: .005 + Math.random() * .006, col: cols[i % cols.length] });
+      if (pc.left.length <= pc.full * .1) { pc.gone = true; g.fx.burst(q.x, q.y, 20, { colors: ['#ffd54a', '#ff9ec8', '#fff'], speed: 240, g: 300, life: .8, size: 6, shape: 'star' }); sfx.pop(); }
+      if (s.n % 3 === 1) voice.say('cook-yum');
+      if (g.pieces.every(x => x.gone)) { g.recipeDone(); s.fin = true; s.finT = 99; }
     },
     update(g, s, dt) { g.bounce = Math.max(0, (g.bounce || 0) - dt * 4); },
     draw(g, s, c) {
       g.sceneBoard(c, true);
-      const sl = g.slots(); const one = g.pieces.length === 1;
-      const pl = g.plate(); drawPlate(c, pl.x, pl.y, pl.r); drawPlatePaint(g, c);
-      g.pieces.forEach((p, i) => { if (p.gone) return; const q = sl[i], bob = (g.finishedAll ? 0 : Math.sin(g.t * 3 + i) * 3) + (g.bounce || 0) * -6; drawBittenAt(g, c, p, q.x, q.y + bob, q.r); });
+      const sl = g.slots(), pl = g.plate(); drawPlate(c, pl.x, pl.y, pl.r); drawPlatePaint(g, c);
+      for (const k of g.crumbs || []) { c.fillStyle = k.col; c.beginPath(); c.ellipse(pl.x + k.x * g.U, pl.y + k.y * g.U, k.r * g.U, k.r * g.U * .7, k.x * 9, 0, TAU); c.fill(); }
+      g.pieces.forEach((p, i) => { if (p.gone) return; const q = sl[i], bob = (g.finishedAll ? 0 : Math.sin(g.t * 3 + i) * 2) + (g.bounce || 0) * -4; drawEatenAt(g, c, p, q.x, q.y + bob, q.r); });
       if (!s.n && !g.finishedAll) { const q = sl[0]; drawTapHint(c, q.x, q.y - q.r * .4, g.U * .1, g.t); }
     }
   };
+
 
   /* ---------------------------------------------------------------- loop, menu and drawing */
     Object.assign(CookGame.prototype, {
@@ -957,8 +1020,7 @@
 
     // ---- photos: the camera button on the left (a little bigger than the home button) and her own album of food photos
     camBtn() {
-      if (this.screen !== 'cook' || this.trans || !this.st || !this.pieces.length) return null;
-      const k = this.st.k; if (!this.pieces.some(p => !p.gone)) return null; if (!['stack', 'build', 'decorate', 'slice', 'serve'].includes(k) && !(k === 'cut' && this.st.sandwich) && !(k === 'pick' && this.st.sel >= 0)) return null;
+      if (this.screen !== 'cook' || this.trans || !this.st) return null;
       const r = this.uiR * .6; return { x: r + 16, y: clamp((this.y0 + this.y1) / 2, this.y0 + r + 8, this.y1 - r * 2.4), r };
     },
     albumBtn() { const r = this.uiR * .6; return { x: 14 + this.uiR + 18 + r, y: 14 + this.uiR / 2, r }; },
@@ -1074,7 +1136,7 @@
       }
     },
     back() { if (this.screen === 'gallery') { if (this.gal && this.gal.view >= 0) { this.gal.view = -1; return true; } this.closeGallery(); return true; } return false; },
-    probe() { return { spec: this.st && this.st.spec, cards: this.st && this.st.k === 'pick' ? H.pick.cards(this, this.st) : [], cam: this.camBtn(), album: this.screen === 'menu' ? this.albumBtn() : null, opt: this.opt, R1: this.R1, photos: this.photoCount || 0, gal: this.gal ? { n: this.gal.list.length, view: this.gal.view } : null, screen: this.screen, step: this.st && this.st.k, idx: this.stIdx, tray: this.tray.map(i => ({ id: i.id, x: i.x, y: i.y, used: i.used, kind: i.kind })), U: this.U, bx: this.bx, by: this.by, y1: this.y1, w: this.w, h: this.h, st: this.st && { fin: this.st.fin, canDone: this.st.canDone, state: this.st.state, i: this.st.i, n: this.st.n, end: this.st.end, placed: this.st.placed, closed: this.st.closed, sel: this.st.sel, units: (this.st.units || []).map(u => ({ id: u.id, x: u.x, y: u.y, state: u.state })) }, pieces: this.pieces.length, check: this.checkBtn(), menu: this.menuHit.map(m => ({ x: m.x, y: m.y, tab: m.tab, id: m.R && m.R.id })), want: this.wantIds(), tool: this.tool, flies: this.flies.length, busy: this.busy(), cuts: this.st && this.st.cuts ? this.st.cuts.length : 0, trans: !!this.trans, finishedAll: this.finishedAll, arrow: !!this.arrow, slots: this.screen === 'cook' ? this.slots() : [] }; },
+    probe() { return { eat: this.pieces.map(p => p.left && p.left.length && !p.gone ? p.left[Math.floor(p.left.length / 2)] : null), pack: this.st && this.st.packT, spec: this.st && this.st.spec, cards: this.st && this.st.k === 'pick' ? H.pick.cards(this, this.st) : [], cam: this.camBtn(), album: this.screen === 'menu' ? this.albumBtn() : null, opt: this.opt, R1: this.R1, photos: this.photoCount || 0, gal: this.gal ? { n: this.gal.list.length, view: this.gal.view } : null, screen: this.screen, step: this.st && this.st.k, idx: this.stIdx, tray: this.tray.map(i => ({ id: i.id, x: i.x, y: i.y, used: i.used, kind: i.kind })), U: this.U, bx: this.bx, by: this.by, y1: this.y1, w: this.w, h: this.h, st: this.st && { fin: this.st.fin, canDone: this.st.canDone, state: this.st.state, i: this.st.i, n: this.st.n, end: this.st.end, placed: this.st.placed, closed: this.st.closed, sel: this.st.sel, units: (this.st.units || []).map(u => ({ id: u.id, x: u.x, y: u.y, state: u.state })) }, pieces: this.pieces.length, check: this.checkBtn(), menu: this.menuHit.map(m => ({ x: m.x, y: m.y, tab: m.tab, id: m.R && m.R.id })), want: this.wantIds(), tool: this.tool, flies: this.flies.length, busy: this.busy(), cuts: this.st && this.st.cuts ? this.st.cuts.length : 0, trans: !!this.trans, finishedAll: this.finishedAll, arrow: !!this.arrow, slots: this.screen === 'cook' ? this.slots() : [] }; },
 
     sceneBoard(c, noBoard) {
       if (noBoard) return;
@@ -1181,17 +1243,25 @@
         else (ING[it.id] || ING.flour)(c, s);
         c.restore();
       }
-      // chef
-      const ch = this.chefPos(), s = this.st, r = ch.r, hop = this.chefBounce > 0 ? Math.sin(this.chefBounce * 3) * 8 : this.idle > 4.5 ? Math.abs(Math.sin(this.t * 5)) * 6 : 0; this.chefBounce = Math.max(0, (this.chefBounce || 0) - dt * 2);
-      c.save(); c.translate(ch.x, ch.y + r * .15 - hop); art.avatar(c, 'bear', r * .95, { mood: 'happy' });
-      c.fillStyle = '#fff'; c.strokeStyle = '#d8d0e0'; c.lineWidth = 2; rr(c, -r * .55, -r * 1.25, r * 1.1, r * .55, r * .1); c.fill(); c.stroke(); for (const dx of [-.45, 0, .45]) { c.beginPath(); c.arc(dx * r, -r * 1.42, r * .38, 0, TAU); c.fill(); c.stroke(); } c.fillStyle = '#fff'; c.fillRect(-r * .5, -r * 1.3, r * 1.0, r * .5);
-      c.restore();
-      if (s && !this.finishedAll) {
-        const k = s.k, sp = s.spec; let id = null;
-        if (k === 'add') id = (s.left && s.left[0]) || sp.ids[0]; else if (k === 'grill') id = sp.id; else if (k === 'stack') id = sp.order[Math.min(s.i, sp.order.length - 1)]; else if (k === 'cut') id = this.cutters[0]; else if (k === 'decorate') id = this.tool || sp.tools[0]; else if (k === 'pick') id = sp.opts[0]; else if (k === 'build') id = s.end && s.n >= s.max ? s.end : sp.icon || sp.items[0]; if (k === 'grill' && sp.free) id = sp.ids[0];
-        const bx = ch.x + r * 1.5, by = ch.y - r * 1.9 - hop * .5, br = r * 1.05;
+      // the helper in the corner: her own pet (with what it wears), or the chef bear if she has no pet yet. Touch it: it jumps for joy.
+      const ch = this.chefPos(), s = this.st, r = ch.r; this.chefBounce = Math.max(0, (this.chefBounce || 0) - dt * 1.6);
+      const jump = this.chefBounce > 0 ? Math.sin((1 - this.chefBounce) * Math.PI) * r * .75 : 0, hop = jump || (this.idle > 4.5 ? Math.abs(Math.sin(this.t * 5)) * 5 : 0);
+      const pet = SPG.pets && SPG.pets.active && SPG.pets.active();
+      if (pet) { c.save(); c.translate(ch.x, ch.y + r * .95 - hop); SPG.pets.draw(c, pet.id, r * 2.1, this.t, { mood: jump ? 'cheer' : 'happy', hat: pet.hat, face: pet.face, neck: pet.neck }); c.restore(); }
+      else {
+        c.save(); c.translate(ch.x, ch.y + r * .15 - hop); art.avatar(c, 'bear', r * .95, { mood: jump ? 'cheer' : 'happy' });
+        c.fillStyle = '#fff'; c.strokeStyle = '#d8d0e0'; c.lineWidth = 2; rr(c, -r * .55, -r * 1.25, r * 1.1, r * .55, r * .1); c.fill(); c.stroke(); for (const dx of [-.45, 0, .45]) { c.beginPath(); c.arc(dx * r, -r * 1.42, r * .38, 0, TAU); c.fill(); c.stroke(); } c.fillStyle = '#fff'; c.fillRect(-r * .5, -r * 1.3, r * 1.0, r * .5);
+        c.restore();
+      }
+      if (this.emote) { const E = this.emote; E.t += dt; const u = E.t / 1.1; if (u >= 1) this.emote = null; else { c.save(); c.globalAlpha = 1 - u * u; c.translate(ch.x + r * .2, ch.y - r * 1.3 - u * r * 1.4); c.scale(.6 + u * .5, .6 + u * .5); c.fillStyle = E.col; c.beginPath(); c.moveTo(0, r * .3); c.bezierCurveTo(-r * .5, -r * .05, -r * .3, -r * .45, 0, -r * .2); c.bezierCurveTo(r * .3, -r * .45, r * .5, -r * .05, 0, r * .3); c.fill(); c.restore(); } }
+      const id = s && !this.finishedAll ? this.tip() : null;
+      if (id) {
+        const k = s.k, sp = s.spec, bx = ch.x + r * 1.5, by = ch.y - r * 1.9 - hop * .5, br = r * 1.05;
         c.save(); c.translate(bx, by); c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.arc(3, 5, br, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.strokeStyle = '#ff9ec8'; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, br, 0, TAU); c.fill(); c.stroke(); tri(c, [[-br * .75, br * .5], [-br * 1.15, br * 1.1], [-br * .3, br * .85]], '#fff'); c.beginPath(); c.arc(0, 0, br * .9, 0, TAU); c.clip();
-        const pul = 1 + (this.idle > 4.5 ? Math.sin(this.t * 6) * .06 : 0); c.scale(pul, pul); stepIcon(c, k === 'fill' ? 'add' : k, br * 1.5, k === 'fill' ? (sp.what === 'dough' ? 'dough' : 'batter') : id); c.restore();
+        const pul = 1 + (this.idle > 4.5 ? Math.sin(this.t * 6) * .06 : 0); c.scale(pul, pul);
+        if (id === 'HAPPY') { c.fillStyle = '#ff6b9d'; c.beginPath(); c.moveTo(0, br * .45); c.bezierCurveTo(-br * .8, -br * .05, -br * .45, -br * .7, 0, -br * .3); c.bezierCurveTo(br * .45, -br * .7, br * .8, -br * .05, 0, br * .45); c.fill(); }
+        else stepIcon(c, k === 'fill' ? 'add' : k, br * 1.5, k === 'fill' ? (sp.what === 'dough' ? 'dough' : 'batter') : id);
+        c.restore();
       }
     },
     drawFlies(c) {

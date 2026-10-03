@@ -657,8 +657,9 @@
     const count = h('p', { class: 'fine' }, 'Counting photos…');
     if (SPG.photos) SPG.photos.count().then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
     const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear(); renderParent(); });
-    return h('section', {}, h('h3', {}, 'Kitchen photos'),
+    return h('section', {}, h('h3', {}, 'Photos and pictures'),
       h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made. Photos are always kept in the kitchen\u2019s own photo album, on this device only.'),
+      h('p', {}, app ? 'In the Coloring Book the Save picture button always puts the finished picture into this phone\u2019s photo gallery (album \u201CSprout Park\u201D). Every picture also stays in the Coloring Book\u2019s own gallery.' : 'In the Coloring Book the Save picture button downloads the picture to this device. Every picture also stays in the Coloring Book\u2019s own gallery.'),
       ios ? h('p', { class: 'fine' }, 'On iPhone and iPad the photos stay in the kitchen album.') : h('div', { class: 'setting' }, h('span', {}, app ? 'Also save them to this phone\u2019s photo gallery (album \u201CSprout Park\u201D)' : 'Also save them to this device (as a download)'), sw),
       count, clear);
   }

@@ -165,8 +165,20 @@
   }
   function saveFile(blob, name) { return SPG.native.saveFile(blob, name, 'image/png'); }
   const fileName = def => `little-sprout-park-${def.id}.png`;
-  // On iPhone/iPad (and in the Android app, where saving opens the share sheet) a download can pull the child out of the app, so a grown-up has to okay it there.
+  // On iPhone/iPad (and in the Android app, where the share sheet is only a fallback) a download can pull the child out of the app, so a grown-up has to okay it there.
   const okToSave = fn => ((SPG.safe.isIOS || SPG.native.isApp) && SPG.app && SPG.app.askGate) ? SPG.app.askGate(fn) : fn();
+  // Android app: the picture goes straight into the phone's photo gallery (album "Sprout Park"), no share sheet and no gate.
+  // Only if that fails does the share sheet open (behind the grown-up gate), so nothing is lost.
+  // `done` runs once the picture has been handed over (a cancelled grown-up gate just never calls it).
+  async function saveToDevice(blob, name, done) {
+    const share = () => Promise.resolve(saveFile(blob, name)).catch(() => false).then(done);
+    if (SPG.native.isApp && SPG.native.saveToGallery) {
+      let ok = false; try { ok = await SPG.native.saveToGallery(blob, name); } catch (_) { ok = false; }
+      if (ok) return done(true);
+      return (SPG.app && SPG.app.askGate) ? SPG.app.askGate(share) : share();
+    }
+    okToSave(share);
+  }
 
   /* ================================================================ the game */
   class ColorGame {
@@ -324,14 +336,12 @@
     // and the app shows its own "Saved!" so the child never has to look at a browser message.
     async savePicture(def, button) {
       if (this.saving) return;
-      okToSave(async () => {
-        this.saving = true;
-        try {
-          const r = this.rec(def.id);
-          saveFile(await toPNG(def, r && r.ops || []), fileName(def));
-          this.showSaved(button);
-        } catch (_) { sfx.oops(); } finally { this.saving = false; }
-      });
+      this.saving = true;
+      try {
+        const r = this.rec(def.id);
+        const blob = await toPNG(def, r && r.ops || []);
+        await saveToDevice(blob, fileName(def), () => this.showSaved(button));
+      } catch (_) { sfx.oops(); } finally { this.saving = false; }
     }
     showSaved(button) {
       sfx.chime();

@@ -57,7 +57,21 @@
   const NAMES = SPG.voice.PICK_NAMES.pets;
 
   /* ------------------------------------------------------------ saved state */
-  const bag = () => store.bag('pets', () => ({ v: 1, owned: {}, hats: {}, active: null }));
+  // An accessory can only be on one pet at a time. Old saves (and merged backups) may have two pets wearing the same thing:
+  // the first pet (in the order they were taken home) keeps it, the others quietly lose it. Checked once per loaded bag.
+  const checked = new WeakSet();
+  const slotKey = slot => slot === 'head' ? 'hat' : slot;
+  function dedupe(b) {
+    if (checked.has(b)) return b; checked.add(b);
+    const seen = {}; let changed = false;
+    for (const id of Object.keys(b.owned || {})) {
+      const o = b.owned[id]; if (!o) continue;
+      for (const k of ['hat', 'face', 'neck']) { const it = o[k]; if (!it) continue; if (seen[it]) { o[k] = null; changed = true; } else seen[it] = id; }
+    }
+    if (changed) store.save();
+    return b;
+  }
+  const bag = () => dedupe(store.bag('pets', () => ({ v: 1, owned: {}, hats: {}, active: null })));
   const info = id => PETS.find(p => p.id === id);
   const api = {
     PETS, HATS, NAMES, SPECIES,
@@ -81,8 +95,20 @@
       if (!h || b.hats[id] || !api.canAfford(h.price)) return false;
       store.addStars(-h.price); b.hats[id] = true; store.save(); return true;
     },
-    // Wear an accessory she owns (it goes in its own slot: head, face or neck). wear(null) takes the hat off; unwear(slot) clears one slot.
-    wear(itemId) { const b = bag(); if (!b.active || !b.owned[b.active]) return; if (!itemId) { b.owned[b.active].hat = null; store.save(); return; } const h = api.hatInfo(itemId); if (!h || !b.hats[itemId]) return; b.owned[b.active][h.slot === 'head' ? 'hat' : h.slot] = itemId; store.save(); },
+    // Which other owned pet (id) is wearing this accessory right now? (null if nobody but, maybe, the pet in `except`, default the active pet.)
+    wornBy(itemId, except) {
+      const b = bag(), ex = except === undefined ? b.active : except;
+      for (const id of Object.keys(b.owned)) { if (id === ex) continue; const o = b.owned[id]; if (o && (o.hat === itemId || o.face === itemId || o.neck === itemId)) return id; }
+      return null;
+    },
+    // Wear an accessory she owns (it goes in its own slot: head, face or neck). Returns false (nothing changes) when it is not owned
+    // or another pet is already wearing it. wear(null) takes the hat off; unwear(slot) clears one slot.
+    wear(itemId) {
+      const b = bag(); if (!b.active || !b.owned[b.active]) return false;
+      if (!itemId) { b.owned[b.active].hat = null; store.save(); return true; }
+      const h = api.hatInfo(itemId); if (!h || !b.hats[itemId] || api.wornBy(itemId)) return false;
+      b.owned[b.active][slotKey(h.slot)] = itemId; store.save(); return true;
+    },
     unwear(slot) { const b = bag(); if (b.active && b.owned[b.active]) { b.owned[b.active][slot === 'head' ? 'hat' : slot] = null; store.save(); } },
     rename(id, name) { const b = bag(); if (b.owned[id]) { b.owned[id].name = String(name || '').trim().slice(0, 12); store.save(); } },
     randomName() { return NAMES[Math.floor(Math.random() * NAMES.length)]; },
@@ -168,14 +194,16 @@
   }
 
   // Glasses and noses sit on the face (head circle of radius R, eyes at about +-.31R, -.05R).
-  function faceAcc(c, id, R) {
+  function faceAcc(c, id, R, kind) {
     c.save(); c.lineJoin = c.lineCap = 'round';
-    const ex = R * .31, ey = -R * .05;
-    if (id === 'glasses') { c.strokeStyle = '#3a2f40'; c.lineWidth = R * .06; for (const s of [-1, 1]) { c.fillStyle = 'rgba(210,235,255,.3)'; ell(c, s * ex, ey, R * .26, R * .26); c.fill(); c.stroke(); } c.beginPath(); c.moveTo(-R * .05, ey); c.lineTo(R * .05, ey); c.stroke(); }
-    else if (id === 'shades') { c.fillStyle = '#20141a'; for (const s of [-1, 1]) { ell(c, s * ex, ey, R * .27, R * .25); c.fill(); } c.strokeStyle = '#20141a'; c.lineWidth = R * .06; c.beginPath(); c.moveTo(-R * .05, ey); c.lineTo(R * .05, ey); c.stroke(); c.fillStyle = 'rgba(255,255,255,.4)'; for (const s of [-1, 1]) { ell(c, s * ex - R * .08, ey - R * .09, R * .08, R * .04, -.5); c.fill(); } }
+    const fr = kind === 'frog';   // a frog's eyes sit on top of its head
+    const ex = fr ? R * .5 : R * .31, ey = fr ? -R * .6 : -R * .05, ny = fr ? R * .26 : R * .16;
+    if (fr) R *= .85;
+    if (id === 'glasses') { c.strokeStyle = '#3a2f40'; c.lineWidth = R * .06; for (const s of [-1, 1]) { c.fillStyle = 'rgba(210,235,255,.3)'; ell(c, s * ex, ey, R * .26, R * .26); c.fill(); c.stroke(); } c.beginPath(); c.moveTo(-(ex - R * .26), ey); c.lineTo(ex - R * .26, ey); c.stroke(); }
+    else if (id === 'shades') { c.fillStyle = '#20141a'; for (const s of [-1, 1]) { ell(c, s * ex, ey, R * .27, R * .25); c.fill(); } c.strokeStyle = '#20141a'; c.lineWidth = R * .06; c.beginPath(); c.moveTo(-(ex - R * .27), ey); c.lineTo(ex - R * .27, ey); c.stroke(); c.fillStyle = 'rgba(255,255,255,.4)'; for (const s of [-1, 1]) { ell(c, s * ex - R * .08, ey - R * .09, R * .08, R * .04, -.5); c.fill(); } }
     else if (id === 'hearts') { for (const s of [-1, 1]) art.heart(c, s * ex, ey, R * .3, '#ff6fae'); c.fillStyle = 'rgba(255,255,255,.4)'; for (const s of [-1, 1]) { ell(c, s * ex - R * .09, ey - R * .1, R * .05, R * .03, -.5); c.fill(); } }
     else if (id === 'stars') { for (const s of [-1, 1]) art.star(c, s * ex, ey, R * .32, '#ffd54a', 0); }
-    else if (id === 'clown') { c.fillStyle = '#ef4a4a'; ell(c, 0, R * .16, R * .14, R * .14); c.fill(); c.fillStyle = 'rgba(255,255,255,.6)'; ell(c, -R * .04, R * .12, R * .04, R * .04); c.fill(); }
+    else if (id === 'clown') { c.fillStyle = '#ef4a4a'; ell(c, 0, ny, R * .14, R * .14); c.fill(); c.fillStyle = 'rgba(255,255,255,.6)'; ell(c, -R * .04, ny - R * .04, R * .04, R * .04); c.fill(); }
     c.restore();
   }
   // Collars and ties sit just under the chin.
@@ -275,7 +303,7 @@
     c.save(); c.translate(0, hy + Math.sin(t * 2.2 + .6) * s * .006); if (mood === 'sleep') c.rotate(.1);
     art.avatar(c, sp.kind || id, R, { mood: mood === 'sleep' ? 'sleep' : mood === 'cheer' ? 'cheer' : 'happy', blink });
     furHead(c, id, sp, R, detail);
-    if (o.face) faceAcc(c, o.face, R);
+    if (o.face) faceAcc(c, o.face, R, sp.kind || id);
     if (o.neck) neckAcc(c, o.neck, R);
     if (o.hat) hat(c, o.hat, R);
     c.restore();
@@ -290,7 +318,7 @@
   const item = id => HATS.find(h => h.id === id);
 
   // A pet head with a hat, for shop cards.
-  api.drawHead = (c, id, R, hatId) => { c.save(); art.avatar(c, SPECIES[id].kind || id, R); const it = hatId && item(hatId), slot = it ? it.slot : 'head'; if (hatId) { if (slot === 'face') faceAcc(c, hatId, R); else if (slot === 'neck') neckAcc(c, hatId, R); else hat(c, hatId, R); } c.restore(); };
+  api.drawHead = (c, id, R, hatId) => { c.save(); art.avatar(c, SPECIES[id].kind || id, R); const it = hatId && item(hatId), slot = it ? it.slot : 'head'; if (hatId) { if (slot === 'face') faceAcc(c, hatId, R, SPECIES[id].kind || id); else if (slot === 'neck') neckAcc(c, hatId, R); else hat(c, hatId, R); } c.restore(); };
 
   /* ------------------------------------------------------------ the companion that keeps her company */
   // Adds the child's active pet to `host`. Returns null if she has none yet. The pet blinks, breathes, hops when

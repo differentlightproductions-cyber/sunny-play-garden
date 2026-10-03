@@ -49,7 +49,7 @@ async function playRecipe(page, id, log) {
       }
       const q2 = await P(page); if (q2.check) { await page.mouse.click(q2.check.x, q2.check.y); await wait(300); } else if (!q2.st.fin) { for (let r = 0; r < 4; r++) for (const s of sl) { await page.mouse.click(s.x, s.y); await wait(100); } }
     }
-    else if (k === 'slice') { await drag(page, [[bx, p.by - U * .1], [bx, by + U * .26]], 12); await wait(300); }
+    else if (k === 'slice') { const q = p.sliceG; await drag(page, [[q.x, q.top - 10], [q.x, q.bot + 10]], 12); await wait(300); }
     else if (k === 'serve') { if (shots.includes('serve') && !shot.s) { shot.s = 1; await wait(900); await page.screenshot({ path: `${SP}/serve_${id}_${W}x${H}.png` }); } for (let n = 0; n < 12; n++) { const q = await P(page); const i = q.eat.findIndex(Boolean); if (i < 0) break; const s0 = q.slots[i], e = q.eat[i]; await page.mouse.click(s0.x + e[0] * s0.r, s0.y + e[1] * s0.r); await wait(70); } if (shots.includes('serve') && !shot.s2) { shot.s2 = 1; await page.screenshot({ path: `${SP}/bitten_${id}_${W}x${H}.png` }); } }
     else await wait(200);
     if (Date.now() - stuck > 50000) { log.push(`${id}: STUCK in ${k}`); break; }

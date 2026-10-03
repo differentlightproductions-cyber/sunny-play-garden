@@ -29,7 +29,7 @@
     ['puzzle', 'Puzzle Pond', ['Up to 6 pieces', 'Up to 12 pieces', 'Up to 20 pieces']],
     ['hide', 'Hide and Seek', ['Two friends in each place, the arrow comes sooner', 'Three to five friends in each place', 'At least four friends in each place, the arrow waits longer']],
     ['garden', 'Grow a Garden', ['Plants need less water', 'The usual amount of water', 'Plants need more water']],
-    ['cook', 'Sprout Kitchen', ['Every ingredient one at a time', 'A few ingredients are counted (2)', 'Ingredients are counted up to 3']]
+    ['cook', 'Sprout Kitchen', ['Ingredients measured out, at most two scoops of each', 'Real recipe amounts (cups, half cups, eggs, butter sticks), counted out loud', 'Real recipe amounts (cups, half cups, eggs, butter sticks), counted out loud']]
   ];
 
   const cfgOf = p => {

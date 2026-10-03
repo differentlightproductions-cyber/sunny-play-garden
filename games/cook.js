@@ -5,7 +5,7 @@
 (() => {
   const SPG = window.SPG;
   const { art, sfx, voice, store } = SPG;
-  const { F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU } = SPG.cookArt;
+  const { shapePath, F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, SPRINKLE_KINDS, drawSprinkle, CANDY_KINDS, drawCandy, CANDLE_KINDS, drawCandle, FRUIT_KINDS, ICING12, drawIcingPen, drawPaintBucket, drawMeasure, drawPile, drawEgg, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU } = SPG.cookArt;
 
   /* ---------------------------------------------------------------- recipes (three kinds, six each) */
   // steps: add (drop ingredients in the bowl) stir roll cut (character cutters) fill (batter/dough onto a tray) bake grill (grill, pan or toaster)
@@ -19,29 +19,29 @@
   const RECIPES = [
     { id: 'sugar', cat: 0, name: 'Sugar cookies', ptype: 'cookie', steps: [
       { k: 'add', ids: ['flour', 'sugar', 'butter', 'egg'], meas: { flour: ['cup', 'cup', 'cup'], sugar: ['cup', 'half'], butter: ['stick', 'stick'], egg: ['egg'] } }, { k: 'stir' }, { k: 'roll' }, { k: 'cut', n: 6 }, { k: 'bake' },
-      { k: 'decorate', tools: ['ice-pink', 'ice-blue', 'ice-yellow', 'sprinkles', 'candy', 'star'], need: 4 }, { k: 'serve' }],
+      { k: 'decorate', tools: ['icing', 'bucket', 'sprinkles', 'candy'], need: 4 }, { k: 'serve' }],
       sample: { type: 'multi', parts: [[-.6, .1, { type: 'cookie', shape: 'star', baked: 1, deco: { fill: '#ff9ec8', dots: [{ id: 'sprinkles', x: -.2, y: -.1, col: '#fff', rot: .5 }, { id: 'sprinkles', x: .2, y: .1, col: '#ffd54a', rot: -.5 }] } }, .5], [.55, -.05, { type: 'cookie', shape: 'bear', baked: 1, deco: { fill: '#7fd4f5', dots: [{ id: 'candy', x: 0, y: .25, col: '#ff6b81' }] } }, .5], [0, .55, { type: 'cookie', shape: 'heart', baked: 1, deco: { fill: '#ffe066', dots: [{ id: 'candy', x: -.1, y: -.1, col: '#5cc8f2' }] } }, .5]] } },
     { id: 'chip', cat: 0, name: 'Chocolate chip cookies', ptype: 'cookie', steps: [
       { k: 'add', ids: ['flour', 'sugar', 'butter', 'egg', 'chips'], meas: { flour: ['cup', 'cup'], sugar: ['cup'], butter: ['stick', 'stick'], egg: ['egg'], chips: ['cup', 'cup'] } }, { k: 'stir' }, { k: 'fill', what: 'dough', lay: 'sheet', n: 6 }, { k: 'bake' }, { k: 'serve' }],
       sample: { type: 'multi', parts: [[-.5, 0, { type: 'cookie', shape: 'round', baked: 1, chips: true }, .62], [.5, -.1, { type: 'cookie', shape: 'round', baked: 1, chips: true }, .62], [0, .55, { type: 'cookie', shape: 'round', baked: 1, chips: true }, .62]] } },
     { id: 'cupcake', cat: 0, name: 'Cupcakes', ptype: 'cupcake', steps: [
       { k: 'add', ids: ['flour', 'sugar', 'butter', 'egg', 'milk'], meas: { flour: ['cup', 'half'], sugar: ['cup'], butter: ['stick'], egg: ['egg', 'egg'], milk: ['half'] } }, { k: 'stir' }, { k: 'fill', what: 'batter', lay: 'cups', n: 6 }, { k: 'bake' },
-      { k: 'decorate', tools: ['ice-pink', 'ice-blue', 'ice-white', 'ice-purple'], mode: 'frost', need: 3 },
-      { k: 'decorate', tools: ['sprinkles', 'cherry', 'candy', 'star', 'strawberry'], need: 3 }, { k: 'serve' }],
+      { k: 'decorate', tools: ['icing'], mode: 'frost', need: 3 },
+      { k: 'decorate', tools: ['sprinkles', 'candy', 'fruit', 'icing'], need: 3 }, { k: 'serve' }],
       sample: { type: 'cupcake', baked: 1, liner: '#ff9ec8', frost: { col: '#ffd0e4' }, tops: [{ id: 'cherry', x: 0, y: -.62 }, { id: 'sprinkles', x: -.2, y: -.3, col: '#5cc8f2', rot: .4 }, { id: 'sprinkles', x: .22, y: -.24, col: '#ffd54a', rot: -.6 }] } },
     { id: 'cake', cat: 0, name: 'Birthday cake', ptype: 'cake', steps: [
       { k: 'add', ids: ['flour', 'sugar', 'butter', 'egg', 'milk'], meas: { flour: ['cup', 'cup'], sugar: ['cup', 'half'], butter: ['stick'], egg: ['egg', 'egg', 'egg'], milk: ['cup'] } }, { k: 'stir' }, { k: 'fill', what: 'batter', lay: 'pan', n: 1 }, { k: 'bake' },
-      { k: 'decorate', tools: ['ice-pink', 'ice-blue', 'ice-yellow', 'ice-choc'], mode: 'frost', need: 1 },
-      { k: 'decorate', tools: ['candle', 'strawberry', 'sprinkles', 'candy', 'star'], need: 4 }, { k: 'serve' }],
+      { k: 'decorate', tools: ['icing'], mode: 'frost', need: 1 },
+      { k: 'decorate', tools: ['candle', 'fruit', 'sprinkles', 'candy', 'icing'], need: 4 }, { k: 'serve' }],
       sample: { type: 'cake', baked: 1, frost: { col: '#ffd0e4' }, tops: [{ id: 'candle', x: 0, y: -.12 }, { id: 'candle', x: -.42, y: 0 }, { id: 'candle', x: .42, y: 0 }, { id: 'strawberry', x: -.22, y: .14 }, { id: 'strawberry', x: .22, y: .14 }] } },
     { id: 'pancake', cat: 0, name: 'Pancakes', ptype: 'stack', steps: [
       { k: 'add', ids: ['flour', 'egg', 'milk', 'butter'], meas: { flour: ['cup', 'half'], egg: ['egg'], milk: ['cup', 'half'], butter: ['tbsp', 'tbsp'] } }, { k: 'stir' }, { k: 'fill', what: 'batter', lay: 'griddle', n: 3 },
       { k: 'grill', id: 'pancake', device: 'pan', existing: true }, { k: 'stack', order: ['pancake', 'pancake', 'pancake', 'butterpat'] },
-      { k: 'decorate', tools: ['syrup', 'strawberry', 'blueberry', 'cream', 'sprinkles'], need: 3 }, { k: 'serve' }],
+      { k: 'decorate', tools: ['syrup', 'fruit', 'cream', 'sprinkles'], need: 3 }, { k: 'serve' }],
       sample: { type: 'stack', layers: [{ id: 'pancake' }, { id: 'pancake' }, { id: 'pancake' }, { id: 'butterpat' }], tops: [{ id: 'strawberry', x: -.4, y: -.62 }, { id: 'blueberry', x: .35, y: -.58 }, { id: 'blueberry', x: .5, y: -.5 }] } },
     { id: 'sundae', cat: 0, name: 'Ice cream sundae', ptype: 'sundae', steps: [
       { k: 'build', scoop: true, items: ['sc-vanilla', 'sc-strawb', 'sc-choc', 'sc-mint', 'sc-blueb'], max: 3, min: 1, say: 'cook-scoop', icon: 'sc-strawb' },
-      { k: 'decorate', tools: ['ice-choc', 'caramel', 'strawsauce', 'cream', 'sprinkles', 'cherry', 'candy'], need: 3 }, { k: 'serve' }],
+      { k: 'decorate', tools: ['ice-choc', 'caramel', 'strawsauce', 'cream', 'sprinkles', 'fruit', 'candy'], need: 3 }, { k: 'serve' }],
       sample: { type: 'sundae', scoops: [{ id: 'vanilla' }, { id: 'strawb' }, { id: 'choc' }], cream: true, tops: [{ id: 'cherry', x: 0, y: -2.36 }, { id: 'sprinkles', x: -.3, y: -1.5, col: '#5cc8f2', rot: .5 }, { id: 'sprinkles', x: .32, y: -1.42, col: '#ffd54a', rot: -.3 }] } },
 
     { id: 'sandwich', cat: 1, name: 'Build a sandwich', ptype: 'stack', steps: [
@@ -81,13 +81,18 @@
   const BITES = { cookie: 3, cupcake: 4, cake: 5, stack: 4, hotdog: 3, sundae: 4, pizza: 5 };
   // The ingredient that a layer id stands for in the tray, and the layer it draws as
   const layerOf = id => id === 'hotbun' ? 'hotbunBack' : id;
-  const DOTS = ['sprinkles', 'candy', 'star', 'cherry', 'strawberry', 'blueberry', 'candle', 'chips', 'onion', 'relish', 'cream', 'pepperoni', 'mushroom', 'greenpepper', 'olive', 'pineapple', 'basil'];
+  const DOTS = ['sprinkles', 'candy', 'star', 'fruit', 'cherry', 'strawberry', 'blueberry', 'raspberry', 'banana', 'kiwi', 'orange', 'grape', 'candle', 'chips', 'onion', 'relish', 'cream', 'pepperoni', 'mushroom', 'greenpepper', 'olive', 'pineapple', 'basil'];
   const SAUCES = ['ketchup', 'mustard', 'mayo', 'syrup', 'ice-choc', 'caramel', 'strawsauce', 'bbq', 'pizzasauce'];
   const SEASONS = ['salt', 'pepper'];
 
 
   /* ---------------------------------------------------------------- the game */
   const H = {};   // one handler per kind of step (below)
+  const VARS = { sprinkles: () => SPRINKLE_KINDS.map(k => ['spr-' + k, k]), candy: () => CANDY_KINDS.map(k => ['cdy-' + k, k]), candle: () => CANDLE_KINDS.map(k => ['cnd-' + k.id, k.id]), fruit: () => FRUIT_KINDS.map(k => [k, k]), icing: () => Object.keys(ICING12).map(k => ['pen-' + k, k]) };
+  VARS.bucket = VARS.icing;
+  const kindKey = tool => tool === 'bucket' ? 'icing' : tool;
+  // icing colour for a tool: the 12-colour icing button (and the bucket) use the chosen colour; the old icing tubes keep theirs
+  const icingOf = (g, tool) => tool === 'icing' || tool === 'bucket' ? ICING12[g.kinds.icing] || ICING12.pink : icingOf(g, tool);
   const TRANS = 1.7;   // seconds for the gentle change between two steps
   const bitesFor = (p, n = 1) => { const b = BITES[p.type] || 4; return n >= 5 ? 2 : n >= 3 ? Math.min(b, 3) : b; };
 
@@ -134,7 +139,7 @@
       this.layoutTray(); if (this.screen === 'menu') this.layoutMenu();
     }
     P(ux, uy) { return { x: this.bx + ux * this.U, y: this.by + uy * this.U }; }
-    bowlPos() { const r = Math.min(this.U * .28, (this.y1 - this.y0) * .34); return { x: this.bx, y: Math.max(this.by + this.U * .02, this.y0 + this.U * .26 + r * .55), r }; }
+    bowlPos() { const top = this.pileBot || this.y0 + this.U * .26, r = Math.min(this.U * .28, (this.y1 - this.y0) * .34, (this.y1 - top - 12) / 1.45); return { x: this.bx, y: Math.max(this.by + this.U * .02, top + r * .7 + 8), r }; }
     // where each piece sits on the stage (one big, or up to four smaller)
     // a single burger, sandwich, stack, hot dog or sundae stands on the middle of its plate; its size fits the space above it
     plateR() { return Math.min(this.U * .37, this.w * .46, (this.SH - 10) / 1.7); }
@@ -147,8 +152,8 @@
       if (n === 3) return (tall ? [this.P(-.2, -.2), this.P(.2, -.2), this.P(0, .2)] : [this.P(-.32, 0), this.P(0, 0), this.P(.32, 0)]).map(p => ({ ...p, r: U * (tall ? .2 : .17) }));
       if (n === 4) return [this.P(-.22, -.18), this.P(.22, -.18), this.P(-.22, .2), this.P(.22, .2)].map(p => ({ ...p, r: U * .17 }));
       // five or six: a neat grid, three across (two across on a tall screen)
-      const cols = tall ? 2 : 3, rows = Math.ceil(n / cols), dx = tall ? .24 : .31, dy = tall ? .25 : .2, out = [];
-      for (let i = 0; i < n; i++) { const row = Math.floor(i / cols), inRow = row === rows - 1 ? n - cols * (rows - 1) : cols, col = i % cols; out.push({ ...this.P((col - (inRow - 1) / 2) * dx, (row - (rows - 1) / 2) * dy), r: U * (tall ? .125 : .14) }); }
+      const cols = tall ? 2 : 3, rows = Math.ceil(n / cols), dx = tall ? .25 : .31, dy = tall ? .25 : .29, out = [];
+      for (let i = 0; i < n; i++) { const row = Math.floor(i / cols), inRow = row === rows - 1 ? n - cols * (rows - 1) : cols, col = i % cols; out.push({ ...this.P((col - (inRow - 1) / 2) * dx, (row - (rows - 1) / 2) * dy), r: U * (tall ? .115 : .13) }); }
       return out;
     }
     // the plate or platter every step draws the food on, so nothing jumps around between steps
@@ -168,8 +173,10 @@
     layoutTray() {
       const n = this.tray.length; if (!n) return;
       if (this.tray[0].stage) {   // laid out on the counter, in a row above the bowl
-        const bw = Math.min(this.w * .94, this.SH * 1.7), gap = bw / n, r = clamp(Math.min(gap * .36, this.U * .11), 24, 70);
-        this.tray.forEach((it, i) => { it.r = r; it.hx = this.bx + (i - (n - 1) / 2) * gap; it.hy = this.y0 + r * 1.25; if (!it.drag && !it.fly) { it.x = it.hx; it.y = it.hy; } });
+        // tall screens: two rows so everything stays big enough to touch
+        const bw = Math.min(this.w * .94, this.SH * 1.7), rows = this.SH > this.w * 1.1 && n > 3 ? 2 : 1, per = Math.ceil(n / rows), gap = bw / per, r = clamp(Math.min(gap * .36, this.U * .12), 24, 70);
+        this.tray.forEach((it, i) => { const row = Math.floor(i / per), inRow = row === rows - 1 ? n - per * (rows - 1) : per; it.r = r; it.hx = this.bx + ((i % per) - (inRow - 1) / 2) * gap; it.hy = this.y0 + r * 1.25 + row * r * 3.3; if (!it.drag && !it.fly) { it.x = it.hx; it.y = it.hy; } });
+        this.pileBot = this.y0 + r * 1.25 + (rows - 1) * r * 3.3 + r * 1.8;
         return;
       }
       const w = this.w, h = this.h, th = this.th, pad = 8, chefW = Math.max(64, th * .95);
@@ -202,7 +209,8 @@
         this.layoutMenu(); this.say('cook-pick', 6);
     }
     startRecipe(R) {
-      this.R1 = this.U * .26; this.opt = {}; this.pendingPatties = null;
+      this.R1 = this.U * .26; this.opt = {}; this.pendingPatties = null; this.menu = null; this.pileBot = 0;
+      this.kinds = { sprinkles: 'rainbow', candy: 'dot', candle: 'blue', fruit: R.id === 'sundae' ? 'cherry' : 'strawberry', icing: 'pink' };
       this.R = R; this.screen = 'intro'; this.intro = { t: 0 }; this.stIdx = 0; this.st = null; this.pieces = []; this.piece = null; this.dough = null; this.units = null; this.arrow = null; this.finishedAll = false;
       this.mix = R.steps.some(s => s.k === 'add') ? { items: [], fill: 0, stirred: 0, col: '#f6e8c8', final: BATTER } : null;
       this.cutters = this.pickCutters(); this.flies = []; this.motions = []; this.heard = new Set(); this.paint = { plate: [] }; this.piece = null; this.tool = null;
@@ -230,6 +238,7 @@
       if (this.screen === 'intro') { if (this.intro.t > .5) { sfx.tap(); this.endIntro(); } return; }
       if (this.trans) return;
       if (this.st) this.st.touched = true;
+      if (this.menu) { const m = this.menuLayout(); for (const o of m.opts) if (Math.hypot(p.x - o.x, p.y - o.y) < o.r * 1.15) { this.kinds[kindKey(this.menu.tool)] = o.kind; sfx.pop(); this.menu = null; return; } this.menu = null; if (Math.abs(p.x - m.x) < m.w / 2 && Math.abs(p.y - m.y) < m.h / 2) return; }
       const cam = this.camBtn(); if (cam && Math.hypot(p.x - cam.x, p.y - cam.y) < cam.r * 1.15) { this.snap(); return; }
       if (this.arrow && Math.hypot(p.x - this.arrowPos().x, p.y - this.arrowPos().y) < this.arrowPos().r * 1.3) { sfx.tap(); this.enterMenu(); return; }
       if (Math.hypot(p.x - this.menuBtn().x, p.y - this.menuBtn().y) < this.menuBtn().r * 1.2) { sfx.tap(); this.enterMenu(); return; }
@@ -240,7 +249,7 @@
       for (const it of this.tray) {
         if (it.used || it.fly) continue;
         if (Math.hypot(p.x - it.x, p.y - it.y) < it.r * 1.3) {
-          if (it.kind === 'tool') { this.tool = it.id; sfx.tap(); this.hear(it.id); return; }
+          if (it.kind === 'tool') { const was = this.tool === it.id && this.menu; this.tool = it.id; sfx.tap(); this.hear(it.id); this.menu = VARS[it.id] && !was ? { tool: it.id, it } : null; return; }
           this.drag = { it, id: p.id, dx: it.x - p.x, dy: it.y - p.y, sx: p.x, sy: p.y, moved: 0 }; it.drag = true; sfx.tap(); this.hear(it.id);
           return;
         }
@@ -286,13 +295,13 @@
     tip() {
       const s = this.st; if (!s) return null; const k = s.k, sp = s.spec, slow = Math.floor(this.t / 3.5);
       const happy = () => { if (s.happyT == null) s.happyT = this.t; return this.t - s.happyT < 3 ? 'HAPPY' : null; };
-      if (k === 'decorate' && sp.mode !== 'frost' && sp.mode !== 'cover') { const used = s.usedTools || new Set(), left = sp.tools.filter(t => !used.has(t)); if (s.acts >= s.need && (used.size >= Math.min(3, sp.tools.length) || !left.length)) return happy(); return (left.length ? left : sp.tools)[slow % (left.length || sp.tools.length)]; }
+      if (k === 'decorate' && sp.mode !== 'frost' && sp.mode !== 'cover') { const used = s.usedTools || new Set(), left = sp.tools.filter(t => !used.has(t)); if (s.acts >= s.need && (used.size >= Math.min(3, sp.tools.length) || !left.length)) return happy(); return this.iconId((left.length ? left : sp.tools)[slow % (left.length || sp.tools.length)]); }
       if (k === 'build') { if (s.end && (s.n >= 2 || s.n >= s.max)) return s.end; if (!s.end && s.n >= Math.min(2, s.max)) return happy(); const used = s.usedItems || new Set(), left = s.items.filter(t => !used.has(t) && t !== s.end); return left.length ? left[slow % left.length] : (s.end || null); }
       if (k === 'add') return (s.left && s.left[0]) || sp.ids[0];
       if (k === 'grill') return sp.free ? sp.ids[0] : sp.id;
       if (k === 'stack') return sp.order[Math.min(s.i, sp.order.length - 1)];
       if (k === 'cut') return this.cutters[0];
-      if (k === 'decorate') return this.tool || sp.tools[0];
+      if (k === 'decorate') return this.iconId(this.tool || sp.tools[0]);
       if (k === 'pick') return sp.opts[0];
       return null;
     }
@@ -789,7 +798,8 @@
         H.decorate.sprinkle(g, s, h, tool); s.dotDrag = tool === 'sprinkles' || tool === 'candy' ? { x: p.x, y: p.y } : null;
         sfx.plink(Math.floor(Math.random() * 5)); g.fx.burst(p.x, p.y, 6, { colors: [tool === 'sprinkles' ? SPRINKLE[0] : '#fff', '#ffd54a'], speed: 90, g: 300, life: .4, size: 4, shape: 'star' }); H.decorate.act(g, s); return;
       }
-      const pc = t && t.piece, icing = pc && ['cookie', 'cupcake', 'cake'].includes(pc.type) && ICING[tool];
+      if (tool === 'bucket') { const pc = t && t.piece; if (!pc) return; const col = icingOf(g, tool); if (pc.type === 'cookie') (pc.deco = pc.deco || {}).fill = col; else if (pc.type === 'cupcake' || pc.type === 'cake') pc.frost = { col, t: 0 }; else return; sfx.squirt(); g.fx.burst(p.x, p.y, 14, { colors: [col, '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); return; }
+      const pc = t && t.piece, icing = pc && ['cookie', 'cupcake', 'cake'].includes(pc.type) && icingOf(g, tool);
       if (icing) { s.cur = { piece: pc, slot: t.slot }; s.stroke = { pts: [] }; H.decorate.move(g, s, p); return; }
       if (SAUCES.includes(tool) && t) {   // a squeeze bottle: paint it anywhere on the food or the plate
         s.sauce = { col: SAUCE[tool] || '#b8651a', st: null, key: null, last: { x: p.x, y: p.y, t: performance.now() }, moved: performance.now(), n: 0 };
@@ -820,10 +830,10 @@
       if (!s.cur || !s.stroke) return; const h = s.cur, pc = h.piece, tool = g.tool;
       if (Math.hypot(p.x - s.sp0.x, p.y - s.sp0.y) > 10) s.dragged = true; if (!s.dragged && s.stroke.pts.length) return;
       if (!s.stroke.pts.length && !s.stroke.target) {
-        if ((pc.type === 'cupcake' || pc.type === 'cake') && !pc.frost && ICING[tool]) { pc.frost = { col: ICING[tool], t: 0 }; sfx.squirt(); g.fx.burst(h.slot.x, h.slot.y, 14, { colors: [ICING[tool], '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); s.cur = null; s.stroke = null; if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); return; }
+        if ((pc.type === 'cupcake' || pc.type === 'cake') && !pc.frost && icingOf(g, tool)) { pc.frost = { col: icingOf(g, tool), t: 0 }; sfx.squirt(); g.fx.burst(h.slot.x, h.slot.y, 14, { colors: [icingOf(g, tool), '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); s.cur = null; s.stroke = null; if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); return; }
       }
-      const lx = clamp((p.x - h.slot.x) / h.slot.r, -.8, .8), ly = clamp((p.y - h.slot.y) / h.slot.r, -.7, .7);
-      if (!s.stroke.target) { const st = { col: ICING[tool] || '#fff', pts: [] }; s.stroke.target = st; pc.deco = pc.deco || {}; (pc.deco.strokes = pc.deco.strokes || []).push(st); if (!s.snd) s.snd = sfx.squeeze(); }
+      const ck = pc.type === 'cookie', lx = clamp((p.x - h.slot.x) / h.slot.r, ck ? -1.2 : -.8, ck ? 1.2 : .8), ly = clamp((p.y - h.slot.y) / h.slot.r, ck ? -1.2 : -.7, ck ? 1.2 : .7);
+      if (!s.stroke.target) { const st = { col: icingOf(g, tool) || '#fff', pts: [] }; s.stroke.target = st; pc.deco = pc.deco || {}; (pc.deco.strokes = pc.deco.strokes || []).push(st); if (!s.snd) s.snd = sfx.squeeze(); }
       const last = s.stroke.pts[s.stroke.pts.length - 1]; if (!last || Math.hypot(last[0] - lx, last[1] - ly) > .05) { s.stroke.pts.push([lx, ly]); s.stroke.target.pts = s.stroke.pts.slice(); if (s.snd) s.snd.set(.6); }
     },
     up(g, s, p) {
@@ -835,8 +845,8 @@
       if (!s.dragged || !st.target || st.pts.length < 2) {
         // a plain tap with icing: fill the whole shape (cookies) or frost it
         if (st.target) { const arr = pc.deco && pc.deco.strokes; if (arr) arr.splice(arr.indexOf(st.target), 1); }
-        if (pc.type === 'cookie' && ICING[tool]) { (pc.deco = pc.deco || {}).fill = ICING[tool]; sfx.squirt(); g.fx.burst(h.slot.x, h.slot.y, 14, { colors: [ICING[tool], '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); }
-        else if ((pc.type === 'cupcake' || pc.type === 'cake') && ICING[tool] && !pc.frost) { pc.frost = { col: ICING[tool], t: 0 }; sfx.squirt(); H.decorate.act(g, s); if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); }
+        if (pc.type === 'cookie' && icingOf(g, tool)) { const lx = (s.sp0.x - h.slot.x) / h.slot.r, ly = (s.sp0.y - h.slot.y) / h.slot.r; pc.deco = pc.deco || {}; (pc.deco.strokes = pc.deco.strokes || []).push({ col: icingOf(g, tool), pts: [[lx - .02, ly], [lx + .02, ly]] }); sfx.squirt(); g.fx.burst(h.slot.x, h.slot.y, 14, { colors: [icingOf(g, tool), '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); }
+        else if ((pc.type === 'cupcake' || pc.type === 'cake') && icingOf(g, tool) && !pc.frost) { pc.frost = { col: icingOf(g, tool), t: 0 }; sfx.squirt(); H.decorate.act(g, s); if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); }
         return;
       }
       H.decorate.act(g, s);
@@ -852,8 +862,9 @@
     // the green check appears once there is enough on it (it never says "all done": she decides that by touching the check)
     act(g, s) { s.acts++; (s.usedTools || (s.usedTools = new Set())).add(g.tool); const first = !s.canDone; if (s.spec.mode === 'cover') return; if (s.spec.mode !== 'frost') { s.canDone = s.acts >= s.need; if (s.canDone && first) sfx.plink(4); } else if (g.pieces.every(q => q.frost)) g.finish(.9); },
     dot(g, pc, id, lx, ly, i) {
-      const col = id === 'sprinkles' || id === 'candy' ? SPRINKLE[Math.floor(Math.random() * 5)] : null, rot = ['sprinkles', 'star', 'pepperoni', 'olive', 'greenpepper', 'pineapple', 'basil', 'mushroom'].includes(id) ? Math.random() * 3 - 1.5 : (Math.random() - .5) * .3;
-      (pc.tops = pc.tops || []).push({ id, x: lx, y: ly, col, rot });   // exactly where she touched
+      if (id === 'fruit') id = g.kinds.fruit; const kind = ['sprinkles', 'candy', 'candle'].includes(id) ? g.kinds[id] : undefined;
+      const col = (id === 'sprinkles' && (kind === 'rainbow' || kind === 'dots')) || id === 'candy' ? SPRINKLE[Math.floor(Math.random() * 5)] : undefined, rot = ['sprinkles', 'star', 'pepperoni', 'olive', 'greenpepper', 'pineapple', 'basil', 'mushroom'].includes(id) ? Math.random() * 3 - 1.5 : (Math.random() - .5) * .3;
+      (pc.tops = pc.tops || []).push({ id, kind, x: lx, y: ly, col, rot });   // exactly where she touched
     },
     update(g, s, dt) {
       for (const p of g.pieces) if (p.frost && p.frost.t < 1) p.frost.t = Math.min(1, p.frost.t + dt * 3);
@@ -1148,7 +1159,7 @@
       }
     },
     back() { if (this.screen === 'gallery') { if (this.gal && this.gal.view >= 0) { this.gal.view = -1; return true; } this.closeGallery(); return true; } return false; },
-    probe() { return { eat: this.pieces.map(p => p.left && p.left.length && !p.gone ? p.left[Math.floor(p.left.length / 2)] : null), pack: this.st && this.st.packT, spec: this.st && this.st.spec, cards: this.st && this.st.k === 'pick' ? H.pick.cards(this, this.st) : [], cam: this.camBtn(), album: this.screen === 'menu' ? this.albumBtn() : null, opt: this.opt, R1: this.R1, photos: this.photoCount || 0, gal: this.gal ? { n: this.gal.list.length, view: this.gal.view } : null, screen: this.screen, step: this.st && this.st.k, idx: this.stIdx, tray: this.tray.map(i => ({ id: i.id, x: i.x, y: i.y, used: i.used, kind: i.kind })), U: this.U, bx: this.bx, by: this.by, y1: this.y1, w: this.w, h: this.h, st: this.st && { fin: this.st.fin, canDone: this.st.canDone, state: this.st.state, i: this.st.i, n: this.st.n, end: this.st.end, placed: this.st.placed, closed: this.st.closed, sel: this.st.sel, units: (this.st.units || []).map(u => ({ id: u.id, x: u.x, y: u.y, state: u.state })) }, pieces: this.pieces.length, check: this.checkBtn(), menu: this.menuHit.map(m => ({ x: m.x, y: m.y, tab: m.tab, id: m.R && m.R.id })), want: this.wantIds(), tool: this.tool, flies: this.flies.length, busy: this.busy(), cuts: this.st && this.st.cuts ? this.st.cuts.length : 0, trans: !!this.trans, finishedAll: this.finishedAll, arrow: !!this.arrow, slots: this.screen === 'cook' ? this.slots() : [] }; },
+    probe() { return { sliceG: this.st && this.st.k === 'slice' ? H.slice.geom(this) : null, eat: this.pieces.map(p => p.left && p.left.length && !p.gone ? p.left[Math.floor(p.left.length / 2)] : null), pack: this.st && this.st.packT, spec: this.st && this.st.spec, cards: this.st && this.st.k === 'pick' ? H.pick.cards(this, this.st) : [], cam: this.camBtn(), album: this.screen === 'menu' ? this.albumBtn() : null, opt: this.opt, R1: this.R1, photos: this.photoCount || 0, gal: this.gal ? { n: this.gal.list.length, view: this.gal.view } : null, screen: this.screen, step: this.st && this.st.k, idx: this.stIdx, tray: this.tray.map(i => ({ id: i.id, x: i.x, y: i.y, used: i.used, kind: i.kind })), U: this.U, bx: this.bx, by: this.by, y1: this.y1, w: this.w, h: this.h, st: this.st && { fin: this.st.fin, canDone: this.st.canDone, state: this.st.state, i: this.st.i, n: this.st.n, end: this.st.end, placed: this.st.placed, closed: this.st.closed, sel: this.st.sel, units: (this.st.units || []).map(u => ({ id: u.id, x: u.x, y: u.y, state: u.state })) }, pieces: this.pieces.length, check: this.checkBtn(), menu: this.menuHit.map(m => ({ x: m.x, y: m.y, tab: m.tab, id: m.R && m.R.id })), want: this.wantIds(), tool: this.tool, flies: this.flies.length, busy: this.busy(), cuts: this.st && this.st.cuts ? this.st.cuts.length : 0, trans: !!this.trans, finishedAll: this.finishedAll, arrow: !!this.arrow, slots: this.screen === 'cook' ? this.slots() : [] }; },
 
     sceneBoard(c, noBoard) {
       if (noBoard) return;
@@ -1218,8 +1229,8 @@
       }
     },
     drawStepBar(c) {
-      const R = this.R, cc = CAT_COL[R.cat], n = R.steps.length, sb = this.sb, w = this.w, left = this.narrow ? sb + 30 : 96, right = this.narrow ? w - 12 : w - 190;
-      const sz = Math.min(sb * .9, (right - left) / n / 1.25), gap = sz * .28, tot = n * sz + (n - 1) * gap, x0 = this.narrow ? left + (right - left - tot) / 2 : (w - tot) / 2 + (this.narrow ? 0 : 0), y = this.topY + sb / 2;
+      const R = this.R, cc = CAT_COL[R.cat], n = R.steps.length, sb = this.sb, w = this.w, left = this.narrow ? sb + 34 : 96, right = this.narrow ? w - 22 : w - 190;
+      const sz = Math.min(sb * .9, (right - left - 28) / (n * 1.28 - .28)), gap = sz * .28, tot = n * sz + (n - 1) * gap, x0 = this.narrow ? left + (right - left - tot) / 2 : (w - tot) / 2 + (this.narrow ? 0 : 0), y = this.topY + sb / 2;
       this.stepBarW = tot + 40;
       c.save(); c.fillStyle = 'rgba(70,30,20,.18)'; rr(c, x0 - 14 + 2, y - sb * .56 + 5, tot + 28, sb * 1.12, sb * .56); c.fill(); c.fillStyle = 'rgba(255,255,255,.78)'; rr(c, x0 - 14, y - sb * .56, tot + 28, sb * 1.12, sb * .56); c.fill(); c.strokeStyle = cc.main; c.lineWidth = 3; c.stroke(); c.restore();
       R.steps.forEach((sp, i) => {
@@ -1253,6 +1264,7 @@
         if (it.kind === 'cutter') cutterArt(c, it.id, it.r * .72, this.t);
         else if (it.kind === 'dough') ING.dough(c, s * 1.2);
         else if (it.kind === 'batter') drawBowl(c, 0, it.r * .05, it.r * .8, { fill: .8, items: [], col: this.mix ? this.mix.final : BATTER, final: this.mix ? this.mix.final : BATTER, stirred: 1 }, 0);
+        else if (it.kind === 'tool') this.drawToolIcon(c, it.id, s);
         else (ING[it.id] || ING.flour)(c, s);
         c.restore();
       }
@@ -1291,6 +1303,21 @@
       fancyText(c, it.label, it.hx, it.hy + r * 1.2, Math.max(13, r * .34), { stroke: '#7a3b5a', outline: .25 });
       const n = it.plan.length; if (n > 1) { const dr = Math.max(3, r * .09); for (let i = 0; i < n; i++) { c.fillStyle = i < it.cnt.done ? '#7ed957' : '#ffb3d1'; c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.beginPath(); c.arc(it.hx + (i - (n - 1) / 2) * dr * 2.8, it.hy + r * 1.55, dr, 0, TAU); c.fill(); c.stroke(); } }
       if (!it.used) { const held = it.drag || it.back, x = held ? it.x : it.hx + r * .62, y = held ? it.y : it.hy + r * .3, k = it.drag ? 1.2 : 1 + it.glow * Math.sin(this.t * 7) * .06; c.save(); c.translate(x, y); c.scale(k, k); c.rotate(Math.sin(this.t * 40) * it.wig * .25); this.drawTool(c, it.id, unit, r * .62); c.restore(); }
+    },
+    iconId(tool) { const v = VARS[tool]; if (!v || !this.kinds) return tool; const k = this.kinds[kindKey(tool)], f = v().find(x => x[1] === k); return tool === 'bucket' ? 'paintbucket' : f ? f[0] : tool; },
+    drawToolIcon(c, id, s) { if (id === 'bucket') drawPaintBucket(c, s * .9, ICING12[this.kinds.icing] || ICING12.pink); else (ING[this.iconId(id)] || ING[id] || ING.flour)(c, s); },
+    menuLayout() {
+      const M = this.menu, it = M.it, opts = VARS[M.tool](), n = opts.length, cols = n > 8 ? Math.ceil(n / 2) : n, rows = Math.ceil(n / cols);
+      const r = clamp(Math.min(it.r * .8, (this.w - 40) / (cols * 2.5)), 18, 40), gap = r * 2.5, w = cols * gap + 16, h = rows * gap + 12;
+      const x = clamp(it.hx, w / 2 + 8, this.w - w / 2 - 8), y = it.hy - it.r * 1.2 - h / 2;
+      return { x, y, w, h, opts: opts.map(([icon, kind], i) => ({ icon, kind, r, x: x + ((i % cols) - (cols - 1) / 2) * gap, y: y + (Math.floor(i / cols) - (rows - 1) / 2) * gap })) };
+    },
+    drawMenuPop(c) {
+      if (!this.menu || this.screen !== 'cook') return; const m = this.menuLayout(), cur = this.kinds[kindKey(this.menu.tool)];
+      c.save(); c.fillStyle = 'rgba(80,40,20,.2)'; rr(c, m.x - m.w / 2 + 3, m.y - m.h / 2 + 6, m.w, m.h, 24); c.fill(); c.fillStyle = '#fff'; rr(c, m.x - m.w / 2, m.y - m.h / 2, m.w, m.h, 24); c.fill(); c.strokeStyle = '#ff9ec8'; c.lineWidth = 3; c.stroke();
+      tri(c, [[this.menu.it.hx - 12, m.y + m.h / 2 - 1], [this.menu.it.hx + 12, m.y + m.h / 2 - 1], [this.menu.it.hx, m.y + m.h / 2 + 12]], '#fff');
+      for (const o of m.opts) { const on = o.kind === cur; c.fillStyle = on ? 'rgba(255,107,157,.22)' : 'rgba(255,248,238,.9)'; c.beginPath(); c.arc(o.x, o.y, o.r, 0, TAU); c.fill(); if (on) { c.strokeStyle = '#ff6b9d'; c.lineWidth = 3; c.stroke(); } c.save(); c.translate(o.x, o.y); (ING[o.icon] || ING.flour)(c, o.r * 1.6); c.restore(); }
+      c.restore();
     },
     drawFlies(c) {
       for (const m of this.motions) this.drawMotion(c, m);
@@ -1340,7 +1367,7 @@
       const s = this.st; if (s) H[s.k].draw(this, s, c);
       this.drawFlies(c); this.drawTray(c, dt); this.drawCheck(c); this.drawArrow(c);
       if (this.finishedAll) { const K = CAT_COL[this.R.cat], bw = Math.min(w * .8, 520), bh = clamp(h * .09, 44, 66), by = this.y0 + bh * .7; ribbon(c, w / 2, by, bw, bh, K.main, K.dark); fitLabel(c, this.R.name + '!', w / 2, by - bh * .02, bw * .85, bh * .56, { stroke: K.dark }); }
-      this.drawCam(c); this.fx.draw(c); this.drawSnap(c, dt); this.drawTrans(c);
+      this.drawMenuPop(c); this.drawCam(c); this.fx.draw(c); this.drawSnap(c, dt); this.drawTrans(c);
     }
   });
 

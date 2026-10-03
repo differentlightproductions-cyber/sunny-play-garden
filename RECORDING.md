@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 135 short lines.
+1. **Cheering** and **Prompts**: about 145 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -95,10 +95,19 @@ Short lines that tell {her} what to do.
 | `cook-stack.mp3` | Stack it up! Pick the glowing one! |
 | `cook-frost.mp3` | Touch the cake with icing! |
 | `cook-decorate.mp3` | Make it pretty! |
-| `cook-shake.mp3` | Shake, shake, shake! |
-| `cook-alldone.mp3` | All done? Touch the green check! |
 | `cook-slice.mp3` | Slice it with the knife! |
 | `cook-serve.mp3` | Yummy! Touch it to take a bite! |
+| `cook-pickbun.mp3` | Pick a bun! |
+| `cook-pickbread.mp3` | Pick your bread! |
+| `cook-patties.mp3` | Put patties on the grill! One, two or three! |
+| `cook-meat.mp3` | Add the meat you like! |
+| `cook-cheese.mp3` | Add some cheese, or touch the green check! |
+| `cook-veg.mp3` | Add the veggies you like! |
+| `cook-saucetop.mp3` | Add some sauce, then put the top on! |
+| `cook-scoop.mp3` | Pick your ice cream! |
+| `cook-pizzasauce.mp3` | Spread the sauce all over! |
+| `cook-pizzacheese.mp3` | Sprinkle on the cheese! |
+| `cook-toppings.mp3` | Put your toppings anywhere you like! |
 | `cook-yum.mp3` | Yum yum! |
 | `cook-wrong.mp3` | Try the glowing one! |
 | `cook-done.mp3` | You cooked it! Delicious! |
@@ -122,6 +131,7 @@ Short lines that tell {her} what to do.
 | `shape-triangle.mp3` | Triangle! |
 | `shape-star.mp3` | Star! |
 | `aq-start.mp3` | Touch the water to feed the fish! |
+| `aq-fresh.mp3` | A fresh new fish tank! Here are some coins to buy new fish! |
 | `aq-coin.mp3` | A shiny coin! Touch it! |
 | `aq-grow.mp3` | Your fish is growing! |
 | `aq-shop.mp3` | Spend your coins! |
@@ -429,7 +439,7 @@ Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a
 |---|---|
 | `cookc-0.mp3` | Sweets! |
 | `cookc-1.mp3` | Sandwiches! |
-| `cookc-2.mp3` | Burgers! |
+| `cookc-2.mp3` | Burgers, hot dogs and pizza! |
 | `cookr-sugar.mp3` | Sugar cookies! |
 | `cookr-chip.mp3` | Chocolate chip cookies! |
 | `cookr-cupcake.mp3` | Cupcakes! |
@@ -438,16 +448,10 @@ Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a
 | `cookr-sundae.mp3` | An ice cream sundae! |
 | `cookr-pbj.mp3` | Peanut butter and jelly! |
 | `cookr-toastie.mp3` | A cheese toastie! |
-| `cookr-hamcheese.mp3` | Ham and cheese! |
-| `cookr-veggie.mp3` | A veggie sandwich! |
-| `cookr-turkey.mp3` | Turkey and lettuce! |
-| `cookr-hotdog.mp3` | Hot dog pals! |
-| `cookr-hamburger.mp3` | A hamburger! |
-| `cookr-cheeseburger.mp3` | A cheeseburger! |
-| `cookr-double.mp3` | A double cheeseburger! |
-| `cookr-veggieb.mp3` | A veggie burger! |
-| `cookr-chickenb.mp3` | A chicken burger! |
-| `cookr-super.mp3` | A super burger! |
+| `cookr-sandwich.mp3` | Build a sandwich! |
+| `cookr-hotdog.mp3` | A hot dog! |
+| `cookr-burger.mp3` | Build a burger! |
+| `cookr-pizza.mp3` | Pizza! |
 | `cook-flour.mp3` | Flour! |
 | `cook-sugar.mp3` | Sugar! |
 | `cook-egg.mp3` | An egg! |
@@ -516,6 +520,38 @@ Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a
 | `cook-sc-choc.mp3` | Chocolate ice cream! |
 | `cook-sc-mint.mp3` | Mint ice cream! |
 | `cook-sc-blueb.mp3` | Blueberry ice cream! |
+| `cook-cheddar.mp3` | Cheddar cheese! |
+| `cook-american.mp3` | American cheese! |
+| `cook-provolone.mp3` | Provolone cheese! |
+| `cook-pepperjack.mp3` | Pepper jack cheese! |
+| `cook-swiss.mp3` | Swiss cheese! |
+| `cook-bacon.mp3` | Bacon! |
+| `cook-salami.mp3` | Salami! |
+| `cook-chickenslice.mp3` | Chicken! |
+| `cook-bun-plain.mp3` | A plain bun! |
+| `cook-bun-sesame.mp3` | A sesame bun! |
+| `cook-bun-wheat.mp3` | A wheat bun! |
+| `cook-bunT-plain.mp3` | The top bun! |
+| `cook-bunT-wheat.mp3` | The top bun! |
+| `cook-bread-white.mp3` | White bread! |
+| `cook-bread-wheat.mp3` | Wheat bread! |
+| `cook-bread-rye.mp3` | Rye bread! |
+| `cook-breadT.mp3` | The top slice! |
+| `cook-breadT-wheat.mp3` | The top slice! |
+| `cook-breadT-rye.mp3` | The top slice! |
+| `cook-bbq.mp3` | Barbecue sauce! |
+| `cook-relish.mp3` | Relish! |
+| `cook-caramel.mp3` | Caramel sauce! |
+| `cook-strawsauce.mp3` | Strawberry sauce! |
+| `cook-cream.mp3` | Whipped cream! |
+| `cook-pizzasauce.mp3` | Pizza sauce! |
+| `cook-mozzarella.mp3` | Mozzarella cheese! |
+| `cook-pepperoni.mp3` | Pepperoni! |
+| `cook-mushroom.mp3` | Mushrooms! |
+| `cook-olive.mp3` | Olives! |
+| `cook-greenpepper.mp3` | Green peppers! |
+| `cook-pineapple.mp3` | Pineapple! |
+| `cook-basil.mp3` | Basil! |
 
 ## Letter names (A to Z)
 

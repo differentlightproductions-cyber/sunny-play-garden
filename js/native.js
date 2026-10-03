@@ -27,6 +27,24 @@
       a.href = url; a.download = name; a.style.display = 'none'; document.body.append(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       return true;
+    },
+    // Puts a picture straight into the device's own photos, with no questions (only used when a grown-up allowed it).
+    // In the app: an album called "Sprout Park" in the phone's gallery (@capacitor-community/media, no storage permission needed).
+    // On the website: a normal download (it shows in Downloads); on iPhone/iPad a download needs a grown-up, so nothing happens.
+    async saveToGallery(blob, name) {
+      if (isApp) {
+        try {
+          const { Media } = plugins(); if (!Media) return false;
+          const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(blob); });
+          const find = async () => (((await Media.getAlbums()) || {}).albums || []).find(al => al.name === 'Sprout Park');
+          let album = await find(); if (!album) { try { await Media.createAlbum({ name: 'Sprout Park' }); } catch (_) { /* it may exist already */ } album = await find(); }
+          if (!album) return false;
+          await Media.savePhoto({ path: data, albumIdentifier: album.identifier, fileName: name.replace(/\.\w+$/, '') });
+          return true;
+        } catch (_) { return false; }
+      }
+      if (SPG.safe && SPG.safe.isIOS) return false;
+      return N.saveFile(blob, name, blob.type || 'image/jpeg');
     }
   };
   // The Android back button goes to the same place the browser's back button did: SPG.safe.onBack.

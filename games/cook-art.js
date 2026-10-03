@@ -175,7 +175,12 @@
     beanpatty: [.17, (c, w) => { c.fillStyle = '#7a6a3a'; rr(c, -w * .46, -w * .07, w * .92, w * .15, w * .07); c.fill(); c.fillStyle = '#a89860'; rr(c, -w * .46, -w * .08, w * .92, w * .1, w * .05); c.fill(); for (let i = 0; i < 12; i++) { c.fillStyle = ['#5a3a2a', '#c9a060', '#6a9a3a'][i % 3]; c.beginPath(); c.ellipse((rnd(i) - .5) * w * .84, -w * .04 + (rnd(i + 4) - .5) * w * .05, w * .02, w * .012, i, 0, TAU); c.fill(); } }],
     chicken: [.2, (c, w) => { c.fillStyle = '#d98a2a'; rr(c, -w * .46, -w * .08, w * .92, w * .17, w * .08); c.fill(); c.fillStyle = '#f0b24a'; rr(c, -w * .46, -w * .09, w * .92, w * .11, w * .05); c.fill(); for (let i = 0; i < 16; i++) { c.fillStyle = '#fbd682'; c.beginPath(); c.arc((rnd(i) - .5) * w * .85, -w * .045 + (rnd(i + 6) - .5) * w * .05, w * .016, 0, TAU); c.fill(); } }],
     cheese: [.07, (c, w) => { c.fillStyle = '#ffd54a'; c.beginPath(); c.moveTo(-w * .52, -w * .03); c.lineTo(w * .52, -w * .03); c.lineTo(w * .46, w * .05); c.lineTo(w * .3, w * .1); c.lineTo(w * .16, w * .04); c.lineTo(-w * .1, w * .09); c.lineTo(-w * .3, w * .03); c.lineTo(-w * .46, w * .07); c.closePath(); c.fill(); c.fillStyle = '#ffe582'; c.fillRect(-w * .52, -w * .035, w * 1.04, w * .03); }],
-    lettuce: [.1, (c, w) => { c.fillStyle = '#6fcf4a'; c.beginPath(); c.moveTo(-w * .54, 0); for (let i = 0; i <= 14; i++) c.lineTo(-w * .54 + i * w * .0771, -w * .04 + Math.sin(i * 1.7) * w * .045); for (let i = 14; i >= 0; i--) c.lineTo(-w * .54 + i * w * .0771, w * .04 + Math.sin(i * 1.7 + 1) * w * .03); c.closePath(); c.fill(); c.strokeStyle = '#a8f07a'; c.lineWidth = w * .012; c.beginPath(); c.moveTo(-w * .5, 0); for (let i = 0; i <= 14; i++) c.lineTo(-w * .54 + i * w * .0771, Math.sin(i * 1.7) * w * .03); c.stroke(); }],
+    lettuce: [.1, (c, w) => {   // a ruffled leaf hanging a little over the edges, two greens and a few veins
+      const edge = (k, a) => { const pts = []; for (let i = 0; i <= 28; i++) { const x = -w * .55 + i / 28 * w * 1.1; pts.push([x, k * w * .035 + Math.sin(i * 1.15 + a) * w * .02 + (k > 0 ? Math.abs(Math.sin(i * .55 + a)) * w * .03 : 0)]); } return pts; };
+      const leaf = (top, bot, col) => { c.fillStyle = col; c.beginPath(); top.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); for (let i = bot.length - 1; i >= 0; i--) { const [x, y] = bot[i], j = i % 2; c.quadraticCurveTo(x + w * .02, y + (j ? w * .02 : 0), x, y); } c.closePath(); c.fill(); };
+      leaf(edge(-1, 0), edge(1, .8), '#4fb83a'); leaf(edge(-1.1, .4), edge(.55, 1.6), '#7ed957');
+      c.strokeStyle = 'rgba(220,255,190,.75)'; c.lineWidth = w * .008; for (const x of [-.36, -.1, .16, .4]) { c.beginPath(); c.moveTo(x * w, -w * .02); c.quadraticCurveTo(x * w + w * .03, w * .01, x * w + w * .01, w * .04); c.stroke(); }
+    }],
     tomato: [.08, (c, w) => { for (const x of [-.28, 0, .28]) { c.fillStyle = '#e8433f'; c.beginPath(); c.ellipse(x * w, 0, w * .17, w * .045, 0, 0, TAU); c.fill(); c.fillStyle = '#ff7a6a'; c.beginPath(); c.ellipse(x * w, -w * .008, w * .13, w * .025, 0, 0, TAU); c.fill(); } }],
     onion: [.06, (c, w) => { for (const x of [-.26, 0, .26]) { c.strokeStyle = '#e8d0f0'; c.lineWidth = w * .035; c.beginPath(); c.ellipse(x * w, 0, w * .15, w * .035, 0, 0, TAU); c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = w * .015; c.beginPath(); c.ellipse(x * w, 0, w * .09, w * .02, 0, 0, TAU); c.stroke(); } }],
     pickle: [.06, (c, w) => { for (const x of [-.3, -.1, .1, .3]) { c.fillStyle = '#6fae3c'; c.beginPath(); c.ellipse(x * w, 0, w * .09, w * .035, 0, 0, TAU); c.fill(); c.fillStyle = '#a4d65a'; c.beginPath(); c.ellipse(x * w, -w * .004, w * .06, w * .02, 0, 0, TAU); c.fill(); } }],
@@ -186,7 +191,7 @@
     turkey: [.07, (c, w) => { c.fillStyle = '#f0d6b0'; c.beginPath(); c.moveTo(-w * .5, -w * .03); c.quadraticCurveTo(-w * .25, -w * .08, 0, -w * .02); c.quadraticCurveTo(w * .25, w * .04, w * .5, -w * .04); c.lineTo(w * .47, w * .05); c.quadraticCurveTo(w * .25, w * .1, 0, w * .04); c.quadraticCurveTo(-w * .25, 0, -w * .47, w * .06); c.closePath(); c.fill(); }],
     bread: [.13, (c, w) => { c.fillStyle = CRUST; rr(c, -w * .5, -w * .06, w, w * .13, w * .05); c.fill(); c.fillStyle = BREAD; rr(c, -w * .47, -w * .045, w * .94, w * .095, w * .04); c.fill(); }],
     toast: [.13, (c, w) => { c.fillStyle = '#a8662a'; rr(c, -w * .5, -w * .06, w, w * .13, w * .05); c.fill(); c.fillStyle = '#d9a05a'; rr(c, -w * .47, -w * .045, w * .94, w * .095, w * .04); c.fill(); }],
-    pancake: [.14, (c, w) => { c.fillStyle = '#d9a04a'; rr(c, -w * .48, -w * .06, w * .96, w * .13, w * .06); c.fill(); c.fillStyle = '#f0c36a'; rr(c, -w * .48, -w * .07, w * .96, w * .09, w * .045); c.fill(); }],
+    pancake: [.14, (c, w) => { c.fillStyle = '#b06a28'; rr(c, -w * .48, -w * .045, w * .96, w * .1, w * .05); c.fill(); const g = c.createLinearGradient(0, -w * .06, 0, w * .05); g.addColorStop(0, '#f4c56c'); g.addColorStop(1, '#c9822e'); c.fillStyle = g; rr(c, -w * .48, -w * .06, w * .96, w * .095, w * .047); c.fill(); c.fillStyle = '#f8d58a'; c.beginPath(); c.ellipse(0, -w * .05, w * .45, w * .022, 0, 0, TAU); c.fill(); c.fillStyle = 'rgba(255,255,255,.25)'; rr(c, -w * .36, -w * .035, w * .4, w * .012, w * .006); c.fill(); }],
     pbutter: [.05, (c, w) => { c.fillStyle = '#c98b4a'; rr(c, -w * .46, -w * .025, w * .92, w * .06, w * .03); c.fill(); }],
     jelly: [.05, (c, w) => { c.fillStyle = '#b8326a'; rr(c, -w * .46, -w * .025, w * .92, w * .06, w * .03); c.fill(); c.fillStyle = '#e0508a'; rr(c, -w * .46, -w * .025, w * .92, w * .025, w * .012); c.fill(); }],
     butterpat: [.06, (c, w) => { c.fillStyle = '#ffe27a'; rr(c, -w * .14, -w * .03, w * .28, w * .07, w * .02); c.fill(); c.fillStyle = '#fff3b0'; c.fillRect(-w * .14, -w * .03, w * .28, w * .02); }],
@@ -197,6 +202,107 @@
   const SAUCE = { ketchup: '#e8433f', mustard: '#f2c230', mayo: '#fff6dc', syrup: '#b8651a', 'ice-choc': '#5a3320' };
   const SEASON = { salt: '#ffffff', pepper: '#2a2a30' };
   const ID = x => x;
+
+  /* ---------------------------------------------------------------- build-your-own foods: buns, breads, cheeses, meats, sauces, pizza toppings */
+  // Buns come in three kinds; 'bunB'/'bunT' (the original ids) are the sesame bun. Breads come in three kinds; 'bread' is white.
+  const BUNS = { plain: { top: '#eaa457', crumb: '#f7ddb0', seeds: null }, sesame: { top: '#e8a85c', crumb: '#f7ddb0', seeds: '#fff3d6' }, wheat: { top: '#b47638', crumb: '#e2c08f', seeds: '#ead6ad', oats: true } };
+  const BREADS = { white: { crust: '#d9a45c', crumb: '#f8e4b8' }, wheat: { crust: '#9a6332', crumb: '#d9b483', flecks: '#a8763f' }, rye: { crust: '#6e4528', crumb: '#c9a477', flecks: '#4a2e1c' } };
+  const CHEESES = { cheddar: { col: '#ff9f1c' }, american: { col: '#ffc23a' }, provolone: { col: '#fbefc8' }, pepperjack: { col: '#fbeccb', flecks: ['#e8433f', '#5fae3a'] }, swiss: { col: '#ffe9a0', holes: true } };
+  const TOPL = new Set(['bunT', 'bunT-plain', 'bunT-wheat', 'breadT', 'breadT-wheat', 'breadT-rye']);   // layers drawn upward from their bottom edge
+  // a bun's dome, its bottom edge on y = 0
+  function bunTopArt(c, w, b) {
+    const h = w * .36;
+    const g = c.createLinearGradient(0, -h, 0, 0); g.addColorStop(0, shade(b.top, .2)); g.addColorStop(.75, b.top); g.addColorStop(1, shade(b.top, -.2));
+    c.fillStyle = shade(b.top, -.3); c.beginPath(); c.moveTo(-w * .5, -w * .015); c.bezierCurveTo(-w * .53, -h * 1.28, w * .53, -h * 1.28, w * .5, -w * .015); c.quadraticCurveTo(0, w * .04, -w * .5, -w * .015); c.fill();
+    c.fillStyle = g; c.beginPath(); c.moveTo(-w * .49, -w * .03); c.bezierCurveTo(-w * .51, -h * 1.26, w * .51, -h * 1.26, w * .49, -w * .03); c.quadraticCurveTo(0, w * .02, -w * .49, -w * .03); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.ellipse(-w * .16, -h * .66, w * .17, h * .17, -.35, 0, TAU); c.fill();
+    if (b.seeds) for (let i = 0; i < (b.oats ? 16 : 11); i++) { const x = (rnd(i + 3) - .5) * w * .76, yk = 1 - Math.pow(Math.abs(x) / (w * .46), 2), y = -h * (.3 + rnd(i + 7) * .62) * Math.max(.3, yk); c.fillStyle = b.seeds; c.beginPath(); c.ellipse(x, y, w * (b.oats ? .028 : .022), w * (b.oats ? .012 : .013), rnd(i) * 3, 0, TAU); c.fill(); }
+  }
+  // the bottom half of a bun: its middle on y = 0, the soft cut face on top
+  function bunBottomArt(c, w, b) {
+    c.fillStyle = shade(b.top, -.22); c.beginPath(); c.moveTo(-w * .5, -w * .05); c.lineTo(w * .5, -w * .05); c.quadraticCurveTo(w * .53, w * .1, w * .36, w * .1); c.lineTo(-w * .36, w * .1); c.quadraticCurveTo(-w * .53, w * .1, -w * .5, -w * .05); c.fill();
+    c.fillStyle = b.top; c.beginPath(); c.moveTo(-w * .5, -w * .05); c.lineTo(w * .5, -w * .05); c.quadraticCurveTo(w * .51, w * .05, w * .38, w * .06); c.lineTo(-w * .38, w * .06); c.quadraticCurveTo(-w * .51, w * .05, -w * .5, -w * .05); c.fill();
+    c.fillStyle = b.crumb; c.beginPath(); c.ellipse(0, -w * .052, w * .5, w * .035, 0, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.22)'; c.beginPath(); c.ellipse(-w * .2, w * .0, w * .14, w * .02, 0, 0, TAU); c.fill();
+  }
+  // a slice of bread lying flat, seen a little from above: middle on y = 0
+  function breadArt(c, w, b) {
+    c.fillStyle = shade(b.crust, -.12); rr(c, -w * .5, -w * .035, w, w * .085, w * .035); c.fill();
+    c.fillStyle = b.crust; rr(c, -w * .5, -w * .065, w, w * .075, w * .035); c.fill();
+    c.fillStyle = b.crumb; rr(c, -w * .47, -w * .058, w * .94, w * .045, w * .022); c.fill();
+    if (b.flecks) for (let i = 0; i < 14; i++) { c.fillStyle = b.flecks; c.beginPath(); c.arc((rnd(i + 2) - .5) * w * .88, -w * .036 + (rnd(i + 5) - .5) * w * .03, w * .006, 0, TAU); c.fill(); }
+  }
+  // the top slice of a sandwich: its top face (a loaf shape with the two shoulders), bottom edge on y = 0
+  function breadTopArt(c, w, b) {
+    const t = -w * .26;
+    const loaf = (k) => { c.beginPath(); c.moveTo(-w * .5 * k, -w * .02); c.lineTo(w * .5 * k, -w * .02); c.lineTo(w * .5 * k, t * .55 * k); c.bezierCurveTo(w * .56 * k, t * 1.05 * k, w * .12 * k, t * 1.12 * k, 0, t * .96 * k); c.bezierCurveTo(-w * .12 * k, t * 1.12 * k, -w * .56 * k, t * 1.05 * k, -w * .5 * k, t * .55 * k); c.closePath(); };
+    c.fillStyle = shade(b.crust, -.15); rr(c, -w * .5, -w * .045, w, w * .055, w * .025); c.fill();
+    c.fillStyle = b.crust; c.save(); c.translate(0, -w * .02); loaf(1); c.fill(); c.restore();
+    c.fillStyle = b.crumb; c.save(); c.translate(0, -w * .035); c.scale(.92, .84); loaf(1); c.fill(); c.restore();
+    c.fillStyle = 'rgba(255,255,255,.3)'; c.beginPath(); c.ellipse(-w * .18, -w * .17, w * .14, w * .03, -.15, 0, TAU); c.fill();
+    c.fillStyle = shade(b.crumb, -.12); for (let i = 0; i < 18; i++) { c.beginPath(); c.ellipse((rnd(i + 4) - .5) * w * .7, -w * (.06 + rnd(i + 9) * .14), w * .008, w * .005, 0, 0, TAU); c.fill(); }
+    if (b.flecks) for (let i = 0; i < 16; i++) { c.fillStyle = b.flecks; c.beginPath(); c.arc((rnd(i + 12) - .5) * w * .72, -w * (.06 + rnd(i + 21) * .14), w * .007, 0, TAU); c.fill(); }
+  }
+  // a cheese slice melting over what is under it, middle on y = 0
+  function cheeseArt(c, w, ch) {
+    c.fillStyle = shade(ch.col, -.12); c.beginPath(); c.moveTo(-w * .53, -w * .02); c.lineTo(w * .53, -w * .02); c.lineTo(w * .5, w * .02);
+    for (const [x, d] of [[.38, .07], [.12, .05], [-.16, .08], [-.4, .045]]) { c.lineTo(w * (x + .05), w * .02); c.quadraticCurveTo(w * (x + .02), w * d, w * x, w * d); c.quadraticCurveTo(w * (x - .03), w * d, w * (x - .05), w * .02); }
+    c.lineTo(-w * .5, w * .02); c.closePath(); c.fill();
+    c.fillStyle = ch.col; rr(c, -w * .53, -w * .03, w * 1.06, w * .035, w * .015); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.35)'; rr(c, -w * .4, -w * .028, w * .5, w * .008, w * .004); c.fill();
+    if (ch.holes) for (const x of [-.32, -.05, .2, .41]) { c.fillStyle = shade(ch.col, -.2); c.beginPath(); c.ellipse(x * w, w * .003, w * .022, w * .01, 0, 0, TAU); c.fill(); }
+    if (ch.flecks) for (let i = 0; i < 12; i++) { c.fillStyle = ch.flecks[i % 2]; c.beginPath(); c.arc((rnd(i + 3) - .5) * w * .95, -w * .012 + (rnd(i + 8) - .5) * w * .02, w * .006, 0, TAU); c.fill(); }
+  }
+  const SAUCE_L = { ketchup: '#e8433f', mustard: '#f2c230', mayo: '#fff4d6', bbq: '#7a2e1a' };
+  // a squiggle of sauce with a few drips over the edge, middle on y = 0
+  function sauceLayerArt(c, w, col) {
+    c.lineCap = c.lineJoin = 'round'; c.strokeStyle = shade(col, -.25); c.lineWidth = w * .045; c.beginPath();
+    for (let i = 0; i <= 24; i++) { const x = -w * .44 + i / 24 * w * .88, y = Math.sin(i * 1.3) * w * .018; i ? c.lineTo(x, y + w * .004) : c.moveTo(x, y + w * .004); } c.stroke();
+    c.strokeStyle = col; c.lineWidth = w * .036; c.stroke();
+    c.fillStyle = col; for (const x of [-.3, .05, .33]) { c.beginPath(); c.moveTo(w * (x - .025), 0); c.quadraticCurveTo(w * (x - .02), w * .07, w * x, w * .075); c.quadraticCurveTo(w * (x + .02), w * .07, w * (x + .025), 0); c.fill(); }
+    c.strokeStyle = 'rgba(255,255,255,.45)'; c.lineWidth = w * .009; c.beginPath(); for (let i = 2; i <= 22; i++) { const x = -w * .44 + i / 24 * w * .88, y = Math.sin(i * 1.3) * w * .018 - w * .01; i > 2 ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke();
+  }
+  for (const [k, b] of Object.entries({ '': BUNS.sesame, '-plain': BUNS.plain, '-wheat': BUNS.wheat })) { LAYER['bunB' + k] = [.17, (c, w) => bunBottomArt(c, w, b)]; LAYER['bunT' + k] = [.36, (c, w) => bunTopArt(c, w, b)]; }
+  for (const [k, b] of Object.entries({ '': BREADS.white, '-wheat': BREADS.wheat, '-rye': BREADS.rye })) { LAYER['bread' + k] = [.1, (c, w) => breadArt(c, w, b)]; LAYER['breadT' + k] = [.27, (c, w) => breadTopArt(c, w, b)]; }
+  for (const [k, ch] of Object.entries(CHEESES)) LAYER[k] = [.05, (c, w) => cheeseArt(c, w, ch)];
+  LAYER.cheese = LAYER.american;
+  for (const [k, col] of Object.entries(SAUCE_L)) LAYER['sauce-' + k] = [.03, (c, w) => sauceLayerArt(c, w, col)];
+  LAYER.bacon = [.06, (c, w) => { for (const [dy, s] of [[-.008, 0], [.012, 2]]) { c.lineCap = 'round'; c.strokeStyle = '#a8322a'; c.lineWidth = w * .045; c.beginPath(); for (let i = 0; i <= 20; i++) { const x = -w * .5 + i / 20 * w, y = dy * w + Math.sin(i * .9 + s) * w * .016; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); c.strokeStyle = '#f5c6b4'; c.lineWidth = w * .012; c.stroke(); } }];
+  LAYER.salami = [.05, (c, w) => { for (const x of [-.36, -.12, .12, .36]) { c.fillStyle = '#9e2a2e'; c.beginPath(); c.ellipse(x * w, 0, w * .15, w * .03, 0, 0, TAU); c.fill(); c.fillStyle = '#c23a3e'; c.beginPath(); c.ellipse(x * w, -w * .006, w * .13, w * .02, 0, 0, TAU); c.fill(); for (let i = 0; i < 4; i++) { c.fillStyle = '#ffe6dc'; c.beginPath(); c.arc(x * w + (rnd(i + x * 9) - .5) * w * .18, -w * .006, w * .005, 0, TAU); c.fill(); } } }];
+  LAYER.chickenslice = [.06, (c, w) => { for (const x of [-.32, -.06, .2, .4]) { c.fillStyle = '#e0b070'; rr(c, x * w - w * .14, -w * .025, w * .27, w * .05, w * .022); c.fill(); c.fillStyle = '#f6dcae'; rr(c, x * w - w * .13, -w * .028, w * .25, w * .022, w * .01); c.fill(); c.strokeStyle = 'rgba(110,60,20,.55)'; c.lineWidth = w * .008; for (const d of [-.06, .03]) { c.beginPath(); c.moveTo(x * w + d * w, -w * .025); c.lineTo(x * w + d * w + w * .03, w * .02); c.stroke(); } } }];
+  LAYER.patty = [.17, (c, w) => {
+    c.fillStyle = '#4e2a16'; c.beginPath(); for (let i = 0; i <= 30; i++) { const a = i / 30 * Math.PI, x = -Math.cos(a) * w * .48, y = w * .075 + Math.sin(a * 9) * w * .006; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.lineTo(w * .48, -w * .05); for (let i = 30; i >= 0; i--) { const x = -Math.cos(i / 30 * Math.PI) * w * .48, y = -w * .07 + Math.sin(i * 1.7) * w * .006; c.lineTo(x, y); } c.closePath(); c.fill();
+    c.fillStyle = '#7a4424'; rr(c, -w * .47, -w * .072, w * .94, w * .07, w * .03); c.fill();
+    for (let i = 0; i < 26; i++) { c.fillStyle = i % 2 ? '#93583a' : '#5e331b'; c.beginPath(); c.arc((rnd(i + 1) - .5) * w * .9, -w * .045 + (rnd(i + 6) - .5) * w * .05, w * .008, 0, TAU); c.fill(); }
+    c.strokeStyle = '#2e170b'; c.lineWidth = w * .016; c.lineCap = 'round'; for (const x of [-.26, 0, .26]) { c.beginPath(); c.moveTo((x - .05) * w, -w * .06); c.lineTo((x + .05) * w, -w * .02); c.stroke(); }
+  }];
+  LAYER.relish = [.03, (c, w) => { for (let i = 0; i < 22; i++) { c.fillStyle = i % 3 ? '#5fae3a' : '#9ad85a'; c.beginPath(); c.ellipse((rnd(i + 2) - .5) * w * .85, (rnd(i + 7) - .5) * w * .03, w * .022, w * .011, rnd(i) * 3, 0, TAU); c.fill(); } }];
+  // ---- the pictures for the tray
+  const slice = (col, o = {}) => (c, s) => { c.save(); c.rotate(-.12); c.fillStyle = shade(col, -.15); rr(c, -s * .36, -s * .3, s * .74, s * .66, s * .07); c.fill(); c.fillStyle = col; rr(c, -s * .38, -s * .34, s * .74, s * .66, s * .07); c.fill(); if (o.holes) for (const [x, y, r] of [[-.15, -.1, .07], [.14, .08, .06], [-.05, .18, .04], [.18, -.18, .04]]) circ(c, x * s, y * s, r * s, shade(col, -.18)); if (o.flecks) for (let i = 0; i < 12; i++) circ(c, (rnd(i) - .5) * s * .6, (rnd(i + 4) - .5) * s * .54, s * .022, o.flecks[i % 2]); shine(c, -s * .2, -s * .22, s * .1, s * .03, -.3, .5); c.restore(); };
+  for (const [k, ch] of Object.entries(CHEESES)) ING[k] = slice(ch.col, ch);
+  for (const [k, b] of Object.entries({ plain: BUNS.plain, sesame: BUNS.sesame, wheat: BUNS.wheat })) { ING['bun-' + k] = (c, s) => { c.save(); c.translate(0, s * .3); bunBottomArt(c, s * .9, b); c.translate(0, -s * .2); bunTopArt(c, s * .9, b); c.restore(); }; ING['bunT-' + k] = (c, s) => { c.save(); c.translate(0, s * .16); bunTopArt(c, s * .95, b); c.restore(); }; }
+  ING.bunT = ING['bunT-sesame']; ING['bunT-plain'] = ING['bunT-plain']; ING['bunT-wheat'] = ING['bunT-wheat'];
+  for (const [k, b] of Object.entries(BREADS)) { const f = (c, s) => { c.fillStyle = b.crust; rr(c, -s * .4, -s * .3, s * .8, s * .72, s * .12); c.fill(); c.beginPath(); c.arc(-s * .2, -s * .3, s * .21, Math.PI, 0); c.arc(s * .2, -s * .3, s * .21, Math.PI, 0); c.fill(); c.fillStyle = b.crumb; rr(c, -s * .33, -s * .24, s * .66, s * .6, s * .09); c.fill(); c.beginPath(); c.arc(-s * .2, -s * .26, s * .15, Math.PI, 0); c.arc(s * .2, -s * .26, s * .15, Math.PI, 0); c.fill(); if (b.flecks) for (let i = 0; i < 12; i++) circ(c, (rnd(i + 2) - .5) * s * .56, (rnd(i + 6) - .4) * s * .56, s * .018, b.flecks); }; ING['bread-' + k] = f; }
+  ING.breadT = ING['bread-white']; ING['breadT-wheat'] = ING['bread-wheat']; ING['breadT-rye'] = ING['bread-rye'];
+  ING.bacon = (c, s) => { for (const dy of [-.12, .12]) { c.lineCap = 'round'; c.strokeStyle = '#a8322a'; c.lineWidth = s * .16; c.beginPath(); for (let i = 0; i <= 16; i++) { const x = -s * .42 + i / 16 * s * .84, y = dy * s + Math.sin(i * .9) * s * .05; i ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); c.strokeStyle = '#f5c6b4'; c.lineWidth = s * .045; c.stroke(); } };
+  ING.salami = (c, s) => { circ(c, 0, 0, s * .4, '#9e2a2e'); circ(c, 0, 0, s * .34, '#c23a3e'); for (let i = 0; i < 12; i++) circ(c, (rnd(i) - .5) * s * .5, (rnd(i + 5) - .5) * s * .5, s * .03, '#ffe6dc'); shine(c, -s * .14, -s * .16, s * .1, s * .04, -.6, .4); };
+  ING.chickenslice = (c, s) => { for (const [x, y] of [[-.14, -.1], [.12, .08]]) { c.save(); c.translate(x * s, y * s); c.rotate(-.4); c.fillStyle = '#e0b070'; rr(c, -s * .3, -s * .1, s * .6, s * .2, s * .09); c.fill(); c.fillStyle = '#f6dcae'; rr(c, -s * .28, -s * .1, s * .56, s * .08, s * .04); c.fill(); c.restore(); } };
+  ING.veggiedog = (c, s) => { c.fillStyle = '#c98a4a'; rr(c, -s * .5, -s * .1, s, s * .2, s * .1); c.fill(); shine(c, -s * .1, -s * .05, s * .3, s * .03, 0, .4); };
+  ING.bbq = (c, s) => { c.fillStyle = '#7a2e1a'; rr(c, -s * .2, -s * .1, s * .4, s * .52, s * .1); c.fill(); c.fillStyle = '#a8462a'; rr(c, -s * .2, -s * .1, s * .16, s * .5, s * .08); c.fill(); tri(c, [[-s * .14, -s * .1], [s * .14, -s * .1], [0, -s * .3]], '#fff'); box(c, -s * .05, -s * .42, s * .1, s * .14, '#fff', s * .03); box(c, -s * .15, s * .08, s * .3, s * .22, '#ffd54a', s * .04); };
+  ING.relish = (c, s) => { box(c, -s * .3, -s * .2, s * .6, s * .62, 'rgba(210,240,200,.7)', s * .1); for (let i = 0; i < 18; i++) circ(c, (rnd(i) - .5) * s * .46, s * (-.05 + rnd(i + 3) * .4), s * .045, i % 3 ? '#5fae3a' : '#9ad85a'); box(c, -s * .34, -s * .32, s * .68, s * .14, '#3f8a3a', s * .05); };
+  ING.caramel = (c, s) => { c.fillStyle = '#c47a26'; rr(c, -s * .22, -s * .18, s * .44, s * .62, s * .1); c.fill(); c.fillStyle = '#e8a24a'; rr(c, -s * .22, -s * .18, s * .16, s * .6, s * .08); c.fill(); box(c, -s * .12, -s * .38, s * .24, s * .24, '#fff1d0', s * .04); box(c, -s * .18, s * .06, s * .36, s * .22, '#fff', s * .04); };
+  ING.strawsauce = (c, s) => { c.fillStyle = '#d42a50'; rr(c, -s * .22, -s * .18, s * .44, s * .62, s * .1); c.fill(); c.fillStyle = '#ff6b8a'; rr(c, -s * .22, -s * .18, s * .16, s * .6, s * .08); c.fill(); box(c, -s * .12, -s * .38, s * .24, s * .24, '#ffe3ec', s * .04); c.save(); c.translate(0, s * .17); c.scale(.3, .3); ING.strawberry(c, s); c.restore(); };
+  ING.cream = (c, s) => { box(c, -s * .18, -s * .1, s * .36, s * .56, '#e8eef8', s * .08); box(c, -s * .18, -s * .1, s * .12, s * .56, '#fff', s * .06); box(c, -s * .07, -s * .34, s * .14, s * .26, '#ff9ec8', s * .04); for (const [x, y, r] of [[0, -.42, .1], [-.08, -.36, .07], [.08, -.36, .07]]) circ(c, x * s, y * s, r * s, '#fff'); };
+  ING.pizzasauce = (c, s) => { c.strokeStyle = '#8a95a8'; c.lineWidth = s * .07; c.lineCap = 'round'; c.beginPath(); c.moveTo(s * .05, -s * .05); c.lineTo(s * .42, -s * .44); c.stroke(); ell(c, -s * .08, s * .1, s * .3, s * .22, '#aab4c4'); ell(c, -s * .08, s * .07, s * .25, s * .16, '#d8342c'); shine(c, -s * .16, s * .02, s * .06, s * .02, 0, .5); };
+  ING.mozzarella = (c, s) => { ell(c, 0, s * .2, s * .4, s * .16, '#c8a070'); for (let i = 0; i < 30; i++) { c.save(); c.translate((rnd(i) - .5) * s * .62, s * (.14 - rnd(i + 3) * .32 * (1 - Math.abs(rnd(i) - .5)))); c.rotate(rnd(i + 9) * 3); box(c, -s * .06, -s * .015, s * .12, s * .03, i % 4 ? '#fff8e0' : '#ffe9a8', s * .015); c.restore(); } };
+  ING.pepperoni = (c, s) => { circ(c, 0, 0, s * .36, '#a82a24'); circ(c, 0, 0, s * .3, '#c8382e'); for (let i = 0; i < 8; i++) circ(c, (rnd(i) - .5) * s * .4, (rnd(i + 4) - .5) * s * .4, s * .03, '#e8805a'); shine(c, -s * .12, -s * .14, s * .08, s * .03, -.6, .4); };
+  ING.mushroom = (c, s) => { c.fillStyle = '#e8dcc8'; rr(c, -s * .1, -s * .02, s * .2, s * .36, s * .06); c.fill(); c.fillStyle = '#c9a882'; c.beginPath(); c.moveTo(-s * .36, s * .04); c.bezierCurveTo(-s * .38, -s * .38, s * .38, -s * .38, s * .36, s * .04); c.closePath(); c.fill(); c.fillStyle = '#f2e8d8'; c.beginPath(); c.ellipse(0, s * .03, s * .36, s * .05, 0, 0, Math.PI); c.fill(); };
+  ING.olive = (c, s) => { for (const [x, y] of [[-.14, -.08], [.16, .1]]) { circ(c, x * s, y * s, s * .17, '#2e2a30'); circ(c, x * s, y * s, s * .07, '#5a3a4a'); shine(c, (x - .06) * s, (y - .07) * s, s * .04, s * .02, -.6, .5); } };
+  ING.greenpepper = (c, s) => { c.lineCap = 'round'; for (const [x, y, a] of [[-.12, -.06, .5], [.12, .1, -.4]]) { c.strokeStyle = '#3e9a3a'; c.lineWidth = s * .12; c.beginPath(); c.arc(x * s, y * s, s * .2, a, a + 2.6); c.stroke(); c.strokeStyle = '#7ed957'; c.lineWidth = s * .04; c.stroke(); } };
+  ING.pineapple = (c, s) => { for (const [x, y, a] of [[-.12, 0, .2], [.14, .06, -.3]]) { c.save(); c.translate(x * s, y * s); c.rotate(a); tri(c, [[-s * .14, s * .2], [s * .14, s * .2], [0, -s * .22]], '#ffd54a'); box(c, -s * .15, s * .16, s * .3, s * .06, '#e8b030', s * .02); c.restore(); } };
+  ING.basil = (c, s) => { for (const [x, y, a] of [[-.1, .02, -.6], [.12, -.04, .5]]) { c.save(); c.translate(x * s, y * s); c.rotate(a); c.fillStyle = '#3e9a3a'; c.beginPath(); c.ellipse(0, 0, s * .12, s * .26, 0, 0, TAU); c.fill(); c.strokeStyle = '#7ed957'; c.lineWidth = s * .02; c.beginPath(); c.moveTo(0, -s * .22); c.lineTo(0, s * .22); c.stroke(); c.restore(); } };
+  for (const [k, v] of Object.entries({ cheddar: 'Cheddar cheese', american: 'American cheese', provolone: 'Provolone cheese', pepperjack: 'Pepper jack cheese', swiss: 'Swiss cheese', bacon: 'Bacon', salami: 'Salami', chickenslice: 'Chicken', 'bun-plain': 'A plain bun', 'bun-sesame': 'A sesame bun', 'bun-wheat': 'A wheat bun', 'bread-white': 'White bread', 'bread-wheat': 'Wheat bread', 'bread-rye': 'Rye bread', bbq: 'Barbecue sauce', relish: 'Relish', caramel: 'Caramel sauce', strawsauce: 'Strawberry sauce', cream: 'Whipped cream', pizzasauce: 'Pizza sauce', mozzarella: 'Mozzarella cheese', pepperoni: 'Pepperoni', mushroom: 'Mushrooms', olive: 'Olives', greenpepper: 'Green peppers', pineapple: 'Pineapple', basil: 'Basil', veggiedog: 'A veggie dog' })) NAME[k] = v;
+  Object.assign(SAUCE, { bbq: '#7a2e1a', caramel: '#d08a2e', strawsauce: '#e0335a', pizzasauce: '#d8342c' });
 
   /* ---------------------------------------------------------------- the kitchen: table, board, bowl, tools, appliances, plate */
   function drawTable(c, w, h, t) {
@@ -291,7 +397,7 @@
   function drawDeco(c, deco, R, o = {}) {
     if (!deco) return;
     if (deco.fill && o.shape) { c.fillStyle = deco.fill; c.save(); c.translate(0, -R * .03); shapeFill(c, o.shape, R * .8, -R * .04); c.restore(); c.fillStyle = 'rgba(255,255,255,.35)'; c.save(); c.translate(-R * .05, -R * .07); shapeFill(c, o.shape, R * .6, -R * .06); c.restore(); c.fillStyle = deco.fill; c.save(); c.translate(0, -R * .03); shapeFill(c, o.shape, R * .56, -R * .04); c.restore(); }
-    for (const s of deco.strokes || []) { c.strokeStyle = s.col; c.lineWidth = R * .075; c.lineCap = c.lineJoin = 'round'; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R, y * R) : c.moveTo(x * R, y * R)); c.stroke(); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = R * .02; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R - R * .015, y * R - R * .02) : c.moveTo(x * R - R * .015, y * R - R * .02)); c.stroke(); }
+    for (const s of deco.strokes || []) { if (o.beads) { let acc = 0; s.pts.forEach(([x, y], i) => { if (i) { const [px, py] = s.pts[i - 1], d = Math.hypot(x - px, y - py) * R; for (acc += d; acc >= R * .07; acc -= R * .07) { const k = 1 - (acc - R * .07) / Math.max(1e-6, d), bx = (px + (x - px) * Math.min(1, k)) * R, by = (py + (y - py) * Math.min(1, k)) * R; circ(c, bx, by + R * .012, R * .05, shade(s.col, -.15)); circ(c, bx, by, R * .045, s.col); circ(c, bx - R * .012, by - R * .014, R * .016, 'rgba(255,255,255,.6)'); } } else { circ(c, x * R, y * R, R * .045, s.col); } }); continue; } c.strokeStyle = s.col; c.lineWidth = R * .075; c.lineCap = c.lineJoin = 'round'; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R, y * R) : c.moveTo(x * R, y * R)); c.stroke(); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = R * .02; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R - R * .015, y * R - R * .02) : c.moveTo(x * R - R * .015, y * R - R * .02)); c.stroke(); }
     for (const d of deco.dots || []) {
       c.save(); c.translate(d.x * R, d.y * R); c.rotate(d.rot || 0);
       if (d.id === 'sprinkles') { box(c, -R * .07, -R * .02, R * .14, R * .045, d.col, R * .02); }
@@ -320,20 +426,29 @@
     if (p.empty) return;
     const cake = p.baked >= 1 ? (p.choc ? '#8a5a38' : '#e8b868') : p.baked > 0 ? mixHex(p.choc ? '#c89a62' : '#f3dca4', p.choc ? '#8a5a38' : '#e8b868', p.baked) : (p.batter ? (p.choc ? '#a87a52' : '#f6e8c0') : '#f6e8c0');
     c.fillStyle = cake; c.beginPath(); c.moveTo(-R * .52, -R * .06); c.bezierCurveTo(-R * .6, -R * .55, R * .6, -R * .55, R * .52, -R * .06); c.closePath(); c.fill();
-    if (p.frost) { const f = p.frost.col; c.fillStyle = shade(f, -.1); for (const [y, w] of [[.0, .55], [-.16, .44], [-.3, .32], [-.42, .2]]) { c.beginPath(); c.ellipse(0, y * R, w * R, R * .15, 0, 0, TAU); c.fill(); } c.fillStyle = f; for (const [y, w] of [[-.02, .52], [-.17, .41], [-.31, .29], [-.43, .17]]) { c.beginPath(); c.ellipse(0, y * R, w * R, R * .12, 0, 0, TAU); c.fill(); } c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.ellipse(-R * .18, -R * .2, R * .1, R * .04, -.5, 0, TAU); c.fill(); c.save(); c.translate(0, -R * .08); drawDeco(c, p.deco, R * 1.0); c.restore(); }
+    if (p.frost) { const f = p.frost.col; c.fillStyle = shade(f, -.1); for (const [y, w] of [[.0, .55], [-.16, .44], [-.3, .32], [-.42, .2]]) { c.beginPath(); c.ellipse(0, y * R, w * R, R * .15, 0, 0, TAU); c.fill(); } c.fillStyle = f; for (const [y, w] of [[-.02, .52], [-.17, .41], [-.31, .29], [-.43, .17]]) { c.beginPath(); c.ellipse(0, y * R, w * R, R * .12, 0, 0, TAU); c.fill(); } c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.ellipse(-R * .18, -R * .2, R * .1, R * .04, -.5, 0, TAU); c.fill(); c.save(); c.translate(0, -R * .08); drawDeco(c, p.deco, R * 1.0, { beads: true }); c.restore(); }
     else if (p.batter && !p.baked) { /* just batter in the liner */ }
   }
+  // a two-layer cake seen a little from above; its top face is centred on y = 0
   function drawCake(c, p, R, t = 0) {
-    const rx = R * .95, ry = R * .42, hgt = R * .62;
-    c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.ellipse(R * .05, hgt * .5 + ry * .5, rx * 1.04, ry * 1.05, 0, 0, TAU); c.fill();
+    const rx = R * .95, ry = R * .38, hgt = R * .62;
+    c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.ellipse(R * .05, hgt + ry * .55, rx * 1.05, ry * 1.0, 0, 0, TAU); c.fill();
     const col = p.baked >= 1 ? (p.choc ? '#8a5a38' : '#e8b868') : (p.baked > 0 ? mixHex('#f3dca4', '#e8b868', p.baked) : '#f6e8c0');
-    const side = p.frost ? p.frost.col : col;
-    for (const [dy, hh] of [[hgt * .5, hgt * .5], [0, hgt * .5]]) { c.fillStyle = shade(side, -.12); c.beginPath(); c.moveTo(-rx, dy); c.lineTo(-rx, dy + hh); c.ellipse(0, dy + hh, rx, ry, 0, Math.PI, 0, true); c.lineTo(rx, dy); c.closePath(); c.fill(); }
-    if (p.frost) { c.fillStyle = shade(col, -.08); c.fillRect(-rx, hgt * .46, rx * 2, hgt * .08); c.beginPath(); c.ellipse(0, hgt * .5, rx, ry, 0, 0, Math.PI); c.fill(); }
-    c.fillStyle = shade(side, -.05); c.beginPath(); c.ellipse(0, 0, rx, ry, 0, 0, TAU); c.fill();
-    c.fillStyle = p.frost ? p.frost.col : col; c.beginPath(); c.ellipse(0, -hgt * .02, rx * .94, ry * .9, 0, 0, TAU); c.fill();
-    if (p.frost) { c.fillStyle = shade(p.frost.col, .25); for (let i = 0; i < 9; i++) { const a = i / 9 * TAU, x = Math.cos(a) * rx * .94, y = Math.sin(a) * ry * .9 - hgt * .02; if (Math.sin(a) > -.2) { c.fillStyle = p.frost.col; c.beginPath(); c.ellipse(x, y + hgt * .05, rx * .06, hgt * (.12 + rnd(i) * .1), 0, 0, TAU); c.fill(); } } c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(-rx * .3, -ry * .3, rx * .22, ry * .12, -.3, 0, TAU); c.fill(); }
-    c.save(); c.translate(0, -hgt * .02); c.scale(1, .9); drawDeco(c, p.deco, R * 1.0); c.restore();
+    const fr = p.frost && p.frost.col, side = fr || col;
+    const body = () => { c.beginPath(); c.moveTo(-rx, 0); c.lineTo(-rx, hgt); c.ellipse(0, hgt, rx, ry, 0, Math.PI, 0, true); c.lineTo(rx, 0); c.closePath(); };
+    const g = c.createLinearGradient(-rx, 0, rx, 0); g.addColorStop(0, shade(side, -.2)); g.addColorStop(.35, side); g.addColorStop(.7, shade(side, .08)); g.addColorStop(1, shade(side, -.14));
+    c.fillStyle = g; body(); c.fill();
+    if (!fr) {   // the cream between the two layers
+      c.strokeStyle = '#fff3d6'; c.lineWidth = hgt * .13; c.beginPath(); c.ellipse(0, hgt * .5, rx * .995, ry, 0, Math.PI * .02, Math.PI * .98); c.stroke();
+      c.fillStyle = shade(col, -.12); for (let i = 0; i < 14; i++) { const a = rnd(i + 3) * Math.PI, y = hgt * (.15 + rnd(i + 8) * .7); c.beginPath(); c.arc(-Math.cos(a) * rx * .95, y + Math.sin(a) * ry, R * .012, 0, TAU); c.fill(); }
+    } else {     // drips down the side, and piped beads round the bottom
+      c.fillStyle = shade(fr, -.06); for (let i = 0; i < 11; i++) { const a = (i + .5) / 11 * Math.PI, x = -Math.cos(a) * rx * .97, y = Math.sin(a) * ry, d = hgt * (.18 + rnd(i + 2) * .22); c.beginPath(); c.ellipse(x, y + d * .5, rx * .045, d * .55, 0, 0, TAU); c.fill(); }
+      for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI, x = -Math.cos(a) * rx, y = hgt + Math.sin(a) * ry; circ(c, x, y - R * .02, R * .07, shade(fr, -.08)); circ(c, x - R * .015, y - R * .035, R * .04, shade(fr, .25)); }
+    }
+    c.fillStyle = fr ? shade(fr, .06) : shade(col, .06); c.beginPath(); c.ellipse(0, 0, rx, ry, 0, 0, TAU); c.fill();
+    if (fr) { for (let i = 0; i <= 18; i++) { const a = i / 18 * TAU, x = Math.cos(a) * rx * .93, y = Math.sin(a) * ry * .9; circ(c, x, y, R * .055, shade(fr, -.04)); circ(c, x - R * .012, y - R * .012, R * .03, shade(fr, .3)); } }
+    c.fillStyle = 'rgba(255,255,255,.3)'; c.beginPath(); c.ellipse(-rx * .3, -ry * .35, rx * .25, ry * .14, -.2, 0, TAU); c.fill();
+    c.save(); c.scale(1, .9); drawDeco(c, p.deco, R * 1.0, { beads: true }); c.restore();
   }
   // toppings dropped on the top of a flat thing (a stack, a hot dog, a sundae): at height y, in widths of W
   function drawFlatDots(c, dots, W, y) {
@@ -351,45 +466,100 @@
       c.restore();
     }
   }
-  // a stack of flat layers (a burger, a sandwich, pancakes...), bottom first. Width W.
+  // a stack of flat layers (a burger, a sandwich, pancakes...), bottom first. Width W; the bottom sits on y = 0.
   function drawStack(c, p, W, t = 0) {
     let y = 0; const layers = p.layers || [];
-    const total = layers.reduce((a, l) => a + (LAYER[l.id] ? LAYER[l.id][0] * W : 0) * (l.squash || 1), 0);
-    c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.ellipse(W * .04, W * .12, W * .56, W * .09, 0, 0, TAU); c.fill();
+    c.fillStyle = 'rgba(80,40,20,.16)'; c.beginPath(); c.ellipse(W * .02, W * .045, W * .5, W * .06, 0, 0, TAU); c.fill();
     layers.forEach((l, i) => {
-      const L = LAYER[l.id]; if (!L) return; const h = L[0] * W * (l.squash || 1), lw = W * (l.wscale || 1) * (1 + (rnd(i + (l.seed || 0)) - .5) * .06);
+      const L = LAYER[l.id]; if (!L) return; const h = L[0] * W * (l.squash || 1), lw = W * (l.wscale || 1) * (1 + (rnd(i + (l.seed || 0)) - .5) * .05), top = TOPL.has(l.id);
       const lift = (l.drop || 0) * W * .8;
-      c.save(); c.translate((rnd(i + 3 + (l.seed || 0)) - .5) * W * .02, -y - h * .5 - lift + (l.id === 'bunT' ? h * .5 - lw * .02 : 0)); c.globalAlpha = 1 - (l.drop || 0) * .6;   // (the top bun's dome sits right on the layer below, no gap)
-      if (l.id === 'bread' || l.id === 'toast') { c.scale(1, 1); }
-      if (l.cook != null && (l.id === 'patty' || l.id === 'chicken')) { c.save(); L[1](c, lw); c.globalAlpha = .45; c.fillStyle = '#5a3320'; c.restore(); }
+      c.save(); c.translate((rnd(i + 3 + (l.seed || 0)) - .5) * W * .015, -y - lift - (top ? 0 : h * .5)); c.globalAlpha = 1 - (l.drop || 0) * .6;
       L[1](c, lw);
       if (l.spread) { c.fillStyle = l.spread; rr(c, -lw * .44, -h * .6, lw * .88, h * .35, h * .15); c.fill(); }
-      for (const s of l.sauce || []) { c.strokeStyle = s.col; c.lineWidth = W * .05; c.lineCap = c.lineJoin = 'round'; c.beginPath(); s.pts.forEach(([x, yy], k) => k ? c.lineTo(x * W, yy * W * 1.4 + h * .1) : c.moveTo(x * W, yy * W * 1.4 + h * .1)); c.stroke(); c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = W * .012; c.beginPath(); s.pts.forEach(([x, yy], k) => k ? c.lineTo(x * W - W * .01, yy * W * 1.4 + h * .1 - W * .012) : c.moveTo(x * W - W * .01, yy * W * 1.4 + h * .1 - W * .012)); c.stroke(); const e = s.pts[s.pts.length - 1]; if (e) { c.fillStyle = s.col; c.beginPath(); c.ellipse(e[0] * W, e[1] * W * 1.4 + h * .1 + W * .05, W * .018, W * .04, 0, 0, TAU); c.fill(); } }
-      for (const s of l.season || []) { c.fillStyle = s.col; for (const d of s.pts) { c.beginPath(); c.arc(d[0] * W, d[1] * W - h * .4, W * .008, 0, TAU); c.fill(); } }
+      for (const s of l.sauce || []) { c.strokeStyle = s.col; c.lineWidth = W * .05; c.lineCap = c.lineJoin = 'round'; c.beginPath(); s.pts.forEach(([x, yy], k) => k ? c.lineTo(x * W, yy * W * 1.4 + h * .1) : c.moveTo(x * W, yy * W * 1.4 + h * .1)); c.stroke(); }
       c.restore();
-      y += h * (l.id === 'bunT' ? .8 : .9);
+      y += h * (top ? .9 : .86);
     });
     drawFlatDots(c, p.dots, W, -y);
     return y;
   }
+  // a hot dog in its bun, seen a little from the side; the bottom sits on y = 0. W is about the bun's length.
   function drawHotdog(c, p, W, t = 0) {
-    c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.ellipse(W * .04, W * .12, W * .62, W * .09, 0, 0, TAU); c.fill();
-    const hasB = (p.layers || []).some(l => l.id === 'hotbunBack'), hasS = (p.layers || []).some(l => l.id === 'sausage');
-    if (hasB) { c.save(); c.translate(0, -W * .1 - ((p.layers.find(l => l.id === 'hotbunBack') || {}).drop || 0) * W * .8); LAYER.hotbunBack[1](c, W * 1.1); c.restore(); }
-    if (!hasS) return;
-    c.save(); c.translate(0, -W * .24 - ((p.layers.find(l => l.id === 'sausage') || {}).drop || 0) * W * .8); LAYER.sausage[1](c, W * 1.1);
-    for (const s of p.sauce || []) { c.strokeStyle = s.col; c.lineWidth = W * .035; c.lineCap = c.lineJoin = 'round'; c.beginPath(); s.pts.forEach(([x, yy], k) => k ? c.lineTo(x * W, yy * W * .3 - W * .05) : c.moveTo(x * W, yy * W * .3 - W * .05)); c.stroke(); }
-    for (const o of p.onions || []) { c.strokeStyle = '#f0e0f6'; c.lineWidth = W * .02; c.beginPath(); c.arc(o[0] * W, -W * .04, W * .035, 0, TAU); c.stroke(); }
+    const L = W * .5, bh = W * .14, lay = id => (p.layers || []).find(l => l.id === id), B = lay('hotbunBack'), S = lay('sausage');
+    c.fillStyle = 'rgba(80,40,20,.16)'; c.beginPath(); c.ellipse(W * .02, W * .03, L * 1.05, W * .06, 0, 0, TAU); c.fill();
+    const bun = (y, hh, k) => { const g = c.createLinearGradient(0, y - hh / 2, 0, y + hh / 2); g.addColorStop(0, shade(BUN, .18 * k)); g.addColorStop(1, shade(BUN, -.2)); c.fillStyle = g; rr(c, -L, y - hh / 2, L * 2, hh, hh * .5); c.fill(); };
+    const bl = B ? (B.drop || 0) * W * .8 : 0;
+    if (B) {   // the back half of the bun with its soft inside showing
+      c.save(); c.translate(0, -bl); c.globalAlpha = 1 - (B.drop || 0) * .6;
+      bun(-bh * 1.8, bh * 1.2, 1); c.fillStyle = '#f7ddb0'; rr(c, -L * .95, -bh * 2.05, L * 1.9, bh * .55, bh * .27); c.fill(); c.fillStyle = 'rgba(200,140,70,.25)'; rr(c, -L * .95, -bh * 1.62, L * 1.9, bh * .14, bh * .07); c.fill(); c.restore();
+    }
+    if (S) {
+      const sl = (S.drop || 0) * W * .8; c.save(); c.translate(0, -sl); c.globalAlpha = 1 - (S.drop || 0) * .6;
+      const g = c.createLinearGradient(0, -bh * 1.75, 0, -bh * .75); g.addColorStop(0, '#d8694a'); g.addColorStop(1, '#9a3624'); c.fillStyle = g; rr(c, -L * 1.1, -bh * 1.72, L * 2.2, bh * .92, bh * .46); c.fill();
+      c.strokeStyle = 'rgba(70,20,10,.35)'; c.lineWidth = W * .012; c.lineCap = 'round'; for (const x of [-.6, -.3, 0, .3, .6]) { c.beginPath(); c.moveTo((x - .04) * L, -bh * 1.62); c.lineTo((x + .04) * L, -bh * 1.0); c.stroke(); }
+      shine(c, -L * .2, -bh * 1.52, L * .5, bh * .08, 0, .45); c.restore();
+    }
+    if (B) { c.save(); c.translate(0, -bl); c.globalAlpha = 1 - (B.drop || 0) * .6; bun(-bh * .62, bh * 1.24, 1); c.fillStyle = 'rgba(255,255,255,.25)'; rr(c, -L * .8, -bh * .92, L * 1.3, bh * .14, bh * .07); c.fill(); c.restore(); }
+    drawFlatDots(c, p.dots, W, -bh * 1.75);
+  }
+  // an ice cream sundae: a tulip glass on a little stem with up to three scoops nestled in it; the foot sits on y = 0
+  const SCOOP_AT = [[[0, -.6]], [[-.15, -.6], [.15, -.6]], [[-.15, -.6], [.15, -.6], [0, -.84]]];
+  function drawScoop(c, x, y, r, col, id) {
+    c.save(); c.translate(x, y);
+    c.fillStyle = shade(col, -.14); c.beginPath(); c.arc(0, 0, r, Math.PI * .95, Math.PI * 2.05); for (let i = 0; i <= 10; i++) { const a = i / 10; c.lineTo(r * (1 - 2 * a) * 1.02, r * .42 + Math.sin(a * Math.PI * 5) * r * .09); } c.closePath(); c.fill();
+    c.fillStyle = col; c.beginPath(); c.arc(0, -r * .04, r * .96, Math.PI * .95, Math.PI * 2.05); for (let i = 0; i <= 10; i++) { const a = i / 10; c.lineTo(r * (.97 - 1.94 * a), r * .3 + Math.sin(a * Math.PI * 5 + .6) * r * .08); } c.closePath(); c.fill();
+    if (id === 'mint' || id === 'choc') for (let i = 0; i < 6; i++) tri(c, [[(rnd(i + 2) - .5) * r * 1.2, (rnd(i + 5) - .7) * r], [(rnd(i + 2) - .5) * r * 1.2 + r * .09, (rnd(i + 5) - .7) * r + r * .12], [(rnd(i + 2) - .5) * r * 1.2 - r * .09, (rnd(i + 5) - .7) * r + r * .12]], id === 'mint' ? '#4a2a1a' : '#5a3320');
+    if (id === 'strawb' || id === 'blueb') for (let i = 0; i < 6; i++) circ(c, (rnd(i + 2) - .5) * r * 1.2, (rnd(i + 5) - .7) * r, r * .07, id === 'strawb' ? '#e8435a' : '#4a5fb8');
+    c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(-r * .35, -r * .45, r * .22, r * .12, -.6, 0, TAU); c.fill();
     c.restore();
-    drawFlatDots(c, p.dots, W, -W * .31);
-    if (!(p.layers.find(l => l.id === 'sausage') || {}).drop) { c.save(); c.translate(0, -W * .1); c.fillStyle = shade(BUN, 0); rr(c, -W * .55, -W * .06, W * 1.1, W * .1, W * .05); c.fill(); c.fillStyle = shade(BUN, .1); rr(c, -W * .55, -W * .06, W * 1.1, W * .05, W * .025); c.fill(); c.restore(); }
   }
   function drawSundae(c, p, W, t = 0) {
-    c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.ellipse(W * .04, W * .12, W * .5, W * .09, 0, 0, TAU); c.fill();
-    c.fillStyle = 'rgba(210,235,255,.65)'; c.beginPath(); c.moveTo(-W * .34, -W * .55); c.lineTo(W * .34, -W * .55); c.lineTo(W * .2, -W * .08); c.lineTo(-W * .2, -W * .08); c.closePath(); c.fill(); box(c, -W * .04, -W * .1, W * .08, W * .14, 'rgba(210,235,255,.8)', 0); ell(c, 0, W * .02, W * .22, W * .06, 'rgba(210,235,255,.85)');
-    const sc = p.scoops || []; sc.forEach((s, i) => { const y = -W * (.45 + i * .27), x = (i % 2 ? .04 : -.04) * W; c.save(); c.translate(x, y); c.scale(W * .0095, W * .0095); ING['sc-' + s.id](c, 60); for (const sa of s.sauce || []) { c.strokeStyle = sa.col; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); sa.pts.forEach(([xx, yy], k) => k ? c.lineTo(xx * 60, yy * 60) : c.moveTo(xx * 60, yy * 60)); c.stroke(); } c.restore(); });
-    c.fillStyle = 'rgba(210,235,255,.35)'; c.beginPath(); c.moveTo(-W * .34, -W * .55); c.lineTo(-W * .2, -W * .08); c.lineTo(-W * .1, -W * .08); c.lineTo(-W * .22, -W * .55); c.closePath(); c.fill();
-    drawFlatDots(c, p.dots, W, -W * (.52 + Math.max(0, sc.length - 1) * .27));
+    const sc = p.scoops || [], n = Math.min(3, sc.length), rimY = -W * .55, rimX = W * .36;
+    c.fillStyle = 'rgba(80,40,20,.16)'; c.beginPath(); c.ellipse(W * .02, W * .02, W * .26, W * .05, 0, 0, TAU); c.fill();
+    const glass = 'rgba(214,236,252,.78)', edge = 'rgba(255,255,255,.95)';
+    ell(c, 0, -W * .01, W * .21, W * .055, 'rgba(190,222,245,.9)'); ell(c, 0, -W * .02, W * .17, W * .035, glass);
+    box(c, -W * .03, -W * .26, W * .06, W * .25, 'rgba(200,228,248,.9)', W * .02);
+    const bowl = () => { c.beginPath(); c.moveTo(-rimX, rimY); c.bezierCurveTo(-rimX * 1.02, -W * .34, -W * .12, -W * .25, 0, -W * .25); c.bezierCurveTo(W * .12, -W * .25, rimX * 1.02, -W * .34, rimX, rimY); c.closePath(); };
+    c.fillStyle = glass; bowl(); c.fill();
+    if (n) { c.save(); bowl(); c.clip(); c.fillStyle = shade(SCOOPS[sc[0].id] || '#fff1c4', -.05); c.beginPath(); c.ellipse(0, rimY + W * .06, rimX, W * .16, 0, 0, TAU); c.fill(); c.restore(); }
+    ell(c, 0, rimY, rimX, W * .065, 'rgba(235,246,255,.9)');
+    const pos = n ? SCOOP_AT[n - 1] : [];
+    sc.slice(0, 3).forEach((s, i) => { const [x, y] = pos[i], lift = (s.drop || 0) * W * .8; c.save(); c.globalAlpha = 1 - (s.drop || 0) * .6; drawScoop(c, x * W, y * W - lift, W * .19, SCOOPS[s.id] || '#fff1c4', s.id); c.restore(); });
+    // the glass's front lip over the bottom of the scoops, and its shine
+    c.save(); c.globalAlpha = .55; c.fillStyle = glass; c.beginPath(); c.ellipse(0, rimY, rimX, W * .065, 0, 0, Math.PI); c.lineTo(-rimX, rimY + W * .03); c.ellipse(0, rimY + W * .03, rimX * .985, W * .06, 0, Math.PI, 0, true); c.closePath(); c.fill(); c.restore();
+    c.strokeStyle = edge; c.lineWidth = W * .012; c.beginPath(); c.ellipse(0, rimY, rimX, W * .065, 0, Math.PI * .05, Math.PI * .95); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = W * .02; c.lineCap = 'round'; c.beginPath(); c.moveTo(-rimX * .78, rimY + W * .1); c.quadraticCurveTo(-rimX * .7, -W * .32, -W * .08, -W * .28); c.stroke();
+    if (p.cream && n) { const top = pos[n - 1]; c.save(); c.translate(top[0] * W, top[1] * W - W * .17); for (const [y, r] of [[0, .11], [-.06, .085], [-.11, .06], [-.15, .035]]) { circ(c, 0, y * W, r * W, '#f4f2ee'); circ(c, -r * W * .25, y * W - r * W * .25, r * W * .55, '#fff'); } c.restore(); }
+    drawFlatDots(c, p.dots, W, -W * (n >= 3 ? 1.02 : n ? .78 : .56));
+  }
+  // a pizza seen from above at an angle (top face centred on y = 0); sauce and cheese are painted and sprinkled on it
+  function drawPizza(c, p, R, t = 0) {
+    const rx = R * 1.25, ry = R * .82, k = p.baked || 0;
+    c.fillStyle = 'rgba(80,40,20,.18)'; c.beginPath(); c.ellipse(R * .05, R * .12, rx * 1.02, ry * 1.02, 0, 0, TAU); c.fill();
+    c.fillStyle = mixHex('#e6c48a', '#b8742e', k); c.beginPath(); c.ellipse(0, R * .05, rx, ry, 0, 0, TAU); c.fill();
+    c.fillStyle = mixHex('#f2d9a2', '#d9974a', k); c.beginPath(); c.ellipse(0, 0, rx, ry, 0, 0, TAU); c.fill();
+    c.fillStyle = mixHex('#f8e8c0', '#f0cf90', k); c.beginPath(); c.ellipse(0, -R * .01, rx * .86, ry * .84, 0, 0, TAU); c.fill();
+    for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; circ(c, Math.cos(a) * rx * .93, Math.sin(a) * ry * .92, R * .02, mixHex('#e8c88a', '#a8642a', k)); }
+  }
+  const pizzaClip = (c, R) => { c.beginPath(); c.ellipse(0, -R * .01, R * 1.25 * .86, R * .82 * .84, 0, 0, TAU); c.clip(); };
+  // toppings put exactly where she touched: x, y in units of the food's size R (from where drawPiece draws it)
+  const TOP_SZ = { cherry: .62, strawberry: .5, blueberry: .42, candle: .7, onion: .4, star: .5, pepperoni: .36, mushroom: .34, olive: .3, greenpepper: .34, pineapple: .32, basil: .32, cream: .4 };
+  const TOP_K = { cupcake: 1, cookie: 1, cake: .62, stack: .5, sundae: .46, hotdog: .52, pizza: .55 };
+  function drawTops(c, p, Rr) {
+    const R = Rr * (TOP_K[p.type] || 1), Rp = Rr;
+    for (const d of p.tops || []) {
+      c.save(); c.translate(d.x * Rp, d.y * Rp); c.rotate(d.rot || 0);
+      if (d.id === 'sprinkles') box(c, -R * .07, -R * .02, R * .14, R * .045, d.col || '#ff6b81', R * .02);
+      else if (d.id === 'candy') { circ(c, 0, 0, R * .08, d.col || '#5cc8f2'); shine(c, -R * .025, -R * .025, R * .028, R * .016, -.7, .6); }
+      else if (d.id === 'chips') tri(c, [[0, -R * .08], [R * .07, R * .06], [-R * .07, R * .06]], '#4a2a1a');
+      else if (d.id === 'shred') { if (p.baked > .5) { c.globalAlpha = .9; ell(c, 0, 0, Rp * .17, Rp * .11, '#ffe9a6', d.rot); c.globalAlpha = .55; ell(c, Rp * .03, Rp * .01, Rp * .05, Rp * .03, '#f0b84a', 0); } else box(c, -Rp * .06, -Rp * .014, Rp * .12, Rp * .028, d.col || '#fff8e0', Rp * .014); }
+      else if (d.id === 'cream') { c.rotate(-(d.rot || 0)); for (const [y, r] of [[0, .14], [-.07, .1], [-.13, .065], [-.17, .035]]) { circ(c, 0, y * R, r * R, '#f2efe8'); circ(c, -r * R * .25, y * R - r * R * .25, r * R * .55, '#fff'); } }
+      else if (d.id === 'candle') { c.rotate(-(d.rot || 0)); c.translate(0, -R * .16); ING.candle(c, R * TOP_SZ.candle); }
+      else if (d.id === 'relish') { for (let i = 0; i < 7; i++) ell(c, (rnd(i + 1) - .5) * R * .22, (rnd(i + 4) - .5) * R * .08, R * .03, R * .015, i % 3 ? '#5fae3a' : '#9ad85a', rnd(i) * 3); }
+      else if (d.id === 'pepperoni' && p.baked > .5) { c.scale(1, .7); ING.pepperoni(c, R * TOP_SZ.pepperoni); c.fillStyle = 'rgba(120,30,20,.25)'; c.beginPath(); c.arc(0, 0, R * .1, 0, TAU); c.fill(); }
+      else if (ING[d.id]) { if (['pepperoni', 'olive', 'greenpepper', 'pineapple', 'basil', 'mushroom'].includes(d.id)) c.scale(1, .72); ING[d.id](c, R * (TOP_SZ[d.id] || .4)); }
+      c.restore();
+    }
   }
   function drawPiece(c, p, R, t = 0) {
     c.save(); c.lineJoin = c.lineCap = 'round';
@@ -401,8 +571,10 @@
     else if (p.type === 'cake') drawCake(c, p, R, t);
     else if (p.type === 'hotdog') drawHotdog(c, p, R * 2, t);
     else if (p.type === 'sundae') drawSundae(c, p, R * 2, t);
+    else if (p.type === 'pizza') drawPizza(c, p, R, t);
     else drawStack(c, p, R * 2, t);
-    if (p.paint) drawPaintList(c, p.paint, R);
+    if (p.paint) { if (p.type === 'pizza') { c.save(); pizzaClip(c, R); drawPaintList(c, p.paint.filter(s => s.pizza), R); c.restore(); drawPaintList(c, p.paint.filter(s => !s.pizza), R); } else drawPaintList(c, p.paint, R); }
+    drawTops(c, p, R);
     c.restore();
   }
   // a sandwich cut with a character cutter: seen from above, with a face
@@ -418,17 +590,19 @@
     for (const sg of [-1, 1]) { c.save(); c.beginPath(); c.rect(sg < 0 ? -W : 0, -hh - W * .5, W, hh + W); c.clip(); c.translate(sg * k, 0); drawStack(c, p, W); c.restore(); }
   }
   // height of a piece (so it can sit on the plate)
-  const pieceHeight = (p, R) => p.shape && p.type === 'stack' ? R * 1.8 : p.type === 'cookie' ? R * .8 : p.type === 'cupcake' ? R * 1.0 : p.type === 'cake' ? R * 1.1 : p.type === 'sundae' ? R * 1.9 : p.type === 'hotdog' ? R * .6 : (p.layers || []).reduce((a, l) => a + (LAYER[l.id] ? LAYER[l.id][0] : 0), 0) * R * 2 + R * .2;
+  const sundaeTop = p => { const n = Math.min(3, (p.scoops || []).length); return (n >= 3 ? 1.06 : n ? .82 : .62) + (p.cream && n ? .16 : 0); };
+  const pieceHeight = (p, R) => p.shape && p.type === 'stack' ? R * 1.8 : p.type === 'cookie' ? R * .8 : p.type === 'cupcake' ? R * 1.0 : p.type === 'cake' ? R * 1.1 : p.type === 'pizza' ? R * .9 : p.type === 'sundae' ? R * 2 * sundaeTop(p) : p.type === 'hotdog' ? R * .7 : (p.layers || []).reduce((a, l) => a + (LAYER[l.id] ? LAYER[l.id][0] * (TOPL.has(l.id) ? .9 : .86) : 0), 0) * R * 2 + R * .12;
 
   function sampleBox(p) {
     if (p.type === 'multi') { let hw = 0, a = 0, b = 0; for (const [x, y, sub, k] of p.parts) { const q = sampleBox(sub); hw = Math.max(hw, Math.abs(x) + q.hw * k); a = Math.max(a, -y + q.a * k); b = Math.max(b, y + q.b * k); } return { hw, a, b }; }
     if (p.type === 'cookie') return { hw: 1.1, a: 1.05, b: 1.15 };
     if (p.type === 'cupcake') return { hw: .62, a: .95, b: .6 };
     if (p.type === 'cake') return { hw: 1.0, a: .5, b: .95 };
-    if (p.type === 'sundae') return { hw: .75, a: 2.1, b: .2 };
-    if (p.type === 'hotdog') return { hw: 1.15, a: .9, b: .25 };
+    if (p.type === 'sundae') return { hw: .8, a: pieceHeight(p, 1) + .05, b: .12 };
+    if (p.type === 'hotdog') return { hw: 1.12, a: .6, b: .12 };
+    if (p.type === 'pizza') return { hw: 1.3, a: .9, b: 1.0 };
     if (p.shape) return { hw: 1, a: 1, b: 1 };
-    return { hw: 1.05, a: pieceHeight(p, 1) + .2, b: .25 };
+    return { hw: 1.05, a: pieceHeight(p, 1) + .05, b: .12 };
   }
   // a finished food centred at (x, y) and sized to fit inside bw x bh
   function drawSample(c, p, x, y, bw, bh) { const q = sampleBox(p), k = Math.min(bw / (2 * q.hw), bh / (q.a + q.b)); c.save(); c.translate(x, y + (q.a - q.b) / 2 * k); drawPiece(c, p, k); c.restore(); }
@@ -448,6 +622,7 @@
     else if (k === 'bake') { drawOven(c, 0, s * .05, s * .8, .7, 0); }
     else if (k === 'grill') { c.translate(0, s * .1); if (id === 'bread') { ING.bread(c, s * .9); } else { ell(c, 0, s * .1, s * .46, s * .3, '#3a3a44'); c.save(); c.translate(0, -s * .08); (ING[id || 'patty'] || ING.patty)(c, s * .7); c.restore(); } }
     else if (k === 'stack') { c.translate(0, s * .05); for (const [i, l] of [['bunB', .28], ['patty', .1], ['cheese', -.02], ['bunT', -.2]]) { c.save(); c.translate(0, l * s); LAYER[i][1](c, s * .8); c.restore(); } }
+    else if ((k === 'pick' || k === 'build' || k === 'decorate' || k === 'grill') && id && ING[id] && !(k === 'grill' && id === 'bread')) { if (k === 'grill') { ell(c, 0, s * .2, s * .46, s * .3, '#3a3a44'); c.translate(0, s * .02); } ING[id](c, s * (k === 'decorate' ? .95 : 1)); }
     else if (k === 'decorate') { for (let i = 0; i < 9; i++) { c.save(); c.translate((rnd(i) - .5) * s * .8, (rnd(i + 5) - .5) * s * .7); c.rotate(rnd(i + 9) * 3); box(c, -s * .08, -s * .03, s * .16, s * .06, SPRINKLE[i % 5], s * .02); c.restore(); } }
     else if (k === 'slice') { c.save(); c.rotate(.5); box(c, -s * .5, -s * .08, s * .6, s * .16, '#d8dde6', s * .05); box(c, s * .1, -s * .1, s * .36, s * .2, '#a87a50', s * .08); c.restore(); }
     else if (k === 'serve') { ell(c, 0, s * .12, s * .46, s * .28, '#fff'); ell(c, 0, s * .1, s * .34, s * .2, '#e8f4fa'); art.star(c, 0, -s * .12, s * .2, '#ffd54a', 0); }
@@ -466,7 +641,8 @@
   function drawCupcakeAt(c, p, r) { c.save(); c.scale(r / 38, r / 38); drawCupcake(c, p, 40); c.restore(); }
 
   // a pointing finger-circle that bounces: "touch here"
-  function drawTapHint(c, x, y, r, t) { const b = Math.abs(Math.sin(t * 4)) * r * .5; c.save(); c.translate(x, y - r * 1.1 - b); c.lineJoin = 'round'; c.fillStyle = '#ff6b9d'; c.strokeStyle = '#fff'; c.lineWidth = r * .16; c.beginPath(); c.moveTo(-r * .38, -r * .55); c.lineTo(r * .38, -r * .55); c.lineTo(r * .38, -r * .05); c.lineTo(r * .78, -r * .05); c.lineTo(0, r * .7); c.lineTo(-r * .78, -r * .05); c.lineTo(-r * .38, -r * .05); c.closePath(); c.stroke(); c.fill(); c.restore(); }
+  const F = { hush: false };   // while a photo is taken nothing points or hints
+  function drawTapHint(c, x, y, r, t) { if (F.hush) return; const b = Math.abs(Math.sin(t * 4)) * r * .5; c.save(); c.translate(x, y - r * 1.1 - b); c.lineJoin = 'round'; c.fillStyle = '#ff6b9d'; c.strokeStyle = '#fff'; c.lineWidth = r * .16; c.beginPath(); c.moveTo(-r * .38, -r * .55); c.lineTo(r * .38, -r * .55); c.lineTo(r * .38, -r * .05); c.lineTo(r * .78, -r * .05); c.lineTo(0, r * .7); c.lineTo(-r * .78, -r * .05); c.lineTo(-r * .38, -r * .05); c.closePath(); c.stroke(); c.fill(); c.restore(); }
   function drawPieceC(c, p, R) { drawPiece(c, p, R); }
 
   function drawUnit(c, u, s) {
@@ -485,6 +661,7 @@
     const dark = shade(st.col, -.28), lite = shade(st.col, st.col === '#fff6dc' ? -.05 : .45);
     const pass = (col, f, dx, dy, a) => { c.globalAlpha = a; c.strokeStyle = col; c.fillStyle = col; for (let i = 0; i < pts.length; i++) { const q = pts[i], w = Math.max(.5, q.w * k * f); c.beginPath(); c.arc(q.x * k + dx * w, q.y * k + dy * w, w / 2, 0, TAU); c.fill(); if (i) { const o = pts[i - 1]; c.lineWidth = w; c.beginPath(); c.moveTo(o.x * k + dx * w, o.y * k + dy * w); c.lineTo(q.x * k + dx * w, q.y * k + dy * w); c.stroke(); } } c.globalAlpha = 1; };
     c.lineCap = c.lineJoin = 'round';
+    if (st.pizza) { pass(st.col, 1, 0, 0, .95); pass(shade(st.col, .12), .55, 0, 0, .5); return; }
     pass('rgba(60,20,10,1)', 1.12, .06, .14, .16); pass(dark, 1.06, 0, .05, 1); pass(st.col, 1, 0, 0, 1); pass(lite, .3, -.18, -.2, st.kind === 'sauce' ? .65 : .5);
   };
   const grainPts = (c, st, k) => { c.fillStyle = st.col; for (const q of st.pts) { c.beginPath(); c.arc(q.x * k, q.y * k, Math.max(.8, q.w * k), 0, TAU); c.fill(); } };
@@ -493,7 +670,8 @@
   const drawShadowDisc = (c, x, y, r) => { c.fillStyle = 'rgba(80,40,20,.14)'; c.beginPath(); c.ellipse(x + r * .06, y, r * 1.0, r * .32, 0, 0, TAU); c.fill(); };
   // piece centred at (x, y); tall pieces are drawn from their base so the middle lands on the point
   function drawPieceAt(c, p, x, y, R) { c.save(); c.translate(x, y + pieceBase(p, R)); drawPiece(c, p, R); c.restore(); }
-  const pieceBase = (p, R) => !p.shape && ['stack', 'hotdog', 'sundae'].includes(p.type) ? pieceHeight(p, R) * .5 : 0;
+  const FLAT = ['stack', 'hotdog', 'sundae'];
+  const pieceBase = (p, R) => !p.shape && FLAT.includes(p.type) ? pieceHeight(p, R) * .5 : 0;
 
   function drawKnife(c, x, y, s) { c.save(); c.translate(x, y); c.rotate(.18); c.fillStyle = 'rgba(80,40,20,.2)'; rr(c, -s * .04 + 4, -s * .06 + 6, s * .09, s * .5, s * .03); c.fill(); c.fillStyle = '#e8eef8'; c.beginPath(); c.moveTo(-s * .045, -s * .02); c.lineTo(s * .045, -s * .02); c.lineTo(s * .045, s * .4); c.quadraticCurveTo(0, s * .46, -s * .045, s * .4); c.closePath(); c.fill(); c.fillStyle = '#b9c4d4'; c.fillRect(-s * .045, -s * .02, s * .02, s * .42); box(c, -s * .055, -s * .24, s * .11, s * .24, '#d63a3a', s * .04); c.restore(); }
 
@@ -507,5 +685,5 @@
     c.drawImage(oc, x - S / 2 / dpr, y - S / 2 / dpr, S / dpr, S / dpr);
   }
 
-  SPG.cookArt = { clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU };
+  SPG.cookArt = { F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU };
 })();

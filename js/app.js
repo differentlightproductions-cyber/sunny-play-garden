@@ -506,6 +506,7 @@
       pinSection(),
       nightSection(),
       levelSection(),
+      photoSection(),
       backupSection(),
       safeSection, players,
       h('section', {}, h('h3', {}, 'Locking the tablet properly'),
@@ -646,6 +647,20 @@
       sec.append(block);
     }
     return sec;
+  }
+
+  // Kitchen photos: the camera button in Sprout Kitchen keeps photos in the game's own album; a grown-up can also let them go to the device's photos
+  function photoSection() {
+    const app = SPG.native && SPG.native.isApp, ios = safe.isIOS && !app;
+    const sw = h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': String(!!store.settings.photoSave), 'aria-label': 'Save kitchen photos to this device' });
+    sw.addEventListener('click', () => { store.settings.photoSave = !store.settings.photoSave; store.save(); sw.setAttribute('aria-checked', String(store.settings.photoSave)); });
+    const count = h('p', { class: 'fine' }, 'Counting photos…');
+    if (SPG.photos) SPG.photos.count().then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
+    const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear(); renderParent(); });
+    return h('section', {}, h('h3', {}, 'Kitchen photos'),
+      h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made. Photos are always kept in the kitchen\u2019s own photo album, on this device only.'),
+      ios ? h('p', { class: 'fine' }, 'On iPhone and iPad the photos stay in the kitchen album.') : h('div', { class: 'setting' }, h('span', {}, app ? 'Also save them to this phone\u2019s photo gallery (album \u201CSprout Park\u201D)' : 'Also save them to this device (as a download)'), sw),
+      count, clear);
   }
 
   function pinSection() {

@@ -32,18 +32,19 @@
     'puzzle-start': 'Put the picture together!', 'puzzle-done': 'You made the picture!', 'puzzle-next': 'Tap the green arrow for another puzzle!',
     'care-start': 'Take care of your friend!', 'care-food': 'Yum! Thank you!', 'care-clean': 'So fresh and clean!', 'care-sleep': 'Shhh... sleepy time.', 'care-hungry': 'Your friend is hungry!', 'care-dirty': 'Your friend needs a bath!', 'care-tired': 'Your friend is sleepy!',
     'hide-start': 'Who is hiding? Walk along the trail and look!', 'hide-found': 'Found you! Come along!', 'hide-done': 'You found everybody!', 'hide-gate': 'You found everyone here! Follow the glowing trail to the next place!', 'hide-locked': 'Find all your friends first!', 'hide-new': 'A new place to explore!', 'hide-home': 'What a wonderful adventure! Everyone is home!',
-    'cook-pick': 'What shall we cook today?', 'cookc/0': 'Sweets!', 'cookc/1': 'Sandwiches!', 'cookc/2': 'Burgers!',
-    'cook-start': 'Let us cook! Follow the chef!', 'cook-add': 'Put it in the bowl!', 'cook-stir': 'Stir, stir, stir!', 'cook-roll': 'Roll the dough flat!', 'cook-cut': 'Pick a friend and press it in!',
-    'cook-drop': 'Put some dough on the tray!', 'cook-pour': 'Pour the batter in!', 'cook-bake': 'Into the oven! Touch the tray!', 'cook-ding': 'Ding! It is ready! Touch the oven!',
+    'cook-pick': 'What shall we cook today?', 'cookc/0': 'Sweets!', 'cookc/1': 'Sandwiches!', 'cookc/2': 'Burgers, hot dogs and pizza!',
+    'cook-start': 'Let us cook! Follow the chef!', 'cook-add': 'Put it in the bowl!', 'cook-stir': 'Stir, stir, stir!', 'cook-roll': 'Roll the dough flat!', 'cook-cut': 'Pick a cutter, then touch the dough!', 'cook-cutsand': 'Pick a cutter, then touch the sandwich!', 'cook-oven-on': 'First, turn the oven on! Touch it!', 'cook-squirt': 'Squeeze the sauce anywhere you like!',
+    'cook-drop': 'Put some dough on the tray!', 'cook-pour': 'Pour the batter in!', 'cook-bake': 'Into the oven! Touch the tray!', 'cook-ding': 'It is ready! Touch the oven!',
     'cook-grill': 'Put it on the grill!', 'cook-flip': 'Flip it over!', 'cook-stack': 'Stack it up! Pick the glowing one!', 'cook-frost': 'Touch the cake with icing!',
-    'cook-decorate': 'Make it pretty!', 'cook-shake': 'Shake, shake, shake!', 'cook-alldone': 'All done? Touch the green check!', 'cook-slice': 'Slice it with the knife!',
-    'cook-serve': 'Yummy! Touch it to take a bite!', 'cook-yum': 'Yum yum!', 'cook-wrong': 'Try the glowing one!', 'cook-done': 'You cooked it! Delicious!',
-    'cookr/sugar': 'Sugar cookies!', 'cookr/chip': 'Chocolate chip cookies!', 'cookr/cupcake': 'Cupcakes!', 'cookr/cake': 'A birthday cake!', 'cookr/pancake': 'Pancakes!', 'cookr/sundae': 'An ice cream sundae!', 'cookr/pbj': 'Peanut butter and jelly!', 'cookr/toastie': 'A cheese toastie!', 'cookr/hamcheese': 'Ham and cheese!', 'cookr/veggie': 'A veggie sandwich!', 'cookr/turkey': 'Turkey and lettuce!', 'cookr/hotdog': 'Hot dog pals!', 'cookr/hamburger': 'A hamburger!', 'cookr/cheeseburger': 'A cheeseburger!', 'cookr/double': 'A double cheeseburger!', 'cookr/veggieb': 'A veggie burger!', 'cookr/chickenb': 'A chicken burger!', 'cookr/super': 'A super burger!',
-    'cook/flour': 'Flour!', 'cook/sugar': 'Sugar!', 'cook/egg': 'An egg!', 'cook/butter': 'Butter!', 'cook/milk': 'Milk!', 'cook/chips': 'Chocolate chips!', 'cook/cheese': 'Cheese!', 'cook/lettuce': 'Lettuce!', 'cook/tomato': 'Tomato!', 'cook/onion': 'Onion!', 'cook/pickle': 'Pickle!', 'cook/cucumber': 'Cucumber!', 'cook/avocado': 'Avocado!', 'cook/carrot': 'Carrot!', 'cook/ham': 'Ham!', 'cook/turkey': 'Turkey!', 'cook/patty': 'A burger patty!', 'cook/beanpatty': 'A veggie patty!', 'cook/chicken': 'A chicken patty!', 'cook/bunB': 'The bottom bun!', 'cook/bunT': 'The top bun!', 'cook/bread': 'Bread!', 'cook/hotbun': 'A hot dog bun!', 'cook/sausage': 'A sausage!', 'cook/pancake': 'Pancake!', 'cook/toast': 'Toast!', 'cook/butterpat': 'A pat of butter!', 'cook/batter': 'Batter!', 'cook/hotbunBack': 'A hot dog bun!', 'cook/bunny': 'Bunny!', 'cook/bear': 'Bear!', 'cook/cat': 'Kitty!', 'cook/fox': 'Fox!', 'cook/frog': 'Frog!', 'cook/panda': 'Panda!', 'cook/dino': 'Dinosaur!', 'cook/unicorn': 'Unicorn!', 'cook/flower': 'Flower!', 'cook/heart': 'Heart!', 'cook/ketchup': 'Ketchup!', 'cook/mustard': 'Mustard!', 'cook/mayo': 'Mayo!', 'cook/pbutter': 'Peanut butter!', 'cook/jelly': 'Jelly!', 'cook/syrup': 'Syrup!', 'cook/strawberry': 'A strawberry!', 'cook/blueberry': 'Blueberries!', 'cook/cherry': 'A cherry!', 'cook/sprinkles': 'Sprinkles!', 'cook/candy': 'Candy!', 'cook/candle': 'A candle!', 'cook/star': 'A star!', 'cook/cone': 'A cone!', 'cook/salt': 'Salt!', 'cook/pepper': 'Pepper!', 'cook/dough': 'Dough!', 'cook/ice-pink': 'Pink icing!', 'cook/ice-blue': 'Blue icing!', 'cook/ice-yellow': 'Yellow icing!', 'cook/ice-white': 'White icing!', 'cook/ice-choc': 'Chocolate icing!', 'cook/ice-green': 'Green icing!', 'cook/ice-purple': 'Purple icing!', 'cook/sc-vanilla': 'Vanilla ice cream!', 'cook/sc-strawb': 'Strawberry ice cream!', 'cook/sc-choc': 'Chocolate ice cream!', 'cook/sc-mint': 'Mint ice cream!', 'cook/sc-blueb': 'Blueberry ice cream!',
-    'num/1': 'One!', 'num/2': 'Two!', 'num/3': 'Three!', 'num/4': 'Four!', 'num/5': 'Five!',
+    'cook-decorate': 'Make it pretty!', 'cook-slice': 'Slice it with the knife!',
+    'cook-serve': 'Yummy! Touch it to take a bite!',
+    'cook-pickbun': 'Pick a bun!', 'cook-pickbread': 'Pick your bread!', 'cook-patties': 'Put patties on the grill! One, two or three!', 'cook-meat': 'Add the meat you like!', 'cook-cheese': 'Add some cheese, or touch the green check!', 'cook-veg': 'Add the veggies you like!', 'cook-saucetop': 'Add some sauce, then put the top on!', 'cook-scoop': 'Pick your ice cream!', 'cook-pizzasauce': 'Spread the sauce all over!', 'cook-pizzacheese': 'Sprinkle on the cheese!', 'cook-toppings': 'Put your toppings anywhere you like!', 'cook-yum': 'Yum yum!', 'cook-wrong': 'Try the glowing one!', 'cook-done': 'You cooked it! Delicious!',
+    'cookr/sugar': 'Sugar cookies!', 'cookr/chip': 'Chocolate chip cookies!', 'cookr/cupcake': 'Cupcakes!', 'cookr/cake': 'A birthday cake!', 'cookr/pancake': 'Pancakes!', 'cookr/sundae': 'An ice cream sundae!', 'cookr/pbj': 'Peanut butter and jelly!', 'cookr/toastie': 'A cheese toastie!', 'cookr/sandwich': 'Build a sandwich!', 'cookr/hotdog': 'A hot dog!', 'cookr/burger': 'Build a burger!', 'cookr/pizza': 'Pizza!',
+    'cook/flour': 'Flour!', 'cook/sugar': 'Sugar!', 'cook/egg': 'An egg!', 'cook/butter': 'Butter!', 'cook/milk': 'Milk!', 'cook/chips': 'Chocolate chips!', 'cook/cheese': 'Cheese!', 'cook/lettuce': 'Lettuce!', 'cook/tomato': 'Tomato!', 'cook/onion': 'Onion!', 'cook/pickle': 'Pickle!', 'cook/cucumber': 'Cucumber!', 'cook/avocado': 'Avocado!', 'cook/carrot': 'Carrot!', 'cook/ham': 'Ham!', 'cook/turkey': 'Turkey!', 'cook/patty': 'A burger patty!', 'cook/beanpatty': 'A veggie patty!', 'cook/chicken': 'A chicken patty!', 'cook/bunB': 'The bottom bun!', 'cook/bunT': 'The top bun!', 'cook/bread': 'Bread!', 'cook/hotbun': 'A hot dog bun!', 'cook/sausage': 'A sausage!', 'cook/pancake': 'Pancake!', 'cook/toast': 'Toast!', 'cook/butterpat': 'A pat of butter!', 'cook/batter': 'Batter!', 'cook/hotbunBack': 'A hot dog bun!', 'cook/bunny': 'Bunny!', 'cook/bear': 'Bear!', 'cook/cat': 'Kitty!', 'cook/fox': 'Fox!', 'cook/frog': 'Frog!', 'cook/panda': 'Panda!', 'cook/dino': 'Dinosaur!', 'cook/unicorn': 'Unicorn!', 'cook/flower': 'Flower!', 'cook/heart': 'Heart!', 'cook/ketchup': 'Ketchup!', 'cook/mustard': 'Mustard!', 'cook/mayo': 'Mayo!', 'cook/pbutter': 'Peanut butter!', 'cook/jelly': 'Jelly!', 'cook/syrup': 'Syrup!', 'cook/strawberry': 'A strawberry!', 'cook/blueberry': 'Blueberries!', 'cook/cherry': 'A cherry!', 'cook/sprinkles': 'Sprinkles!', 'cook/candy': 'Candy!', 'cook/candle': 'A candle!', 'cook/star': 'A star!', 'cook/cone': 'A cone!', 'cook/salt': 'Salt!', 'cook/pepper': 'Pepper!', 'cook/dough': 'Dough!', 'cook/ice-pink': 'Pink icing!', 'cook/ice-blue': 'Blue icing!', 'cook/ice-yellow': 'Yellow icing!', 'cook/ice-white': 'White icing!', 'cook/ice-choc': 'Chocolate icing!', 'cook/ice-green': 'Green icing!', 'cook/ice-purple': 'Purple icing!', 'cook/sc-vanilla': 'Vanilla ice cream!', 'cook/sc-strawb': 'Strawberry ice cream!', 'cook/sc-choc': 'Chocolate ice cream!', 'cook/sc-mint': 'Mint ice cream!', 'cook/sc-blueb': 'Blueberry ice cream!', 'cook/cheddar': 'Cheddar cheese!', 'cook/american': 'American cheese!', 'cook/provolone': 'Provolone cheese!', 'cook/pepperjack': 'Pepper jack cheese!', 'cook/swiss': 'Swiss cheese!', 'cook/bacon': 'Bacon!', 'cook/salami': 'Salami!', 'cook/chickenslice': 'Chicken!', 'cook/bun-plain': 'A plain bun!', 'cook/bun-sesame': 'A sesame bun!', 'cook/bun-wheat': 'A wheat bun!', 'cook/bunT-plain': 'The top bun!', 'cook/bunT-wheat': 'The top bun!', 'cook/bread-white': 'White bread!', 'cook/bread-wheat': 'Wheat bread!', 'cook/bread-rye': 'Rye bread!', 'cook/breadT': 'The top slice!', 'cook/breadT-wheat': 'The top slice!', 'cook/breadT-rye': 'The top slice!', 'cook/bbq': 'Barbecue sauce!', 'cook/relish': 'Relish!', 'cook/caramel': 'Caramel sauce!', 'cook/strawsauce': 'Strawberry sauce!', 'cook/cream': 'Whipped cream!', 'cook/pizzasauce': 'Pizza sauce!', 'cook/mozzarella': 'Mozzarella cheese!', 'cook/pepperoni': 'Pepperoni!', 'cook/mushroom': 'Mushrooms!', 'cook/olive': 'Olives!', 'cook/greenpepper': 'Green peppers!', 'cook/pineapple': 'Pineapple!', 'cook/basil': 'Basil!',
+    'count-touch': 'Touch each one to count!', 'count-how': 'How many are there?', 'count-find': 'Touch the number!', 'math-plus': 'plus', 'math-minus': 'take away', 'math-is': 'is', 'math-sum': 'How many altogether?', 'math-left': 'How many are left?', 'math-more': 'One more makes', 'math-start': 'Let us add and take away!', 'count-start': 'Let us count!',
     'color/red': 'Red!', 'color/blue': 'Blue!', 'color/yellow': 'Yellow!', 'color/green': 'Green!',
     'shape/circle': 'Circle!', 'shape/square': 'Square!', 'shape/triangle': 'Triangle!', 'shape/star': 'Star!',
-    'aq-start': 'Touch the water to feed the fish!', 'aq-coin': 'A shiny coin! Touch it!', 'aq-grow': 'Your fish is growing!', 'aq-shop': 'Spend your coins!', 'aq-boss': 'A grumpy visitor! Tap it with bubbles!', 'aq-boss-done': 'You made a new friend! Hooray!',
+    'aq-start': 'Touch the water to feed the fish!', 'aq-fresh': 'A fresh new fish tank! Here are some coins to buy new fish!', 'aq-coin': 'A shiny coin! Touch it!', 'aq-grow': 'Your fish is growing!', 'aq-shop': 'Spend your coins!', 'aq-boss': 'A grumpy visitor! Tap it with bubbles!', 'aq-boss-done': 'You made a new friend! Hooray!',
     'aq/guppy': 'A little guppy', 'aq/clown': 'A clownfish', 'aq/angel': 'An angelfish', 'aq/puffer': 'A pufferfish', 'aq/food': 'Better fish food', 'aq/more': 'More fish food', 'aq/snail': 'A helper snail', 'aq/power': 'Bubble power', 'aq/castle': 'A castle', 'aq/chest': 'A treasure chest', 'aq/weed': 'Seaweed', 'aq/shell': 'A big shell',
     'care-morning': 'Good morning!', 'room/home': 'A cozy home!', 'room/castle': 'A castle!', 'room/halloween': 'A spooky house!', 'room/christmas': 'A Christmas house!', 'room/dino': 'Dinosaur land!', 'room/space': 'Outer space!', 'room/beach': 'A seaside house!',
     'fire-level': 'A new place to help!', 'fire-next': 'Tap the green arrow to go somewhere new!',
@@ -89,6 +90,8 @@
     pets: ['Biscuit', 'Pip', 'Mochi', 'Nugget', 'Clover', 'Peaches', 'Maple', 'Button', 'Pebble', 'Sprout', 'Waffles', 'Poppy', 'Cocoa', 'Daisy', 'Muffin', 'Twinkle', 'Rex', 'Spike', 'Stompy', 'Dino', 'Waddles', 'Nibbles', 'Whiskers', 'Snowball', 'Ginger', 'Bubbles', 'Oreo', 'Pepper', 'Fluffy', 'Sparkle', 'Bean', 'Noodle']
   };
   for (const n of new Set([...PICK_NAMES.nicks, ...PICK_NAMES.pets])) LINES['name/' + n] = n;
+  const NUMW = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
+  NUMW.forEach((w, n) => { LINES['num/' + n] = w + '!'; });
   Object.assign(LINES, { 'hello': 'Hello!', 'welcome-home': 'Welcome home,' });
   for (const [l, t] of Object.entries(NAMES)) LINES['letter/' + l] = t;
   for (const [l, t] of Object.entries(PHONICS)) LINES['sound/' + l] = t;
@@ -100,6 +103,13 @@
   // Purring and happy sounds for the close-up petting in Pet Care. Without a recording the game makes a soft synthesized purr.
   const PURRS = { trex: 'a low, rumbly happy growl', trike: 'a low, happy rumble', stego: 'a deep, sleepy rumble', bronto: 'a slow, deep hum', babydino: 'a squeaky happy chirp', cat: 'a long, happy purr (a real cat purring is best)', dog: 'a happy, sleepy dog groan or soft pant', bunny: 'a bunny "tooth purr", soft chattering teeth', bear: 'a low, contented hum', fox: 'a soft, chirpy fox chatter', panda: 'a gentle panda bleat or hum', frog: 'a soft, slow ribbit' };
   for (const [k, d] of Object.entries(PURRS)) SOUNDS['purr/' + k] = d;
+  // "Extra audio help" (Grown-ups > Sound, off by default): lines that only say what a touched menu item, ingredient, piece of clothing
+  // or shop item is called, or comment on what is happening. Everything that teaches or tells what to do is always spoken.
+  const EXTRA_KEYS = new Set(['cook-yum', 'cook-start']);
+  const isExtra = k => EXTRA_KEYS.has(k) || /^(cookc|cookr|cook|aq|room)\//.test(k) || (/^style\//.test(k) && !/^style\/say-/.test(k));
+  // How the built-in voice should say a line when the written text comes out wrong. (A recording, or text a grown-up has edited, is never changed.)
+  // A lone "Ay" is read like the word "eye" by phone voices; a capital letter on its own is read as the letter.
+  const SAY_AS = { 'letter/a': 'A.', 'sound/x': 'kss' };
   const custom = {}; // dynamic lines, e.g. player names: key -> fallback text
 
   // Two built-in voice slots plus any extra voices the grown-ups add and name (grandparents, cousins, the child herself...).
@@ -114,17 +124,18 @@
   }
 
   const GROUPS = [
-    { id: 'praise', title: 'Cheering', note: 'Said after she does something well. Turn down how often in the "Praise" setting.', test: k => PRAISE.has(k) },
-    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell her what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style|name|cook|cookr|cookc)\//.test(k) },
+    { id: 'praise', title: 'Cheering', note: 'Said after something is done well. Turn down how often in the "Praise" setting.', test: k => PRAISE.has(k) },
+    { id: 'prompts', title: 'Prompts and instructions', note: 'Short lines that tell {her} what to do.', test: k => k in LINES && !PRAISE.has(k) && !/^(letter|sound|word|creature|style|name|cook|cookr|cookc|num)\//.test(k) },
+    { id: 'numbers', title: 'Numbers (0 to 20)', note: 'Said when counting and adding: "One!", "Two!"... Say just the number.', test: k => k.startsWith('num/') },
     { id: 'names', title: 'Names in the name pickers', note: 'Said when a name button is touched (player nicknames and pet names) and in "Welcome home, ...".', test: k => k.startsWith('name/') },
-    { id: 'style', title: 'Style Studio names', note: 'Said when she touches a friend, a hairstyle or a piece of clothing in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
-    { id: 'kitchen', title: 'Sprout Kitchen names', note: 'Said when she touches an ingredient, a cutter shape, a recipe or a food group in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".', test: k => /^(cook|cookr|cookc)\//.test(k) },
+    { id: 'style', title: 'Style Studio names', note: 'Only said when "Extra audio help" is on in Grown-ups. Said when a friend, a hairstyle or a piece of clothing is touched in the dress-up game, like "A ball gown!" or "Fairy wings!".', test: k => k.startsWith('style/') },
+    { id: 'kitchen', title: 'Sprout Kitchen names', note: 'Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a cutter shape, a recipe or a food group is touched in the cooking game: "Flour!", "Pink icing!", "A cheeseburger!".', test: k => /^(cook|cookr|cookc)\//.test(k) },
     { id: 'letters', title: 'Letter names (A to Z)', note: 'Say the name of the letter: "Bee", "Cee".', test: k => k.startsWith('letter/') },
     { id: 'sounds', title: 'Letter sounds (A to Z)', note: 'Say the sound the letter makes: "buh", "kuh", "sss". Not the name.', test: k => k.startsWith('sound/') },
     { id: 'words', title: 'Picture words', note: 'The word for each letter picture: apple, bear, cat...', test: k => k.startsWith('word/') },
     { id: 'friends', title: 'Garden friend announcements', note: 'Said when a new garden friend appears.', test: k => k.startsWith('creature/') },
-    { id: 'critters', title: 'Critter noises (make the sound!)', note: 'Played when she taps a garden friend. Just make the noise, like a bee buzz or a frog ribbit.', test: k => k.startsWith('critter/') },
-    { id: 'purrs', title: 'Purring and happy sounds', note: 'Played while she strokes a pet in the close-up view in Pet Care (it loops while she pets). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.', test: k => k.startsWith('purr/') },
+    { id: 'critters', title: 'Critter noises (make the sound!)', note: 'Played when a garden friend is tapped. Just make the noise, like a bee buzz or a frog ribbit.', test: k => k.startsWith('critter/') },
+    { id: 'purrs', title: 'Purring and happy sounds', note: 'Played while a pet is stroked in the close-up view in Pet Care (it loops while the pet is petted). If nothing is recorded the game makes a soft purr of its own. A few seconds of a real purr works best.', test: k => k.startsWith('purr/') },
     { id: 'players', title: 'Player names', note: 'Say each player\'s greeting, like "Hi Charlotte!".', test: k => k.startsWith('player/') || k.startsWith('pname/') }
   ];
 
@@ -238,14 +249,14 @@
     if (T && text) return new Promise(resolve => {
       let done = false; const fin = () => { if (!done) { done = true; resolve(); } };
       const v = pickVoice();
-      T.speak({ text, lang: (v && v.lang) || 'en-US', rate: .92, pitch: 1.0, volume: 1, voice: v && v.idx != null ? v.idx : undefined, queueStrategy: 0 }).then(fin, fin);
+      T.speak({ text, lang: (v && v.lang) || 'en-US', rate: settings().audioHelp ? .8 : .92, pitch: 1.0, volume: 1, voice: v && v.idx != null ? v.idx : undefined, queueStrategy: 0 }).then(fin, fin);
       setTimeout(fin, 1500 + text.length * 140);
       current = { stop: () => { try { T.stop(); } catch (_) { /* ignore */ } fin(); } };
     });
     return new Promise(resolve => {
       if (!('speechSynthesis' in window) || !text) return resolve();
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = .9; u.pitch = 1.05; u.lang = 'en-US';   // a lightly raised pitch only: a lot of it makes voices sound robotic
+      u.rate = settings().audioHelp ? .78 : .9; u.pitch = 1.05; u.lang = 'en-US';   // a lightly raised pitch only: a lot of it makes voices sound robotic
       const v = pickVoice(); if (v) u.voice = v;
       let done = false;
       const fin = () => { if (!done) { done = true; resolve(); } };
@@ -287,11 +298,12 @@
     if (!settings().voice || !item || SPG.voice.hushed) return;
     if (typeof item !== 'string') return item.say ? speak(item.say) : undefined;
     if (skip(item)) return;
+    if (isExtra(item) && !settings().audioHelp) return;   // only with Extra audio help
     await ready;
     const set = A.ctx ? chooseSet(item) : null;
     if (set) { const buf = await loadBuffer(set, item); if (buf) return playBuffer(buf); }
     if (item in SOUNDS) return; // sound-only: silent unless recorded
-    const text = textFor(item) === item ? (LINES[item] ?? custom[item]) : textFor(item);
+    const text = SAY_AS[item] && !(store.settings.lineText && store.settings.lineText[item]) ? SAY_AS[item] : textFor(item) === item ? (LINES[item] ?? custom[item]) : textFor(item);
     if (text) return speak(text);
   }
 
@@ -400,7 +412,8 @@
       if (changedAny) { store.save(); syncSets(); }
       return changedAny;
     },
-    originalText,
+    originalText, isExtra,
+    spokenFor: key => (SAY_AS[key] && !(store.settings.lineText && store.settings.lineText[key]) ? SAY_AS[key] : textFor(key)),
     setText(key, text) {
       const t = String(text || '').trim().slice(0, 120), map = store.settings.lineText || (store.settings.lineText = {});
       if (!t || t === originalText(key)) delete map[key]; else map[key] = t;

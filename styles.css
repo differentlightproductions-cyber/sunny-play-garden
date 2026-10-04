@@ -642,11 +642,6 @@ body { position: fixed; inset: 0; width: 100%; }
 .ps-name { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: clamp(1.4rem, 4.4vmin, 2.4rem); background: rgba(255, 255, 255, .85); border-radius: 999px; padding: .1em .3em .1em .9em; box-shadow: 0 5px 0 rgba(90, 63, 94, .14); }
 .ps-pencil { width: clamp(40px, 8vmin, 56px); height: clamp(40px, 8vmin, 56px); border: 0; border-radius: 50%; background: #efe6f3; color: var(--ink); display: grid; place-items: center; box-shadow: 0 4px 0 #d8cbe0; }
 .ps-pencil svg { width: 58%; height: 58%; }
-.ps-hatrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-.ps-hatbtn { width: clamp(44px, 8.4vmin, 62px); height: clamp(44px, 8.4vmin, 62px); border: 0; border-radius: 50%; background: #fff; padding: 0; display: grid; place-items: center; box-shadow: 0 4px 0 rgba(90, 63, 94, .16); color: var(--ink); }
-.ps-hatbtn canvas { width: 100%; height: 100%; display: block; }
-.ps-hatbtn svg { width: 50%; height: 50%; }
-.ps-hatbtn.on { background: #d9f7e4; box-shadow: 0 0 0 4px var(--leaf), 0 4px 0 var(--leaf-edge); }
 .ps-hint { min-height: 1.4em; text-align: center; font-weight: 600; color: var(--ink-soft); font-size: clamp(1rem, 2.8vmin, 1.3rem); max-width: 30em; margin: 0; }
 .ps-shelf { overflow-y: auto; overflow-x: hidden; min-height: 0; background: rgba(255, 255, 255, .55); border-radius: 30px; padding: clamp(10px, 2vmin, 20px); -webkit-overflow-scrolling: touch; }
 .ps-shelf h3 { margin: 4px 6px 8px; font-size: clamp(1.1rem, 3vmin, 1.5rem); }
@@ -973,10 +968,13 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 .ps-tag .ps-price { background: none; padding: 0; }
 .ps-peg { display: grid; gap: clamp(8px, 1.6vmin, 16px); grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 20vmin, 150px), 1fr)); padding: 10px; border-radius: 16px; background: #f6d7b0; background-image: radial-gradient(rgba(150, 100, 60, .35) 2px, transparent 2.5px); background-size: 22px 22px; border: 4px solid #d9a877; }
 .ps-hook { border: 3px solid #fff; }
+.ps-none canvas { opacity: .8; }
+.ps-none > .ico { position: absolute; left: 50%; top: 30%; width: 30%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); color: #e0556b; filter: drop-shadow(0 2px 0 rgba(255, 255, 255, .9)); pointer-events: none; }
+.ps-card.taken > canvas { opacity: .75; }
+.ps-worn { position: absolute; top: 4px; left: 4px; width: 34%; max-width: 54px; aspect-ratio: 1; border-radius: 50%; background: #fff; border: 3px solid #ffb52e; box-shadow: 0 3px 0 rgba(90, 63, 94, .22); display: block; overflow: hidden; pointer-events: none; }
+.ps-worn canvas { width: 100%; height: 100%; display: block; }
+.ps-peg-sep { grid-column: 1 / -1; height: 10px; border-radius: 6px; background: rgba(150, 100, 60, .25); }
 .ps-hook::before { content: ''; position: absolute; top: -12px; left: 50%; width: 3px; height: 14px; background: #8a7190; }
-.ps-wardrobe { display: grid; gap: 6px; width: 100%; }
-.ps-wrow { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; padding: 4px 6px; border-radius: 18px; background: rgba(255, 255, 255, .6); }
-.ps-hatbtn { width: clamp(46px, 8.6vmin, 76px) !important; height: clamp(46px, 8.6vmin, 76px) !important; }
 @media (orientation: landscape) { .ps { grid-template-columns: minmax(250px, 40%) minmax(0, 1fr); } }
 @media (max-height: 520px) { .ps-sign span { display: none; } .ps-sign canvas { width: 38px; } .ps-shelfrow { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
@@ -1009,3 +1007,24 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 @media (orientation: landscape) and (max-height: 520px) { .ps-sheet { flex-direction: column; flex-wrap: nowrap; width: min(96vw, 640px); gap: 4px; } .ps-sheet .ps-prev { display: none; } .ps-sheet h2 { flex: none; min-width: 0; font-size: 1.05rem; } .ps-sheet .ps-yn, .ps-sheet .ps-dice { min-height: 48px; } .ps-sheet > .name-grid { min-height: 60px; } }
 /* Player setup: Back and Let's play! stay pinned to the bottom of the sheet even when the rest has to scroll (short landscape phones) */
 .setup .sheet > .row { position: sticky; bottom: -2px; z-index: 2; background: inherit; padding: 8px 0 4px; margin-bottom: 0; }
+/* ---- age and difficulty (Grown-ups), and the boy/girl and age pickers at setup ---- */
+.lvl-block { border-top: 3px dashed #e8dcee; padding: 12px 0 6px; }
+.lvl-block:first-of-type { border-top: 0; }
+.lvl-head { display: flex; align-items: center; gap: 12px; }
+.lvl-head canvas { width: 52px; height: 52px; border-radius: 50%; background: var(--butter); }
+.lvl-head .name { font-weight: 700; font-size: 1.2rem; }
+.lvl-head .stat { color: var(--ink-soft); font-size: .95rem; font-weight: 600; }
+.lvl-line { display: flex; flex-direction: column; gap: 0; padding: 6px 0; border-top: 2px dotted #efe3f3; }
+.lvl-line b { font-size: 1.02rem; }
+.setup .seg { margin: 4px 0 6px; }
+.setup .seg-btn { min-width: 52px; min-height: 48px; }
+#gender-pick .seg-btn { flex: 1; font-size: 1.25rem; }
+@media (orientation: landscape) and (max-height: 520px) { .setup .field-label .fine { display: none; } .setup .seg-btn { min-height: 40px; font-size: 1rem; padding: .3em .9em; } }
+
+/* ---- Letter Garden: eight activities (two more for numbers), and the counting cards ---- */
+.lg-modes { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); max-width: 1200px; }
+@media (orientation: portrait) { .lg-modes { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); max-height: none; } }
+@media (max-height: 520px) and (orientation: landscape) { .lg-modes { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); align-items: stretch; } }
+.lg-numcard { display: block; width: min(94vw, 900px); height: min(36vh, 360px); margin-bottom: clamp(8px, 2vh, 20px); touch-action: none; flex: none; }
+.lg-num .lg-opt { padding: 8px 18px; }
+@media (max-height: 520px) and (orientation: landscape) { .lg-numcard { height: min(40vh, 150px); margin-bottom: 6px; } }

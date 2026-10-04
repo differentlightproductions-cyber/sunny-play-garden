@@ -32,14 +32,13 @@
     /* -------------------------------------------------------------- layout */
     build() {
       this.tab = 'pets';
-      // the dress-up corner: a mirror, a little podium, and three wardrobe rows (hats, glasses, necks)
+      // the dress-up corner: a mirror and a little podium (what she wears is chosen on the pegboard sections on the right)
       this.roomCv = el('canvas', 'ps-pet');
       this.nameEl = el('b', 'ps-nameText');
       this.pencil = btn('ps-pencil', 'Change name', icon('pencil')); tap(this.pencil, () => this.askName(P.active().id, false));
       this.nameRow = el('div', 'ps-name', this.nameEl, this.pencil);
-      this.wardrobe = el('div', 'ps-wardrobe');
       this.hint = el('p', 'ps-hint');
-      this.room = el('section', 'ps-room', this.roomCv, this.nameRow, this.wardrobe, this.hint);
+      this.room = el('section', 'ps-room', this.roomCv, this.nameRow, this.hint);
       // the store: a sign row at the top, then shelves of pens or a pegboard of accessories
       this.signs = el('div', 'ps-signs');
       this.shelf = el('div', 'ps-aisle'); this.shelf.setAttribute('data-scroll', '');
@@ -60,20 +59,6 @@
       this.nameEl.textContent = a ? a.name : '';
       this.nameRow.classList.toggle('hidden', !a);
       this.hint.textContent = a ? '' : 'Pick a friend from the shelves to take home!';
-      // wardrobe: one row per place on the body, showing only what she owns
-      this.wardrobe.replaceChildren();
-      if (a) for (const slot of P.SLOTS) {
-        const own = P.HATS.filter(h => h.slot === slot && P.ownsHat(h.id)); if (!own.length) continue;
-        const cur = slot === 'head' ? a.hat : a[slot], row = el('div', 'ps-wrow');
-        const none = btn('ps-hatbtn' + (cur ? '' : ' on'), 'Take it off', icon('x')); tap(none, () => { P.unwear(slot); sfx.tap(); this.hop = .6; this.render(); });
-        row.append(none);
-        for (const h of own) {
-          const cv = el('canvas'), b = btn('ps-hatbtn' + (cur === h.id ? ' on' : ''), h.name, cv); b._hat = h.id; b._cv = cv;
-          tap(b, () => { P.wear(h.id); sfx.pop(); this.hop = 1; this.render(); });
-          row.append(b);
-        }
-        this.wardrobe.append(row);
-      }
       // the sign row: what you can look at in the shop
       this.signs.replaceChildren();
       for (const [id, label] of [['pets', 'Pets'], ['head', 'Hats'], ['face', 'Glasses'], ['neck', 'Bows and collars']]) {
@@ -101,16 +86,27 @@
       }
       return wrap;
     }
-    // Accessories hang on a pegboard wall.
+    // Accessories hang on a pegboard wall. Each section starts with a big "nothing" button (take it off), then what she owns (touch to
+    // put it on, no price), then what she can still buy (star tags). An owned thing that another pet is wearing shows that pet's face.
     pegboard(slot) {
       const wrap = el('div', 'ps-peg'), a = P.active(), list = P.HATS.filter(h => h.slot === slot);
-      for (const item of list) {
+      const cur = a ? (slot === 'head' ? a.hat : a[slot]) : null;
+      const none = btn('ps-card ps-hook ps-none' + (a && !cur ? ' active' : ''), 'Nothing, take it off', el('canvas'), icon('x'), el('span', 'ps-label', 'None'));
+      none._cv = none.firstChild; none._type = 'none';
+      tap(none, () => { if (!a) { this.nope(none, 'Take a friend home first, then pick something to wear!'); return; } P.unwear(slot); sfx.tap(); this.hop = .6; this.render(); });
+      wrap.append(none);
+      const mine = list.filter(h => P.ownsHat(h.id)), rest = list.filter(h => !P.ownsHat(h.id));
+      const add = item => {
         const owned = P.ownsHat(item.id), cant = !owned && !P.canAfford(item.price), cv = el('canvas');
-        const on = a && (slot === 'head' ? a.hat : a[slot]) === item.id;
-        const b = btn(`ps-card ps-hook${owned ? ' owned' : ''}${cant ? ' cant' : ''}${on ? ' active' : ''}`, owned ? item.name : `${item.name}, ${item.price} stars`, cv,
-          el('span', 'ps-label', item.name), owned ? el('span', 'ps-own', icon('check')) : el('span', 'ps-tag', price(item.price)));
+        const on = !!a && cur === item.id, other = owned && !on ? P.wornBy(item.id) : null;
+        const b = btn(`ps-card ps-hook${owned ? ' owned' : ''}${cant ? ' cant' : ''}${on ? ' active' : ''}${other ? ' taken' : ''}`,
+          other ? `${item.name}, on ${P.nameOf(other)}` : owned ? item.name : `${item.name}, ${item.price} stars`, cv,
+          el('span', 'ps-label', item.name), owned ? (other ? null : el('span', 'ps-own', icon('check'))) : el('span', 'ps-tag', price(item.price)));
+        if (other) { const bc = el('canvas'); b.append(el('span', 'ps-worn', bc)); b._badge = { cv: bc, pet: other }; }
         b._cv = cv; b._item = item; b._type = 'hat'; tap(b, () => this.tapCard(item, 'hat', b)); wrap.append(b);
-      }
+      };
+      mine.forEach(add);
+      if (rest.length) { if (mine.length) wrap.append(el('div', 'ps-peg-sep')); rest.forEach(add); }
       return wrap;
     }
     penKind(id) { return { bunny: 'cage', hamster: 'cage', mouse: 'cage', cat: 'basket', dog: 'basket', pig: 'pasture', lamb: 'pasture', elephant: 'pasture', unicorn: 'cloud', trex: 'jungle', trike: 'jungle', stego: 'jungle', bronto: 'jungle', babydino: 'jungle', frog: 'pond', duck: 'pond', penguin: 'ice', owl: 'perch', bear: 'forest', fox: 'forest', panda: 'forest' }[id] || 'cage'; }
@@ -156,13 +152,13 @@
           c.save(); art.rr(c, 0, 0, w, h, 14); c.clip(); const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#fbeedd'); g.addColorStop(1, '#f3dcc0'); c.fillStyle = g; c.fillRect(0, 0, w, h);
           c.fillStyle = 'rgba(190,140,90,.3)'; for (let yy = h * .12; yy < h; yy += h * .2) for (let xx = w * .1; xx < w; xx += w * .2) { c.beginPath(); c.arc(xx, yy, 2, 0, TAU); c.fill(); }
           c.restore();
-          const base = (P.active() || { id: 'bunny' }).id; c.save(); c.translate(w / 2, h * .62); P.drawHead(c, base, w * .27, b._item.id); c.restore();
+          const base = (P.active() || { id: 'bunny' }).id; c.save(); c.translate(w / 2, h * .62); P.drawHead(c, base, w * .27, b._type === 'none' ? null : b._item.id); c.restore();
         }
       }
-      for (const b of this.wardrobe.querySelectorAll('button')) {
-        if (!b._cv) continue; const w = b._cv.clientWidth; if (!w) continue; const dpr2 = SPG.ui.dpr();
-        b._cv.width = b._cv.height = Math.round(w * dpr2); const c = b._cv.getContext('2d'); c.setTransform(dpr2, 0, 0, dpr2, 0, 0);
-        c.translate(w / 2, w * .58); P.drawHead(c, (P.active() || { id: 'bunny' }).id, w * .27, b._hat);
+      for (const b of this.root.querySelectorAll('.ps-card')) {
+        if (!b._badge) continue; const bc = b._badge.cv, bw = bc.clientWidth; if (!bw) continue;
+        bc.width = bc.height = Math.round(bw * dpr); const c = bc.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        c.translate(bw / 2, bw * .56); P.drawHead(c, b._badge.pet, bw * .3, null);
       }
       for (const b of this.signs.querySelectorAll('button')) { const cv = b._cv, w = cv.clientWidth; if (!w) continue; cv.width = cv.height = Math.round(w * dpr); const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); this.paintSignIcon(c, b._sign, w); }
     }
@@ -210,7 +206,10 @@
         this.confirm(item, 'pet');
       } else {
         if (!a) return this.nope(b, 'Take a friend home first, then pick something to wear!');
-        if (P.ownsHat(item.id)) { const cur = item.slot === 'head' ? a.hat : a[item.slot]; if (cur === item.id) P.unwear(item.slot); else P.wear(item.id); sfx.pop(); this.hop = 1; this.render(); return; }
+        if (P.ownsHat(item.id)) {
+          const other = P.wornBy(item.id);
+          if (other) return this.nope(b, `The ${item.name.toLowerCase()} is on ${P.nameOf(other)} right now.`);
+          const cur = item.slot === 'head' ? a.hat : a[item.slot]; if (cur === item.id) P.unwear(item.slot); else P.wear(item.id); sfx.pop(); this.hop = 1; this.render(); return; }
         if (!P.canAfford(item.price)) return this.nope(b, `${item.name} costs ${item.price} stars. Keep playing to collect more!`);
         this.confirm(item, 'hat');
       }

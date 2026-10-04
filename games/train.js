@@ -98,13 +98,13 @@
 
     /* ---------------------------------------------------------------- rounds */
     newTrain() {
-      const level = Math.min(3, Math.floor(this.bag.trains / 2));
+      const tier = SPG.level.tier('train'), level = Math.max(tier === 3 ? 2 : 0, Math.min(tier === 1 ? 2 : 3, Math.floor(this.bag.trains / 2)));   // toddlers: colors and shapes only; older children start with mixed signs
       const kinds = level === 0 ? ['color', 'color', 'color'] : level === 1 ? ['shape', 'shape', 'shape'] : level === 2 ? shuffle(['color', 'shape', pick(['color', 'shape'])]) : shuffle(['color', 'shape', 'count']);
       const colors = shuffle(Object.keys(COLORS)), shapes = shuffle(SHAPES);
       this.cars = kinds.map((type, i) => {
         const car = { type, body: BODY[(this.bag.trains + i) % BODY.length], filled: 0, shake: 0, bounce: 0, slots: [] };
         // a car is painted the color it asks for, so the train and the blocks always match (shape cars are pale, count cars are sunny yellow)
-        if (type === 'color') { car.val = colors.pop(); car.need = 2; car.body = COLORS[car.val]; } else if (type === 'shape') { car.val = shapes.pop(); car.need = 2; car.body = '#c9d3ea'; } else { car.val = 1 + Math.floor(Math.random() * 4); car.need = car.val; car.body = '#ffdc8a'; }
+        if (type === 'color') { car.val = colors.pop(); car.need = 2; car.body = COLORS[car.val]; } else if (type === 'shape') { car.val = shapes.pop(); car.need = 2; car.body = '#c9d3ea'; } else { car.val = 1 + Math.floor(Math.random() * [0, 3, 4, 6][tier]); car.need = car.val; car.body = '#ffdc8a'; }
         return car;
       });
       this.items = [];

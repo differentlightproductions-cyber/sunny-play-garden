@@ -452,7 +452,7 @@
         d.vy += this.h * 1.5 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.dead = false;
         for (const t of th) {
           if (Math.abs(d.x - t.x) < this.ps * .3 && d.y > t.top - this.ps * .12 && d.y < t.ground) {
-            d.dead = true; t.p.meter += 1 / NEED_DROPS;
+            d.dead = true; t.p.meter += 1 / [0, 20, NEED_DROPS, 45][SPG.level.tier('garden')];
             this.fx.burst(d.x, d.y, 2, { colors: ['#9be0ff', '#fff'], speed: 70, g: 300, life: .35, size: 4 });
             if (t.p.meter >= 1) { t.p.meter = 0; this.grow(t.i); }
             break;

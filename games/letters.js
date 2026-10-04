@@ -269,7 +269,7 @@
     later(fn, ms) { const id = setTimeout(() => { this.timers.delete(id); if (!this.paused) fn(); }, ms); this.timers.add(id); return id; }
     reset(cls) {
       this.timers.forEach(clearTimeout); this.timers.clear();
-      this.tracer?.destroy(); this.tracer = null; voice.stop();
+      this.tracer?.destroy(); this.tracer = null; voice.stop(); this.numRaf && cancelAnimationFrame(this.numRaf); this.numRaf = 0;
       this.root.replaceChildren(); this.root.className = 'lg ' + (cls || '');
     }
     pause() { this.paused = true; this.tracer?.pause(); }
@@ -377,7 +377,24 @@
           c.strokeStyle = '#fff'; c.lineWidth = w * .02; c.setLineDash([w * .02, w * .03]); c.lineCap = 'round'; c.beginPath(); c.moveTo(w * .46, h * .5); c.lineTo(w * .54, h * .5); c.stroke(); c.setLineDash([]);
           art.heart(c, w * .5, h * .5, w * .06, '#ff5c7a');
           art.star(c, w * .5, h * .18, w * .05, '#ffd54a', .2); art.star(c, w * .86, h * .82, w * .035, '#fff', 0); art.star(c, w * .12, h * .8, w * .035, '#fff', 0);
-        }, () => this.match()]
+        }, () => this.match()],
+        ['Numbers', 'Count and learn numbers', (c, w, h) => {
+          sc(c, w, h, '#c9eefc', '#e6f9ee', '#a9dcb8', '#8fcfa6');
+          card(c, w * .5, h * .44, w * .6, -.04, '#fff');
+          glyphs.draw(c, '3', w * .5 - w * .075, h * .2, w * .26, { color: '#ff7a8a', width: 14 });
+          for (const k of [-1, 0, 1]) { c.save(); c.translate(w * (.5 + k * .15), h * .64); art.star(c, 0, 0, w * .06, ['#ffd54a', '#ff9db8', '#7fd4f5'][k + 1], .1 * k); c.restore(); }
+          head(c, 'frog', w * .17, h * .82, w * .08); head(c, 'bunny', w * .84, h * .82, w * .08);
+          art.star(c, w * .86, h * .2, w * .045, '#ffd54a', .2);
+        }, () => this.numbers()],
+        ['Add', 'Add and take away', (c, w, h) => {
+          sc(c, w, h, '#ffe0f0', '#fff0dc', '#f7c0a4', '#f0aa8a');
+          card(c, w * .5, h * .46, w * .66, .03, '#fff');
+          glyphs.draw(c, '2', w * .5 - w * .27, h * .27, w * .24, { color: '#4fb3e8', width: 14 });
+          glyphs.draw(c, '1', w * .5 + w * .06, h * .27, w * .24, { color: '#59b96e', width: 14 });
+          c.strokeStyle = '#ff7a8a'; c.lineWidth = w * .035; c.lineCap = 'round'; c.beginPath(); c.moveTo(w * .5 - w * .05, h * .46); c.lineTo(w * .5 + w * .05, h * .46); c.moveTo(w * .5, h * .41); c.lineTo(w * .5, h * .51); c.stroke();
+          art.heart(c, w * .3, h * .72, w * .05, '#ff6b81'); art.heart(c, w * .42, h * .72, w * .05, '#ff6b81'); art.heart(c, w * .66, h * .72, w * .05, '#ffd54a');
+          art.star(c, w * .84, h * .16, w * .04, '#ffd54a', .2);
+        }, () => this.math()]
       ];
       const grid = el('div', 'lg-modes');
       modes.forEach(([label, aria, draw, go], i) => {
@@ -519,8 +536,9 @@
         qcase = mode === 'mix' ? (Math.random() < .5 ? 'upper' : 'lower') : mode;
         target = this.pickLetter(name.length && Math.random() < .3 ? name : all);
         wrong = 0; locked = false;
-        const count = this.bag.correct >= 12 ? 4 : (this.bag.correct >= 5 && Math.random() < .4 ? 4 : 3);
-        const bad = CONFUSABLE[target] || '';
+        const tier = SPG.level.tier('letters');
+        const count = tier === 3 ? 4 : tier === 1 ? 3 : this.bag.correct >= 12 ? 4 : (this.bag.correct >= 5 && Math.random() < .4 ? 4 : 3);
+        const bad = tier === 3 ? '' : CONFUSABLE[target] || '';   // older children can be shown look-alike letters
         const others = all.filter(x => x !== target && !bad.includes(x)).sort(() => Math.random() - .5);
         const choices = [target, ...others.slice(0, count - 1)].sort(() => Math.random() - .5);
         area.replaceChildren(...choices.map((ch, idx) => {
@@ -569,7 +587,8 @@
         target = this.pickLetter(okName.length && Math.random() < .3 ? okName : okAll);
         wrong = 0; locked = false;
         const picks = [];
-        for (const l of shuffle(ALPHA.filter(x => !NO.includes(x) && !same(x, target)))) { if (picks.length >= 2) break; if (!picks.some(p => same(p, l))) picks.push(l); }
+        const nPicks = SPG.level.tier('letters') === 3 ? 3 : 2;
+        for (const l of shuffle(ALPHA.filter(x => !NO.includes(x) && !same(x, target)))) { if (picks.length >= nPicks) break; if (!picks.some(p => same(p, l))) picks.push(l); }
         const choices = shuffle([target, ...picks]);
         area.replaceChildren(...choices.map((ch, idx) => {
           const [word, emoji] = voice.WORDS[ch];
@@ -603,7 +622,7 @@
     /* ---------------- match: big letter with its little letter ---------------- */
     match() {
       this.reset('lg-match');
-      const level = Math.min(3, this.bag.matchLevel || 0), pairs = 3 + level;
+      const lt = SPG.level.tier('letters'), level = Math.max(lt === 3 ? 1 : 0, Math.min(lt === 1 ? 1 : 3, this.bag.matchLevel || 0)), pairs = 3 + level;
       const { name, all } = this.pool();
       const letters = [];
       if (name.length && Math.random() < .5) letters.push(name[Math.floor(Math.random() * name.length)]);
@@ -638,6 +657,148 @@
         grid.append(b);
       });
       this.root.append(this.backButton(), grid);
+    }
+
+    /* ---------------- numbers: count things, then pick the number ---------------- */
+    // Pictures for counting: fruit, stars, hearts and friendly faces, in neat rows of five.
+    countArt(c, kind, x, y, r, t) {
+      c.save(); c.translate(x, y); const k = kind.k;
+      if (kind.t === 'fruit') art.fruit(c, k, r * 1.05, { mood: 'happy' });
+      else if (kind.t === 'star') art.star(c, 0, 0, r * 1.15, k, 0);
+      else if (kind.t === 'heart') art.heart(c, 0, 0, r * 1.05, k);
+      else art.avatar(c, k, r * .95);
+      c.restore();
+    }
+    pickKind() {
+      const r = Math.random();
+      return r < .3 ? { t: 'fruit', k: Math.floor(Math.random() * (art.FRUIT_COUNT || 6)) } : r < .5 ? { t: 'star', k: ['#ffd54a', '#ff9db8', '#7fd4f5', '#a6e05a'][Math.floor(Math.random() * 4)] }
+        : r < .7 ? { t: 'heart', k: ['#ff6b81', '#ffa64d', '#b58cf0', '#4fb3e8'][Math.floor(Math.random() * 4)] } : { t: 'face', k: ['bunny', 'bear', 'cat', 'frog', 'panda', 'fox'][Math.floor(Math.random() * 6)] };
+    }
+    // positions for n pictures in rows of five (a second group of five is tinted so tens and fives can be seen)
+    rowsFor(n, x, y, w, h) {
+      const per = 5, rows = Math.ceil(n / per), cols = Math.min(n, per), cell = Math.min(w / cols, h / rows), out = [];
+      for (let i = 0; i < n; i++) { const row = Math.floor(i / per), inRow = row === rows - 1 ? n - per * (rows - 1) : per, col = i % per; out.push({ x: x + w / 2 + (col - (inRow - 1) / 2) * cell, y: y + h / 2 + (row - (rows - 1) / 2) * cell, r: cell * .4 }); }
+      return out;
+    }
+    // choices for a number question: the answer and a few near it
+    numChoices(ans, lo, hi, count) {
+      const set = new Set([ans]); const near = [ans - 1, ans + 1, ans - 2, ans + 2, ans + 3, ans - 3].filter(v => v >= lo && v <= hi && v !== ans).sort(() => Math.random() - .5);
+      for (const v of near) { if (set.size >= count) break; set.add(v); }
+      for (let g = 0; set.size < count && g < 50; g++) set.add(lo + Math.floor(Math.random() * (hi - lo + 1)));
+      return [...set].sort(() => Math.random() - .5);
+    }
+    numberButtons(area, nums, color0, onPick) {
+      const px = Math.round(Math.min(innerHeight * .26, innerWidth * .2, 150));
+      area.replaceChildren(...nums.map((n, idx) => {
+        const b = btn('lg-opt', 'Number ' + n, glyphs.numberCanvas(n, px, { color: COLORS[(idx * 2 + color0) % 6], width: 14 }));
+        b.dataset.n = String(n); b.style.setProperty('--d', idx * .12 + 's');
+        SPG.ui.press(b, () => onPick(n, b)); return b;
+      }));
+    }
+    // a canvas card that repaints itself while it is on screen
+    liveCard(draw) {
+      const cv = el('canvas', 'lg-numcard'); this.root.append(cv);
+      const frame = () => { if (!cv.isConnected) return; const r = cv.getBoundingClientRect(); if (r.width && r.height) { const dpr = SPG.ui.dpr(); if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); } const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, r.width, r.height); draw(c, r.width, r.height, performance.now() / 1000); } this.numRaf = requestAnimationFrame(frame); };
+      this.numRaf = requestAnimationFrame(frame); return cv;
+    }
+
+    numbers() {
+      this.reset('lg-find lg-num');
+      const tier = SPG.level.tier('numbers'), bag = this.bag, area = el('div', 'lg-options'), say = btn('lg-btn lg-say big', 'Hear the question', icon('speaker'));
+      const lo = tier === 3 ? 5 : 1, hi = () => tier === 1 ? ((bag.numOk || 0) >= 8 ? 5 : 3) : tier === 2 ? ((bag.numOk || 0) >= 6 ? 10 : 6) : ((bag.numOk || 0) >= 6 ? 20 : 12);
+      let N = 0, last = 0, kind = null, objs = [], counted = [], wrong = 0, locked = false, hintAt = 0;
+      const card = this.liveCard((c, w, h, t) => {
+        c.fillStyle = 'rgba(90,63,94,.1)'; art.rr(c, 6, 12, w - 12, h - 12, 36); c.fill(); c.fillStyle = 'rgba(255,255,255,.88)'; art.rr(c, 6, 6, w - 12, h - 14, 36); c.fill();
+        objs.forEach((o, i) => {
+          const done = counted[i], pop = done ? Math.max(0, 1 - (t - done)) : 0, bob = !done ? Math.sin(t * 3 + i) * o.r * .04 : 0;
+          if (i >= 5 && Math.floor(i / 5) % 2 === 1) { c.fillStyle = 'rgba(205,188,247,.28)'; c.beginPath(); c.arc(o.x, o.y, o.r * 1.2, 0, TAU); c.fill(); }
+          c.save(); c.globalAlpha = done ? 1 : .96; c.translate(0, bob - pop * o.r * .5); this.countArt(c, kind, o.x, o.y, o.r * (1 + pop * .25), t);
+          if (done) { c.fillStyle = '#59b96e'; c.beginPath(); c.arc(o.x + o.r * .7, o.y - o.r * .8, o.r * .42, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.font = `700 ${o.r * .55}px Fredoka, system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(done > 0 ? counted.filter(v => v && v <= done).length : ''), o.x + o.r * .7, o.y - o.r * .78); }
+          c.restore();
+        });
+      });
+      const layout = () => { const r = card.getBoundingClientRect(); objs = this.rowsFor(N, 24, 18, Math.max(40, r.width - 48), Math.max(40, r.height - 36)); };
+      const countOne = i => { if (counted[i] || locked) return; counted[i] = performance.now() / 1000; const k = counted.filter(Boolean).length; counted[i] = performance.now() / 1000; sfx.pop(); voice.say('num/' + k); };
+      card.addEventListener('pointerdown', e => {
+        if (locked) return; const r = card.getBoundingClientRect(); let best = -1, bd = 1e9;
+        objs.forEach((o, i) => { const d = Math.hypot(e.clientX - r.left - o.x, e.clientY - r.top - o.y); if (d < o.r * 1.5 && d < bd) { bd = d; best = i; } });
+        if (best >= 0) countOne(best);
+      });
+      const ask = () => {
+        do { N = lo + Math.floor(Math.random() * (hi() - lo + 1)); } while (N === last && hi() > lo); last = N;
+        kind = this.pickKind(); counted = []; wrong = 0; locked = false; layout();
+        this.numberButtons(area, this.numChoices(N, 1, Math.max(hi(), N + 1), tier === 1 ? 3 : tier === 3 ? 4 : (bag.numOk || 0) >= 5 ? 4 : 3), 1, choose);
+        say.classList.add('wiggle'); voice.say(this.numIntro++ < 2 ? 'count-touch' : 'count-how');
+      };
+      const autoCount = () => { for (let i = 0; i < N; i++) setTimeout(() => { if (card.isConnected) { counted[i] = performance.now() / 1000; sfx.pop(); } }, 250 + i * 550); voice.say(...Array.from({ length: N }, (_, i) => 'num/' + (i + 1))); };
+      const choose = (n, b) => {
+        if (locked) return;
+        if (n === N) {
+          locked = true; sfx.win(); store.addStars(1); bag.numOk = (bag.numOk || 0) + 1; store.save();
+          [...area.children].forEach(o => o.classList.toggle('fade', o !== b)); b.classList.add('right');
+          const r = b.getBoundingClientRect(); this.burst(r.left + r.width / 2, r.top + r.height / 2);
+          voice.say('great-job', 'num/' + N); this.later(ask, 2800);
+        } else {
+          wrong++; sfx.oops(); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); voice.say('try-again');
+          if (wrong >= 2) { [...area.children].forEach(o => { if (o.dataset.n === String(N)) o.classList.add('hint'); }); if (wrong === 2) autoCount(); }
+        }
+      };
+      SPG.ui.press(say, () => voice.say('count-how'));
+      this.numIntro = this.numIntro || 0;
+      this.root.append(this.backButton(), say, area); window.requestAnimationFrame(ask);
+    }
+
+    /* ---------------- add and take away ---------------- */
+    math() {
+      this.reset('lg-find lg-num');
+      const tier = SPG.level.tier('math'), bag = this.bag, area = el('div', 'lg-options'), say = btn('lg-btn lg-say big', 'Hear the question', icon('speaker'));
+      let E = null, kind = null, wrong = 0, locked = false, shown = 0;
+      const ok = () => bag.mathOk || 0;
+      const gen = () => {
+        const R = n => 1 + Math.floor(Math.random() * n);
+        if (tier === 1) { const a = R(3), b = R(Math.min(3, 5 - a)); return { op: '+', a, b, r: a + b }; }
+        if (tier === 2) {
+          if (Math.random() < .6) { const cap = ok() >= 5 ? 10 : 6, a = R(cap - 1), b = R(cap - a); return { op: '+', a, b, r: a + b }; }
+          const a = 2 + Math.floor(Math.random() * (ok() >= 8 ? 8 : 4)), b = R(a - 1); return { op: '-', a, b, r: a - b };
+        }
+        if (Math.random() < .5) { const cap = ok() >= 6 ? 20 : 12, a = R(cap - 2), b = R(cap - a); return { op: '+', a, b, r: a + b }; }
+        const a = 5 + Math.floor(Math.random() * (ok() >= 6 ? 16 : 8)), b = R(Math.min(a - 1, ok() >= 6 ? 12 : 6)); return { op: '-', a, b, r: a - b };
+      };
+      const card = this.liveCard((c, w, h, t) => {
+        c.fillStyle = 'rgba(90,63,94,.1)'; art.rr(c, 6, 12, w - 12, h - 12, 36); c.fill(); c.fillStyle = 'rgba(255,255,255,.88)'; art.rr(c, 6, 6, w - 12, h - 14, 36); c.fill();
+        if (!E) return;
+        const pics = E.a <= 10 && E.b <= 10 && E.a + E.b <= 14 && !(tier === 3 && E.a > 8), sz = Math.min(h * .17, w * .08);
+        const zone = (n, cx, tint, crossFrom) => { const bw = Math.min(w * .3, 5 * sz * 2.2), pts = this.rowsFor(n, cx - bw / 2, h * .38, bw, h * .5); pts.forEach((o, i) => { c.save(); c.translate(o.x, o.y); if (crossFrom != null && i >= crossFrom) { c.globalAlpha = .35; this.countArt(c, kind, 0, 0, o.r, t); c.globalAlpha = 1; c.strokeStyle = '#ff5a6a'; c.lineWidth = o.r * .22; c.lineCap = 'round'; c.beginPath(); c.moveTo(-o.r * .9, -o.r * .9); c.lineTo(o.r * .9, o.r * .9); c.moveTo(o.r * .9, -o.r * .9); c.lineTo(-o.r * .9, o.r * .9); c.stroke(); } else this.countArt(c, kind, 0, 0, o.r, t); c.restore(); }); };
+        const num = (n, x, col) => { const k = Math.min(h * .3, w * .12) / 100; glyphs.drawText(c, String(n), x - glyphs.measure(String(n), k * 100, 10) / 2, h * .08, k * 100, { color: col, width: 13, gap: 10 }); };
+        const opX = w * .5, aX = w * .24, bX = w * .72;
+        const sym = (x, y, s, col, minus) => { c.strokeStyle = col; c.lineWidth = s * .28; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - s * .5, y); c.lineTo(x + s * .5, y); if (!minus) { c.moveTo(x, y - s * .5); c.lineTo(x, y + s * .5); } c.stroke(); };
+        const eq = (x, y, s) => { c.strokeStyle = '#8a7190'; c.lineWidth = s * .2; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - s * .45, y - s * .2); c.lineTo(x + s * .45, y - s * .2); c.moveTo(x - s * .45, y + s * .2); c.lineTo(x + s * .45, y + s * .2); c.stroke(); };
+        const q = (x, y, s) => { c.fillStyle = '#9a7be8'; c.font = `700 ${s}px Fredoka, system-ui`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', x, y + Math.sin(t * 4) * s * .04); };
+        const s1 = Math.min(h * .12, w * .05), my = h * .22;
+        if (pics) { zone(E.a, E.op === '-' ? w * .3 : aX, 0, E.op === '-' ? E.a - E.b : null); if (E.op === '+') zone(E.b, bX - w * .02, 1, null); num(E.a, E.op === '-' ? w * .3 : aX, '#4fb3e8'); num(E.b, E.op === '-' ? w * .66 : bX - w * .02, '#59b96e'); sym(E.op === '-' ? w * .5 : opX - w * .02, my + h * .06, s1, '#ff7a8a', E.op === '-'); eq(E.op === '-' ? w * .8 : w * .88, my + h * .06, s1); q(E.op === '-' ? w * .9 : w * .95, my + h * .06, h * .24); if (w < 560) { /* narrow: the same, just smaller */ } }
+        else { num(E.a, w * .18, '#4fb3e8'); sym(w * .36, h * .3, s1 * 1.3, '#ff7a8a', E.op === '-'); num(E.b, w * .54, '#59b96e'); eq(w * .72, h * .3, s1 * 1.3); q(w * .86, h * .32, h * .4); }
+      });
+      const ask = () => {
+        do { E = gen(); } while (shown && E.r === shown); shown = E.r; kind = this.pickKind(); wrong = 0; locked = false;
+        const hi = Math.max(tier === 1 ? 5 : tier === 2 ? 10 : 20, E.r + 2);
+        this.numberButtons(area, this.numChoices(E.r, 0, hi, tier === 1 ? 3 : 4), 3, choose);
+        say.classList.add('wiggle'); this.sayExpr();
+      };
+      this.sayExpr = () => { if (E) voice.say('num/' + E.a, E.op === '+' ? 'math-plus' : 'math-minus', 'num/' + E.b, E.op === '+' ? 'math-sum' : 'math-left'); };
+      const choose = (n, b) => {
+        if (locked) return;
+        if (n === E.r) {
+          locked = true; sfx.win(); store.addStars(1); bag.mathOk = ok() + 1; store.save();
+          [...area.children].forEach(o => o.classList.toggle('fade', o !== b)); b.classList.add('right');
+          const r = b.getBoundingClientRect(); this.burst(r.left + r.width / 2, r.top + r.height / 2);
+          voice.say('great-job', 'num/' + E.a, E.op === '+' ? 'math-plus' : 'math-minus', 'num/' + E.b, 'math-is', 'num/' + E.r); this.later(ask, 4200);
+        } else {
+          wrong++; sfx.oops(); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); voice.say('try-again');
+          if (wrong >= 2) [...area.children].forEach(o => { if (o.dataset.n === String(E.r)) o.classList.add('hint'); });
+        }
+      };
+      SPG.ui.press(say, () => this.sayExpr());
+      this.root.append(this.backButton(), say, area); window.requestAnimationFrame(ask);
     }
 
     // Confetti as tiny DOM canvas over the whole game.

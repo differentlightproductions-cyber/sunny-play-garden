@@ -62,7 +62,13 @@
       const pool = (mine.length && Math.random() < .8 ? mine : all).filter(p => p !== this.def);
       return pool[Math.floor(Math.random() * pool.length)] || all[0];
     }
-    gridFor(solved) { return GRIDS[solved < 2 ? 0 : solved < 5 ? 1 : solved < 9 ? 2 : 3]; }
+    // how many pieces: toddlers stop at 3 x 2, most children at 4 x 3, older children keep going up to 5 x 4
+    gridFor(solved) {
+      const t = SPG.level.tier('puzzle');
+      if (t === 1) return GRIDS[solved < 3 ? 0 : 1];
+      if (t === 3) return solved < 1 ? GRIDS[1] : solved < 3 ? GRIDS[2] : solved < 6 ? GRIDS[3] : solved < 10 ? [4, 4] : [5, 4];
+      return GRIDS[solved < 2 ? 0 : solved < 5 ? 1 : solved < 9 ? 2 : 3];
+    }
     // The size of the board for a grid on this screen (shared by build and the next-puzzle preparation).
     boardDims(C, R) {
       const w = this.w, h = this.h, wide = w >= h * 1.1;

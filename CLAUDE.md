@@ -101,3 +101,6 @@ The app is called **Little Sprout Park** (launcher/short name "Sprout Park"). Th
 
 ## Guidelines
 Keep play relaxed and unlimited, no losing, no reading required, big touch targets. Don't repeat game mechanics across games. Add new games through the `SPG.games` list.
+
+## Icing and the pet-name sheet (latest)
+Kitchen icing helpers live in games/cook-art.js: `drawFrostSwirl` (cupcake swirl on the muffin), `drawCookieIcing` (glossy sparkly fill clipped to the cookie), `drawPiped` (piped lines), `glitterField`/`twinkle` (sparkle animated from `performance.now()`). The Pet Shop naming sheet keeps picture, title and Done/Cancel pinned and scrolls only the names (`.ps-sheet` rules at the end of styles.css); player setup pins its buttons with `position: sticky`.

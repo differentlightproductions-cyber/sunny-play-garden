@@ -45,3 +45,7 @@ Rules that matter: big touch targets, spoken prompts, no reading needed, nothing
 - Playwright cannot click `.lg-opt` buttons while they animate ("not stable"); dispatch `pointerdown` instead (`SPG.ui.press` acts on touch-down).
 - `art.shade` takes six-digit hex colours only; the kitchen's own `shade` also takes `rgb()`.
 - Never `pkill -f wrangler` in the sandbox shell (it kills the shell).
+
+## Update (pet name screen + icing)
+- Pet Shop name screen: Done/Cancel were pushed off-screen on tablets and short phones; now pinned (CSS at the end of styles.css, `askName` in games/petshop.js; first-time naming has no Cancel, renaming does). Player setup got sticky Back / Let's play! buttons. Long names shrink in `SPG.ui.nameGrid`.
+- Kitchen icing redrawn in `games/cook-art.js` (`drawFrostSwirl` cupcakes, `drawCookieIcing`, `drawPiped`, `glitterField`/`twinkle`; cake gets gloss and sparkle). Needs a fresh Android build to reach the app.

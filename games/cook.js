@@ -38,14 +38,15 @@
   const starPath = (c, r, inner = .45) => { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, k = i % 2 ? r * inner : r; i ? c.lineTo(Math.cos(a) * k, Math.sin(a) * k) : c.moveTo(Math.cos(a) * k, Math.sin(a) * k); } c.closePath(); };
   const heartPath = (c, r) => { c.moveTo(0, r * .9); c.bezierCurveTo(-r * 1.35, r * .1, -r * .9, -r * .95, 0, -r * .35); c.bezierCurveTo(r * .9, -r * .95, r * 1.35, r * .1, 0, r * .9); c.closePath(); };
   // fill (and optionally stroke) a cutter shape: kind, radius r. Pieces are painted separately so overlaps unite.
-  function shapeFill(c, kind, r, grow = 0) {
+  function shapeFill(c, kind, r, grow = 0, pathOnly = false) {
+    if (pathOnly) c.beginPath();
     for (const p of PIECES[kind]) {
-      c.beginPath();
+      if (!pathOnly) c.beginPath();
       if (p[0] === 'star') starPath(c, r + grow, .46);
       else if (p[0] === 'heart') heartPath(c, r + grow);
-      else if (p[0] === 'e') c.ellipse(p[1] * r, p[2] * r, p[3] * r + grow, p[4] * r + grow, p[5] || 0, 0, TAU);
+      else if (p[0] === 'e') { if (pathOnly) c.moveTo(p[1] * r + (p[3] * r + grow) * Math.cos(p[5] || 0), p[2] * r + (p[3] * r + grow) * Math.sin(p[5] || 0)); c.ellipse(p[1] * r, p[2] * r, p[3] * r + grow, p[4] * r + grow, p[5] || 0, 0, TAU); }
       else { const cx = (p[1][0] + p[2][0] + p[3][0]) / 3, cy = (p[1][1] + p[2][1] + p[3][1]) / 3; p.slice(1).forEach(([x, y], i) => { const dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy) || 1, X = (x + dx / d * grow / r) * r, Y = (y + dy / d * grow / r) * r; i ? c.lineTo(X, Y) : c.moveTo(X, Y); }); c.closePath(); }
-      c.fill();
+      if (!pathOnly) c.fill();
     }
   }
   // a baked / raw cookie of a given shape (dough-colored with a darker rim and a soft shine)
@@ -252,10 +253,90 @@
 
   /* ---------------------------------------------------------------- finished foods (pieces). Each is drawn centred, about R across. */
   const DOUGH = '#e8c88a', BAKED = '#d9a05a', CHOCDOUGH = '#c89a62', CHOCBAKED = '#9a6038';
+  /* ---------------------------------------------------------------- icing: glossy, shiny and sparkly */
+  const clock = () => performance.now() / 1000;
+  // a four-point twinkle
+  function twinkle(c, x, y, r, col = '#fff') {
+    c.save(); c.translate(x, y); c.fillStyle = col; c.beginPath();
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 - Math.PI / 2, k = i % 2 ? r * .26 : r; i ? c.lineTo(Math.cos(a) * k, Math.sin(a) * k) : c.moveTo(Math.cos(a) * k, Math.sin(a) * k); }
+    c.closePath(); c.fill(); c.globalAlpha *= .35; c.beginPath(); c.arc(0, 0, r * .55, 0, TAU); c.fill(); c.restore();
+  }
+  // tiny glitter specks (call inside a clip) and a few twinkling stars, laid out by a seed
+  function glitterField(c, seed, w, h, n, R, col) {
+    const t = clock();
+    for (let i = 0; i < n; i++) { const x = (rnd(seed + i * 3.1) - .5) * w, y = (rnd(seed + i * 5.7 + 2) - .5) * h; c.globalAlpha = .55 + .45 * Math.sin(t * 3 + i * 1.9); c.fillStyle = i % 3 ? '#fff' : shade(col, .65); c.beginPath(); c.arc(x, y, R * (.011 + rnd(i + seed) * .012), 0, TAU); c.fill(); }
+    c.globalAlpha = 1;
+    for (let i = 0; i < 3; i++) { const x = (rnd(seed + i * 11.3 + 40) - .5) * w * .9, y = (rnd(seed + i * 7.9 + 60) - .5) * h * .9, k = .5 + .5 * Math.sin(t * 3.2 + i * 2.3); c.globalAlpha = .35 + .65 * k; twinkle(c, x, y, R * (.045 + .05 * k), '#fff'); }
+    c.globalAlpha = 1;
+  }
+  // a glossy rounded dollop of icing (used for borders)
+  function dollop(c, x, y, r, col) {
+    const g = c.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r * 1.1); g.addColorStop(0, shade(col, .55)); g.addColorStop(.45, shade(col, .08)); g.addColorStop(1, shade(col, -.2));
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); shine(c, x - r * .3, y - r * .38, r * .3, r * .16, -.5, .85);
+  }
+  // piped swirl frosting that sits on the top of a cupcake: a scalloped skirt on the muffin, four twisting tiers, a curled tip
+  function drawFrostSwirl(c, R, col, grow = 1) {
+    const g = ease(clamp(grow, 0, 1)), t = clock();
+    c.save(); c.translate(0, -R * .1); c.scale(1, .3 + .7 * g); c.globalAlpha = Math.min(1, grow * 3 + .2);
+    const lite = shade(col, .45), dark = shade(col, -.2), deep = shade(col, -.34);
+    // the skirt of frosting resting on the muffin top
+    for (let i = 0; i < 7; i++) { c.fillStyle = i % 2 ? dark : deep; c.beginPath(); c.arc(-R * .42 + i * R * .14, R * .01, R * .105, 0, TAU); c.fill(); }
+    for (let i = 0; i < 7; i++) dollop(c, -R * .42 + i * R * .14, -R * .015, R * .1, col);
+    const tiers = [[-.17, .46, .12], [-.33, .4, .115], [-.48, .31, .105], [-.62, .21, .095]];
+    tiers.forEach(([y, hw, h], i) => {
+      c.save(); c.translate(0, y * R); c.rotate((i % 2 ? .07 : -.07)); const w = hw * R, hh = h * R * 1.25;
+      const gr = c.createLinearGradient(0, -hh, 0, hh); gr.addColorStop(0, lite); gr.addColorStop(.35, col); gr.addColorStop(1, dark);
+      c.fillStyle = gr; rr(c, -w, -hh, w * 2, hh * 2, hh); c.fill();
+      c.strokeStyle = deep; c.globalAlpha = .45; c.lineWidth = R * .014; c.beginPath(); c.moveTo(-w * .9, hh * .55); c.quadraticCurveTo(0, hh * 1.05, w * .9, hh * .5); c.stroke(); c.globalAlpha = 1;
+      c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = R * .02; c.lineCap = 'round'; c.beginPath(); c.moveTo(-w * .8, -hh * .1); c.quadraticCurveTo(-w * .2, -hh * .75, w * .55, -hh * .55); c.stroke();
+      shine(c, -w * .5, -hh * .45, w * .22, hh * .22, -.2, .8);
+      c.restore();
+    });
+    // a soft round curl on top
+    const tg = c.createRadialGradient(-R * .03, -R * .84, R * .02, 0, -R * .78, R * .2); tg.addColorStop(0, lite); tg.addColorStop(.5, col); tg.addColorStop(1, dark);
+    c.fillStyle = tg; c.beginPath(); c.moveTo(-R * .14, -R * .66); c.bezierCurveTo(-R * .16, -R * .8, -R * .05, -R * .92, R * .08, -R * .9); c.bezierCurveTo(R * .17, -R * .84, R * .1, -R * .74, R * .14, -R * .66); c.closePath(); c.fill();
+    shine(c, -R * .05, -R * .8, R * .035, R * .07, .3, .9);
+    // sparkle over the whole swirl
+    c.save(); c.translate(0, -R * .45); glitterField(c, 17, R * .8, R * .95, 22, R * 1.5, col); c.restore();
+    c.restore();
+  }
+  // frosting on top of a round cake: a glossy top, a ring of dollops, drips down the side, and sparkle
+  function drawFrostTop(c, rx, ry, hgt, col) {
+    const lite = shade(col, .42), dark = shade(col, -.2);
+    // drips down the front of the side
+    for (let i = 0; i < 11; i++) { const a = .12 * Math.PI + i / 10 * .76 * Math.PI, x = Math.cos(a) * rx * .93, len = hgt * (.28 + rnd(i * 2 + 1) * .5), y0 = Math.sin(a) * ry * .93, w = rx * .055; c.fillStyle = dark; c.beginPath(); c.moveTo(x - w, y0); c.lineTo(x - w, y0 + len); c.arc(x, y0 + len, w, Math.PI, 0, true); c.lineTo(x + w, y0); c.closePath(); c.fill(); c.fillStyle = col; c.beginPath(); c.moveTo(x - w * .8, y0); c.lineTo(x - w * .8, y0 + len); c.arc(x - w * .1, y0 + len, w * .75, Math.PI, 0, true); c.lineTo(x + w * .6, y0); c.closePath(); c.fill(); c.fillStyle = 'rgba(255,255,255,.55)'; rr(c, x - w * .55, y0 + len * .1, w * .28, len * .6, w * .14); c.fill(); }
+    // glossy top
+    const g = c.createRadialGradient(-rx * .3, -ry * .3, ry * .1, 0, 0, rx);
+    g.addColorStop(0, lite); g.addColorStop(.55, col); g.addColorStop(1, dark);
+    c.fillStyle = g; c.beginPath(); c.ellipse(0, 0, rx * .96, ry * .92, 0, 0, TAU); c.fill();
+    // ring of dollops (back ones first so the front ones overlap)
+    const n = 16; const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => Math.sin(a / n * TAU) - Math.sin(b / n * TAU));
+    for (const i of order) { const a = i / n * TAU; dollop(c, Math.cos(a) * rx * .85, Math.sin(a) * ry * .8, rx * .075, col); }
+    // sparkle on the top (kept inside the ellipse)
+    c.save(); c.beginPath(); c.ellipse(0, 0, rx * .76, ry * .7, 0, 0, TAU); c.clip(); glitterField(c, 29, rx * 1.5, ry * 1.4, 26, rx, col); c.restore();
+    shine(c, -rx * .38, -ry * .38, rx * .2, ry * .1, -.3, .7);
+  }
+  // clip to a cookie shape and fill it with glossy, sparkly icing
+  function drawCookieIcing(c, kind, R, col, glitter = true) {
+    c.save(); c.fillStyle = shade(col, -.28); shapeFill(c, kind, R * .8, R * .018);
+    shapeFill(c, kind, R * .8, 0, true); c.clip();
+    const g = c.createLinearGradient(-R * .6, -R * .8, R * .6, R * .8); g.addColorStop(0, shade(col, .4)); g.addColorStop(.5, col); g.addColorStop(1, shade(col, -.18)); c.fillStyle = g; c.fillRect(-R * 1.3, -R * 1.3, R * 2.6, R * 2.6);
+    c.fillStyle = 'rgba(255,255,255,.32)'; c.save(); c.translate(-R * .06, -R * .1); shapeFill(c, kind, R * .6, 0); c.restore();
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = R * .03; c.lineCap = 'round'; c.beginPath(); c.moveTo(-R * .5, -R * .25); c.quadraticCurveTo(-R * .4, -R * .55, -R * .1, -R * .6); c.stroke();
+    if (glitter) glitterField(c, 7 + kind.length, R * 1.3, R * 1.3, 24, R, col);
+    c.restore();
+  }
+  // piped icing lines: a dark edge, the bright body, a shine, and sparkle along the line
+  function drawPiped(c, s, R) {
+    c.lineCap = c.lineJoin = 'round';
+    for (const [w, col] of [[.105, shade(s.col, -.3)], [.08, s.col]]) { c.strokeStyle = col; c.lineWidth = R * w; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R, y * R) : c.moveTo(x * R, y * R)); c.stroke(); }
+    c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = R * .022; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R - R * .015, y * R - R * .02) : c.moveTo(x * R - R * .015, y * R - R * .02)); c.stroke();
+    const t = clock(); s.pts.forEach(([x, y], i) => { if (i % 4 === 1) { c.globalAlpha = .4 + .6 * Math.abs(Math.sin(t * 3 + i)); twinkle(c, x * R, y * R, R * .05, '#fff'); } }); c.globalAlpha = 1;
+  }
   function drawDeco(c, deco, R, o = {}) {
     if (!deco) return;
-    if (deco.fill && o.shape) { c.fillStyle = deco.fill; c.save(); c.translate(0, -R * .03); shapeFill(c, o.shape, R * .8, -R * .04); c.restore(); c.fillStyle = 'rgba(255,255,255,.35)'; c.save(); c.translate(-R * .05, -R * .07); shapeFill(c, o.shape, R * .6, -R * .06); c.restore(); c.fillStyle = deco.fill; c.save(); c.translate(0, -R * .03); shapeFill(c, o.shape, R * .56, -R * .04); c.restore(); }
-    for (const s of deco.strokes || []) { c.strokeStyle = s.col; c.lineWidth = R * .075; c.lineCap = c.lineJoin = 'round'; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R, y * R) : c.moveTo(x * R, y * R)); c.stroke(); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = R * .02; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R - R * .015, y * R - R * .02) : c.moveTo(x * R - R * .015, y * R - R * .02)); c.stroke(); }
+    if (deco.fill && o.shape) drawCookieIcing(c, o.shape, R, deco.fill);
+    for (const st of deco.strokes || []) drawPiped(c, st, R);
     for (const d of deco.dots || []) {
       c.save(); c.translate(d.x * R, d.y * R); c.rotate(d.rot || 0);
       if (d.id === 'sprinkles') { box(c, -R * .07, -R * .02, R * .14, R * .045, d.col, R * .02); }
@@ -284,7 +365,7 @@
     if (p.empty) return;
     const cake = p.baked >= 1 ? (p.choc ? '#8a5a38' : '#e8b868') : p.baked > 0 ? mixHex(p.choc ? '#c89a62' : '#f3dca4', p.choc ? '#8a5a38' : '#e8b868', p.baked) : (p.batter ? (p.choc ? '#a87a52' : '#f6e8c0') : '#f6e8c0');
     c.fillStyle = cake; c.beginPath(); c.moveTo(-R * .52, -R * .06); c.bezierCurveTo(-R * .6, -R * .55, R * .6, -R * .55, R * .52, -R * .06); c.closePath(); c.fill();
-    if (p.frost) { const f = p.frost.col; c.fillStyle = shade(f, -.1); for (const [y, w] of [[.0, .55], [-.16, .44], [-.3, .32], [-.42, .2]]) { c.beginPath(); c.ellipse(0, y * R, w * R, R * .15, 0, 0, TAU); c.fill(); } c.fillStyle = f; for (const [y, w] of [[-.02, .52], [-.17, .41], [-.31, .29], [-.43, .17]]) { c.beginPath(); c.ellipse(0, y * R, w * R, R * .12, 0, 0, TAU); c.fill(); } c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.ellipse(-R * .18, -R * .2, R * .1, R * .04, -.5, 0, TAU); c.fill(); c.save(); c.translate(0, -R * .08); drawDeco(c, p.deco, R * 1.0); c.restore(); }
+    if (p.frost) { drawFrostSwirl(c, R, p.frost.col, p.frost.t == null ? 1 : p.frost.t); c.save(); c.translate(0, -R * .3); drawDeco(c, p.deco, R * 1.0); c.restore(); }
     else if (p.batter && !p.baked) { /* just batter in the liner */ }
   }
   function drawCake(c, p, R, t = 0) {
@@ -295,8 +376,7 @@
     for (const [dy, hh] of [[hgt * .5, hgt * .5], [0, hgt * .5]]) { c.fillStyle = shade(side, -.12); c.beginPath(); c.moveTo(-rx, dy); c.lineTo(-rx, dy + hh); c.ellipse(0, dy + hh, rx, ry, 0, Math.PI, 0, true); c.lineTo(rx, dy); c.closePath(); c.fill(); }
     if (p.frost) { c.fillStyle = shade(col, -.08); c.fillRect(-rx, hgt * .46, rx * 2, hgt * .08); c.beginPath(); c.ellipse(0, hgt * .5, rx, ry, 0, 0, Math.PI); c.fill(); }
     c.fillStyle = shade(side, -.05); c.beginPath(); c.ellipse(0, 0, rx, ry, 0, 0, TAU); c.fill();
-    c.fillStyle = p.frost ? p.frost.col : col; c.beginPath(); c.ellipse(0, -hgt * .02, rx * .94, ry * .9, 0, 0, TAU); c.fill();
-    if (p.frost) { c.fillStyle = shade(p.frost.col, .25); for (let i = 0; i < 9; i++) { const a = i / 9 * TAU, x = Math.cos(a) * rx * .94, y = Math.sin(a) * ry * .9 - hgt * .02; if (Math.sin(a) > -.2) { c.fillStyle = p.frost.col; c.beginPath(); c.ellipse(x, y + hgt * .05, rx * .06, hgt * (.12 + rnd(i) * .1), 0, 0, TAU); c.fill(); } } c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(-rx * .3, -ry * .3, rx * .22, ry * .12, -.3, 0, TAU); c.fill(); }
+    if (p.frost) { c.save(); c.translate(0, -hgt * .02); drawFrostTop(c, rx, ry, hgt, p.frost.col); c.restore(); } else { c.fillStyle = col; c.beginPath(); c.ellipse(0, -hgt * .02, rx * .94, ry * .9, 0, 0, TAU); c.fill(); }
     c.save(); c.translate(0, -hgt * .02); c.scale(1, .9); drawDeco(c, p.deco, R * 1.0); c.restore();
   }
   // toppings dropped on the top of a flat thing (a stack, a hot dog, a sundae): at height y, in widths of W

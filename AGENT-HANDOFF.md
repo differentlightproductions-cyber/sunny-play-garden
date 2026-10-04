@@ -25,3 +25,7 @@ Serve the repo (`python3 -m http.server 8123`), open `index.html`, pick a name b
 ## Ideas queued (not started)
 - Cooking: more recipes per tab, a shopping/ingredient-pick step, recipe stars shown on the hub icon, a saved "my menu" of favourite foods.
 - Hide and Seek: more places per season, friends' houses she can walk into.
+
+## Update (later session)
+- Pet Shop name screen: Done/Cancel were pushed off-screen on tablets and short phones; now pinned (CSS at the end of styles.css, `askName` in games/petshop.js). Player setup got the same pinned buttons. Long names shrink/ellipsize in `SPG.ui.nameGrid`.
+- Sprout Kitchen icing redrawn (glossy, sparkly, sitting on the muffin). Needs a fresh Android build to reach the app.

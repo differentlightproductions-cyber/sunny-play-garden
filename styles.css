@@ -663,7 +663,7 @@ body { position: fixed; inset: 0; width: 100%; }
 .ps-own { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border-radius: 50%; background: var(--leaf); color: #fff; display: grid; place-items: center; }
 .ps-own svg { width: 62%; height: 62%; }
 .ps-overlay { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(90, 63, 94, .5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 12px; }
-.ps-sheet { text-align: center; width: min(92vw, 460px); max-height: 96vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ps-sheet { text-align: center; width: min(94vw, 560px); max-height: 96vh; max-height: 96dvh; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .ps-sheet h2 { font-size: clamp(1.4rem, 4.4vmin, 2rem); margin: 0; }
 .ps-prev { width: clamp(120px, 26vmin, 220px); height: clamp(120px, 26vmin, 220px); background: #ffeef3; border-radius: 50%; }
 .ps-cost { font-size: 1.4rem; }
@@ -993,3 +993,19 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 /* tablets: one icon fewer in every row, so each is bigger and easier to hit (must match perPage() in js/app.js) */
 @media (min-width: 600px) and (min-height: 600px) { #hub-games .cards.page { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: clamp(14px, 3vmin, 34px); } #hub-games .card { font-size: clamp(1.1rem, 3.2vmin, 1.9rem); } }
 @media (min-width: 600px) and (min-height: 600px) and (orientation: portrait) { #hub-games .cards.page { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); } }
+
+/* Pet name screen: the picture, title and the buttons always stay on screen; only the list of names scrolls */
+.ps-sheet > * { flex: none; }
+.ps-sheet > .name-grid { flex: 1 1 auto; min-height: 84px; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; padding: 4px 6px 8px; margin: 0; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+.ps-sheet .ps-tools { flex-wrap: wrap; gap: 8px; }
+.ps-sheet .ps-tools .btn { flex: 1 1 auto; min-width: 0; font-size: .85em; }
+.ps-sheet .ps-ok-row { position: relative; z-index: 1; padding-top: 4px; }
+.ps-sheet .ps-ok-row .ps-yn.quiet { background: #ece4f4; color: var(--ink); }
+.name-btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: .5em; padding-right: .5em; }
+.name-btn.long { font-size: clamp(.82rem, 2.5vmin, 1.1rem); }
+.name-btn.xlong { font-size: clamp(.7rem, 2.1vmin, .95rem); }
+@media (max-height: 700px) { .ps-sheet .ps-prev { width: 84px; height: 84px; } .ps-sheet h2 { font-size: 1.15rem; } .ps-sheet > .name-grid { min-height: 70px; } }
+@media (max-width: 520px) { .ps-sheet > .name-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (orientation: landscape) and (max-height: 520px) { .ps-sheet { flex-direction: column; flex-wrap: nowrap; width: min(96vw, 640px); gap: 4px; } .ps-sheet .ps-prev { display: none; } .ps-sheet h2 { flex: none; min-width: 0; font-size: 1.05rem; } .ps-sheet .ps-yn, .ps-sheet .ps-dice { min-height: 48px; } .ps-sheet > .name-grid { min-height: 60px; } }
+/* Player setup: Back and Let's play! stay pinned to the bottom of the sheet even when the rest has to scroll (short landscape phones) */
+.setup .sheet > .row { position: sticky; bottom: -2px; z-index: 2; background: inherit; padding: 8px 0 4px; margin-bottom: 0; }

@@ -484,7 +484,7 @@
     nameGrid(names, onPick) {
       const el = document.createElement('div'); el.className = 'name-grid'; el.value = '';
       const btns = names.map(name => {
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'name-btn'; b.textContent = name; b.setAttribute('aria-pressed', 'false');
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'name-btn'; b.textContent = name; b.setAttribute('aria-pressed', 'false'); if (name.length > 11) b.classList.add('xlong'); else if (name.length > 8) b.classList.add('long');
         SPG.ui.press(b, () => { el.pick(name, true); });
         return b;
       });

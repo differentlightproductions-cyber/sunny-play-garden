@@ -249,13 +249,14 @@
       const dice = btn('btn quiet ps-dice', 'Pick a name for me', icon('dice')); tap(dice, () => { grid.pick(P.randomName(), true); grid.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest' }); });
       const kb = btn('btn quiet ps-dice', 'Grown-up: type a name', icon('lock'), icon('keyboard'));
       tap(kb, () => SPG.app.askGate(() => { kb.classList.add('hidden'); field.classList.remove('hidden'); grid.clear(); input.value = cur && !P.NAMES.includes(cur) ? cur : ''; setTimeout(() => input.focus(), 120); }), () => this.opened);
+      const cancel = btn('btn quiet ps-yn', 'Cancel', icon('x')); tap(cancel, () => this.closeSheet(), () => this.opened);
       const ok = btn('btn go ps-yn', 'Done', icon('check')); const guard = () => this.opened;
       tap(ok, () => {
         const name = input.value.trim() || grid.value || cur || P.randomName();
         P.rename(id, name); this.closeSheet(); this.render();
         if (first) { this.celebrate(); voice.say('welcome-home', voice.LINES['name/' + name] ? 'name/' + name : { say: name }); }
       }, guard);
-      this.openSheet(this.preview({ id }, 'pet'), el('h2', '', first ? 'What is your friend called?' : 'New name'), grid, el('div', 'row', dice, kb), field, el('div', 'row', ok));
+      this.openSheet(this.preview({ id }, 'pet'), el('h2', '', first ? 'What is your friend called?' : 'New name'), grid, el('div', 'row ps-tools', dice, kb), field, el('div', 'row ps-ok-row', ...(first ? [ok] : [cancel, ok])));
       input.addEventListener('keydown', e => { if (e.key === 'Enter') ok.click(); });
     }
     celebrate() {

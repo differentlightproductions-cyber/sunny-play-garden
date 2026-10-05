@@ -29,8 +29,20 @@
     return c;
   }
 
+  // The picture behind the menus. She changes it by touching the empty background of the main menu: each touch shows the next one
+  // (saved per player, `bag('hubbg')`). The look of each is in styles.css under `.backdrop[data-bg=...]`.
+  const BACKDROPS = ['meadow', 'sunset', 'beach', 'snow', 'space', 'autumn', 'candy'];
+  const backdropEl = document.querySelector('.backdrop');
+  const bgBag = () => (store.active ? store.bag('hubbg', () => ({ i: 0 })) : { i: 0 });
+  function applyBackdrop() { backdropEl.dataset.bg = BACKDROPS[((bgBag().i | 0) % BACKDROPS.length + BACKDROPS.length) % BACKDROPS.length]; }
+  function nextBackdrop() {
+    if (!store.active) return;
+    const b = bgBag(); b.i = ((b.i | 0) + 1) % BACKDROPS.length; store.save(); applyBackdrop();
+    backdropEl.classList.remove('bg-swap'); void backdropEl.offsetWidth; backdropEl.classList.add('bg-swap');
+    SPG.sfx.chime?.();
+  }
   function show(name) {
-    current = name; document.body.dataset.screen = name;
+    current = name; document.body.dataset.screen = name; applyBackdrop();
     for (const [id, el] of Object.entries(screens)) el.classList.toggle('hidden', id !== name);
     if (name === 'hub') requestAnimationFrame(drawCards);
   }
@@ -214,6 +226,17 @@
     drawCards();
   }
   /* ------------------------------------------------------------ rearranging the apps (grown-ups): hold an app ~2 s, confirm, then drag */
+  // touching the empty background of the main menu (not an icon, button, arrow or the shop) changes the picture behind it
+  (() => {
+    const hub = $('hub'); let d = null;
+    const empty = t => t.closest('.card, button, .chip, .shopfront, .pg-nav, .hub-editbar, a, input, select') === null;
+    hub.addEventListener('pointerdown', e => { d = e.isPrimary && empty(e.target) ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; });
+    hub.addEventListener('pointercancel', () => { d = null; });
+    hub.addEventListener('pointerup', e => {
+      if (!d) return; const m = Math.hypot(e.clientX - d.x, e.clientY - d.y), long = performance.now() - d.t > 600; d = null;
+      if (m < 14 && !long && !hubEdit && current === 'hub' && !anyOverlay() && empty(e.target)) nextBackdrop();
+    });
+  })();
   let hubEdit = null;   // while rearranging: { drag }
   const orderedGames = list => { const ord = store.settings.hubOrder || [], idx = g => { const i = ord.indexOf(g.id); return i < 0 ? 1000 + g.order : i; }; return list.slice().sort((a, b) => idx(a) - idx(b)); };
   const gameIds = () => orderedGames(SPG.games.filter(g => !g.shop)).map(g => g.id);

@@ -1134,3 +1134,39 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
   .hub-top .chip.round { width: 40px; }
   .hub-top .chip.stars { padding: .3em .75em; justify-content: center; }
 }
+
+/* ---------- main menu backgrounds (she picks one by touching the empty background of the main menu; BACKDROPS in js/app.js) ---------- */
+.backdrop { transition: none; }
+.backdrop.bg-swap svg { animation: bgSwap .7s ease; }
+@keyframes bgSwap { from { opacity: .15; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+.backdrop[data-bg="sunset"] { background: linear-gradient(#ff9a8b, #ffc78a 48%, #ffe9b8); }
+.backdrop[data-bg="beach"] { background: linear-gradient(#7fd1f5, #c8f0fb 60%, #fff5d6); }
+.backdrop[data-bg="snow"] { background: linear-gradient(#bfdcf2, #e8f3fb 62%, #ffffff); }
+.backdrop[data-bg="space"] { background: radial-gradient(circle at 70% 20%, #4b3b9a, #1a1450 55%, #0b0a2c); }
+.backdrop[data-bg="autumn"] { background: linear-gradient(#ffd9a0, #ffe9c4 60%, #fff4de); }
+.backdrop[data-bg="candy"] { background: linear-gradient(#ffd1e8, #e3f6ff 58%, #fff0f7); }
+body:not(.night) .backdrop[data-bg="sunset"] .bg-sun { transform: translate(-760px, 340px) scale(1.5); }
+body:not(.night) .backdrop[data-bg="sunset"] .bg-sun circle { fill: #ff7b54; }
+body:not(.night) .backdrop[data-bg="sunset"] .bg-h1 { fill: #e58fa8; } body:not(.night) .backdrop[data-bg="sunset"] .bg-h2 { fill: #c97cb0; } body:not(.night) .backdrop[data-bg="sunset"] .bg-h3 { fill: #a766a8; }
+body:not(.night) .backdrop[data-bg="sunset"] .cloud * { fill: #ffe3d6; }
+body:not(.night) .backdrop[data-bg="beach"] .bg-sun { transform: translate(-300px, 20px); }
+body:not(.night) .backdrop[data-bg="beach"] .bg-h1 { fill: #6cc7e8; } body:not(.night) .backdrop[data-bg="beach"] .bg-h2 { fill: #f3dc9f; } body:not(.night) .backdrop[data-bg="beach"] .bg-h3 { fill: #ebca7f; }
+body:not(.night) .backdrop[data-bg="snow"] .bg-sun circle { fill: #fff6d8; }
+body:not(.night) .backdrop[data-bg="snow"] .bg-h1 { fill: #f4f9fd; } body:not(.night) .backdrop[data-bg="snow"] .bg-h2 { fill: #e4eff8; } body:not(.night) .backdrop[data-bg="snow"] .bg-h3 { fill: #d3e4f2; }
+body:not(.night) .backdrop[data-bg="snow"] .cloud * { fill: #dbe9f5; }
+body:not(.night) .backdrop[data-bg="snow"]::after { opacity: 1; background:
+  radial-gradient(4px 4px at 10% 10%, #fff, transparent), radial-gradient(5px 5px at 24% 40%, #fff, transparent), radial-gradient(3px 3px at 37% 18%, #fff, transparent), radial-gradient(5px 5px at 52% 55%, #fff, transparent),
+  radial-gradient(4px 4px at 66% 25%, #fff, transparent), radial-gradient(3px 3px at 80% 48%, #fff, transparent), radial-gradient(5px 5px at 91% 12%, #fff, transparent), radial-gradient(4px 4px at 45% 75%, #fff, transparent), radial-gradient(3px 3px at 15% 70%, #fff, transparent);
+  background-size: 100% 50%; animation: snowfall 9s linear infinite; }
+@keyframes snowfall { from { background-position: 0 0; } to { background-position: 30px 100%; } }
+body:not(.night) .backdrop[data-bg="space"] .cloud { display: none; }
+body:not(.night) .backdrop[data-bg="space"] .bg-sun circle { fill: #ff9ad5; }
+body:not(.night) .backdrop[data-bg="space"] .bg-h1 { fill: #5a4aa8; } body:not(.night) .backdrop[data-bg="space"] .bg-h2 { fill: #473a92; } body:not(.night) .backdrop[data-bg="space"] .bg-h3 { fill: #362c7a; }
+body:not(.night) .backdrop[data-bg="space"]::after { opacity: 1; }
+body:not(.night) .backdrop[data-bg="autumn"] .bg-sun circle { fill: #ffbf5a; }
+body:not(.night) .backdrop[data-bg="autumn"] .bg-h1 { fill: #e8a24a; } body:not(.night) .backdrop[data-bg="autumn"] .bg-h2 { fill: #d9833a; } body:not(.night) .backdrop[data-bg="autumn"] .bg-h3 { fill: #bf6a33; }
+body:not(.night) .backdrop[data-bg="autumn"] .cloud * { fill: #fff0d6; }
+body:not(.night) .backdrop[data-bg="candy"] .bg-sun circle { fill: #ffe27a; }
+body:not(.night) .backdrop[data-bg="candy"] .bg-h1 { fill: #bff0d9; } body:not(.night) .backdrop[data-bg="candy"] .bg-h2 { fill: #ffc9e0; } body:not(.night) .backdrop[data-bg="candy"] .bg-h3 { fill: #d9c9ff; }
+@media (prefers-reduced-motion: reduce) { .backdrop.bg-swap svg, body:not(.night) .backdrop[data-bg="snow"]::after { animation: none; } }
+body:not(.night)[data-screen="hub"] .backdrop[data-bg="space"] ~ .hub .pg-dot:not(.on) { background: rgba(255, 255, 255, .55); }

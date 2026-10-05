@@ -222,7 +222,7 @@
     if (/neural|natural|enhanced|premium|wavenet|studio/i.test(n)) s += 9;
     if (/network|online/i.test(n)) s += online ? 8 : -99;
     if (v.localService === false && !online) s -= 99;
-    if (/female|samantha|aria|jenny|ava|allison|nicky|karen|zira|susan|google us english|x-tpf|x-sfg|x-tpc|x-iob|x-iol/i.test(n)) s += 3;
+    if (/female|samantha|aria|jenny|ava|allison|nicky|karen|zira|susan|google us english|x-tpf|x-sfg|x-tpc|x-iob|x-iog/i.test(n)) s += 3;
     if (/compact|espeak|robot|novelty|bad news|whisper|bubbles|boing|zarvox|trinoids|albert|fred|junior/i.test(n)) s -= 12;
     return s;
   };
@@ -347,6 +347,24 @@
     LINES, SOUNDS, PICK_NAMES, PHONICS, NAMES, WORDS, PRAISE, GROUPS, SETS, custom, ready,
     syncSets,
     // the built-in speaking voice, for the grown-ups' picker
+    // The same voices sorted for a grown-up: women's and men's voices apart, the most natural first, robotic ones left out.
+    ttsChoices() {
+      const online = navigator.onLine !== false, seen = new Set(), out = { female: [], male: [], other: [] };
+      const accent = l => (/^en[-_]GB/i.test(l) ? 'British' : /^en[-_]AU/i.test(l) ? 'Australian' : /^en[-_]IN/i.test(l) ? 'Indian' : /^en[-_]CA/i.test(l) ? 'Canadian' : /^en[-_]IE/i.test(l) ? 'Irish' : /^en[-_]ZA/i.test(l) ? 'South African' : /^en[-_]NZ/i.test(l) ? 'New Zealand' : 'American');
+      const F = /female|woman|x-(iob|iog|sfg|tpc|tpf)\b|samantha|aria|jenny|ava\b|allison|nicky|karen|zira|susan|victoria|kate|serena|moira|tessa|fiona|emma|sonia|libby|natasha|michelle|joanna|salli|kendra|kimberly|ivy|amy|olivia|nova|shimmer|heather|catherine|hazel|jane|clara|leah|molly|ana\b/i;
+      const M = /\bmale\b|\bman\b|x-(iol|iom|tpd)\b|aaron|daniel|alex\b|fred|tom\b|guy\b|davis|ryan|brian|matthew|joey|justin|kevin|arthur|james|george|oliver|thomas|mark\b|eric|christopher|roger|steffan|david|rishi|lee\b|gordon|nathan|liam|william|echo|onyx|fable/i;
+      const rows = englishVoices().map(v => ({ v, sc: voiceScore(v, online), n: `${v.name} ${v.voiceURI || ''}` })).filter(x => x.sc > -50 && !/compact|espeak|robot|novelty|bad news|whisper|bubbles|boing|zarvox|trinoids|albert|fred|junior/i.test(x.n)).sort((a, b) => b.sc - a.sc);
+      for (const x of rows) {
+        const id = x.v.voiceURI || x.v.name, key = `${x.v.name}|${x.v.lang}`; if (seen.has(key)) continue; seen.add(key);
+        const g = /female|woman/i.test(x.n) ? 'female' : F.test(x.n) && !/\bmale\b/i.test(x.n.replace(/female/ig, '')) ? 'female' : M.test(x.n) ? 'male' : 'other';
+        const natural = /neural|natural|enhanced|premium|wavenet|studio|network|online/i.test(x.n) || x.v.localService === false;
+        const code = /x-[a-z]{2,4}-?/i.test(x.v.name) || /^[a-z]{2}[-_][a-z]{2}\b/i.test(x.v.name);
+        const bucket = out[g]; if (bucket.length >= 6) continue;
+        const nameTxt = code ? `Voice ${bucket.length + 1}` : x.v.name.replace(/^(Microsoft|Google)\s+/i, '').replace(/\s+Online.*$/i, '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+-\s+.*$/, '').trim();
+        bucket.push({ id, label: `${nameTxt} · ${accent(x.v.lang)}`, tag: natural ? (x.v.localService === false ? 'Most natural · needs internet' : 'Most natural') : 'Good', natural });
+      }
+      return out;
+    },
     ttsVoices() { return englishVoices().map(v => ({ id: v.voiceURI || v.name, label: `${v.name} (${v.lang})${v.localService === false ? ' · needs internet' : ''}` })); },
     ttsChosen() { return store.settings.ttsVoice || ''; },
     setTtsVoice(id) { store.settings.ttsVoice = id || ''; voiceObj = undefined; store.save(); },

@@ -1214,6 +1214,7 @@
       if (titleH) y += titleH + 12;
       if (this.narrow) y = Math.max(y, 118);   // below the stars and the counter in the corner
       const tabH = compact ? 58 : clamp(short * .15, 62, 92), tabW = clamp((w - 36 - 20) / 3, 92, 210);
+      if (!compact && (w / 2 - 1.5 * (tabW + 10) < ab.x + ab.r + 10 || w / 2 + 1.5 * (tabW + 10) > w - 112)) y = Math.max(y, 152);   // the tabs would run into the camera album or the star counters in the corners
       this.tabBox = { h: tabH, w: tabW, y: y + tabH / 2 };
       CATS.forEach((cat, i) => this.menuHit.push({ x: w / 2 + (i - 1) * (tabW + 10), y: y + tabH / 2, w: tabW, h: tabH, tab: i }));
       y += tabH + 14;

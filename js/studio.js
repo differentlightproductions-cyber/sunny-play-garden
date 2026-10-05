@@ -74,14 +74,27 @@
 
   // Lines nobody has recorded are read out by the device's own speaking voice. Phones have several; this picks one by ear.
   function ttsPicker(redraw) {
-    const list = voice.ttsVoices(); if (!list.length) return null;
-    const sel = h('select', { 'aria-label': 'Built-in speaking voice' }, h('option', { value: '' }, 'Best one (automatic)' + (voice.ttsCurrentName() ? ` · now: ${voice.ttsCurrentName()}` : '')), ...list.map(v => h('option', { value: v.id }, v.label)));
-    sel.value = voice.ttsChosen();
-    sel.addEventListener('change', () => { voice.setTtsVoice(sel.value); voice.hearTts(); });
-    const hear = h('button', { class: 'btn small quiet', type: 'button' }, 'Hear it');
-    hear.addEventListener('click', () => voice.hearTts());
-    return h('div', { class: 'vtools' }, h('h3', {}, 'Built-in speaking voice'),
-      h('p', { class: 'fine' }, 'Used for any line that nobody has recorded. If it sounds robotic, try another one here. Voices marked “needs internet” are usually the most natural.'), h('div', { class: 'setting' }, sel, hear));
+    const ch = voice.ttsChoices(); if (!ch.female.length && !ch.male.length && !ch.other.length) return null;
+    const chosen = voice.ttsChosen(), box = h('div', { class: 'vtools vchoices' }, h('h3', {}, 'Built-in speaking voice'),
+      h('p', { class: 'fine' }, 'Used for any line that nobody has recorded. Touch a voice to choose it and hear it. The most natural ones are listed first; some need the internet.'));
+    const pick = id => { voice.setTtsVoice(id); voice.hearTts(); redraw(); };
+    const auto = h('button', { class: 'btn small' + (chosen ? ' quiet' : ' go'), type: 'button' }, 'Best one for me (automatic)' + (voice.ttsCurrentName() && !chosen ? ` · now: ${voice.ttsCurrentName()}` : ''));
+    auto.addEventListener('click', () => pick(''));
+    box.append(h('div', { class: 'setting' }, auto));
+    const group = (title, list) => {
+      if (!list.length) return;
+      box.append(h('h4', { class: 'vgroup' }, title));
+      const row = h('div', { class: 'vrow' });
+      for (const v of list) {
+        const b = h('button', { class: 'vchoice' + (chosen === v.id ? ' on' : ''), type: 'button', 'aria-pressed': chosen === v.id ? 'true' : 'false' },
+          h('span', { class: 'vn' }, (chosen === v.id ? '✓ ' : '▶ ') + v.label), h('span', { class: 'vt' }, v.tag));
+        b.addEventListener('click', () => pick(v.id)); row.append(b);
+      }
+      box.append(row);
+    };
+    group('Female voices', ch.female); group('Male voices', ch.male); group('More voices', ch.other);
+    box.append(h('p', { class: 'fine' }, 'Want more or better voices? On Android open Settings > System > Languages > Text-to-speech output, choose Google or Samsung text-to-speech, then install an English (US, UK or Australia) voice from its settings. They appear here by themselves.'));
+    return box;
   }
 
   // Add, rename and remove extra voices (grandparents, cousins, the child herself...).

@@ -262,7 +262,9 @@
   // Match the CSS grid using the current window, including when a foldable opens or closes.
   // A nearly square inner display has room for nine existing icons without enlarging their art.
   const squareOpen = () => matchMedia('(min-width: 600px) and (min-height: 600px) and (min-aspect-ratio: 4/5) and (max-aspect-ratio: 5/4)').matches;
-  const perPage = () => (squareOpen() ? 9 : matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
+  // A Flip-style cover screen (both sides about 400 px or less) shows three games at a time in one row.
+  const coverTiny = () => matchMedia('(max-width: 420px) and (max-height: 420px)').matches;
+  const perPage = () => (coverTiny() ? 3 : squareOpen() ? 9 : matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }

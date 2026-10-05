@@ -145,7 +145,7 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'], aquarium: ['#d8f2ff', '#7fc8ec'], cook: ['#fff0dc', '#f5c690'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'], aquarium: ['#d8f2ff', '#7fc8ec'], cook: ['#fff0dc', '#f5c690'], clay: ['#ffe9d4', '#f2b98c'] };
   function renderCards() {
     const all = SPG.games.slice().sort((a, b) => a.order - b.order);
     const games = orderedGames(all.filter(g => !g.shop)), shops = all.filter(g => g.shop);
@@ -755,7 +755,7 @@
     if (SPG.photos) SPG.photos.count().then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
     const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear(); renderParent(); });
     return h('section', {}, h('h3', {}, 'Photos and pictures'),
-      h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made. Photos are always kept in the kitchen\u2019s own photo album, on this device only.'),
+      h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made, and in Clay Corner it takes a picture of the clay creation. Pictures are always kept in the game\u2019s own album, on this device only.'),
       h('p', {}, app ? 'In the Coloring Book the Save picture button always puts the finished picture into this phone\u2019s photo gallery (album \u201CSprout Park\u201D). Every picture also stays in the Coloring Book\u2019s own gallery.' : 'In the Coloring Book the Save picture button downloads the picture to this device. Every picture also stays in the Coloring Book\u2019s own gallery.'),
       ios ? h('p', { class: 'fine' }, 'On iPhone and iPad the photos stay in the kitchen album.') : h('div', { class: 'setting' }, h('span', {}, app ? 'Also save them to this phone\u2019s photo gallery (album \u201CSprout Park\u201D)' : 'Also save them to this device (as a download)'), sw),
       count, clear);

@@ -18,7 +18,7 @@ Save MP3s as `audio/voice/male/<file>.mp3` and/or `audio/voice/female/<file>.mp3
 `node tools/build-voice-manifest.mjs` and deploy. (File recordings work on every device; tablet recordings only on that tablet.)
 
 ## Suggested order (most useful first)
-1. **Cheering** and **Prompts**: about 145 short lines.
+1. **Cheering** and **Prompts**: about 146 short lines.
 2. **Letter sounds** and **Letter names**: the heart of the letter games.
 3. **Critter noises**: make the noise yourself (bee buzz, frog ribbit).
 4. **Picture words**, **Garden friend announcements**, **Player names**.
@@ -97,6 +97,7 @@ Short lines that tell {her} what to do.
 | `cook-decorate.mp3` | Make it pretty! |
 | `cook-slice.mp3` | Slice it with the knife! |
 | `cook-serve.mp3` | Yummy! Touch it to take a bite! |
+| `clay-start.mp3` | Squish, roll and shape your clay! |
 | `cook-pickbun.mp3` | Pick a bun! |
 | `cook-pickbread.mp3` | Pick your bread! |
 | `cook-patties.mp3` | Put patties on the grill! One, two or three! |
@@ -552,6 +553,43 @@ Only said when "Extra audio help" is on in Grown-ups. Said when an ingredient, a
 | `cook-greenpepper.mp3` | Green peppers! |
 | `cook-pineapple.mp3` | Pineapple! |
 | `cook-basil.mp3` | Basil! |
+
+## Clay Corner names
+
+Only said when "Extra audio help" is on in Grown-ups. Said when a clay tool, a cookie cutter, a stamp or an eye or bead is touched: "Squish!", "A heart!", "A googly eye!".
+
+| File | Say |
+|---|---|
+| `clay-clay.mp3` | Clay! |
+| `clay-hand.mp3` | Pick it up! |
+| `clay-pull.mp3` | Pull it! |
+| `clay-squish.mp3` | Squish! |
+| `clay-roll.mp3` | Roll it flat! |
+| `clay-cutters.mp3` | Cookie cutters! |
+| `clay-extras.mp3` | Eyes and beads! |
+| `clay-knife.mp3` | Cut it! |
+| `clay-stamps.mp3` | Stamps! |
+| `clay-smooth.mp3` | Smooth it! |
+| `clay-pinch.mp3` | Pinch! |
+| `clay-poke.mp3` | Poke! |
+| `clay-dye.mp3` | Add some color! |
+| `clay-circle.mp3` | A circle! |
+| `clay-square.mp3` | A square! |
+| `clay-heart.mp3` | A heart! |
+| `clay-star.mp3` | A star! |
+| `clay-flower.mp3` | A flower! |
+| `clay-triangle.mp3` | A triangle! |
+| `clay-bear.mp3` | A bear! |
+| `clay-cat.mp3` | A kitty! |
+| `clay-dots.mp3` | Dots! |
+| `clay-paw.mp3` | A paw! |
+| `clay-ridges.mp3` | Stripes! |
+| `clay-ring.mp3` | A ring! |
+| `clay-zigzag.mp3` | A zigzag! |
+| `clay-eye.mp3` | A googly eye! |
+| `clay-bead.mp3` | A bead! |
+| `clay-pearl.mp3` | A pearl! |
+| `clay-sprinkles.mp3` | Sprinkles! |
 
 ## Letter names (A to Z)
 

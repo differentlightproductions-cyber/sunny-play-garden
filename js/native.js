@@ -47,6 +47,33 @@
       return N.saveFile(blob, name, blob.type || 'image/jpeg');
     }
   };
+  // Grown-up unlock with the device's own fingerprint, face or screen lock. In the app this is the phone's biometric prompt (with the screen
+  // lock PIN, pattern or password as its fallback); on the website it is the browser's platform authenticator (WebAuthn: Windows Hello,
+  // Touch ID, Android fingerprint). Nothing secret is stored: the device says "yes, the owner is here" and the PIN / sum always still works.
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))), unb64 = t => Uint8Array.from(atob(t), ch => ch.charCodeAt(0));
+  N.deviceAuth = {
+    async available() {
+      try {
+        if (isApp) { const B = plugins().NativeBiometric; if (!B) return false; const r = await B.isAvailable({ useFallback: true }); return !!(r && (r.isAvailable || r.deviceIsSecure)); }
+        return !!(window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+      } catch (_) { return false; }
+    },
+    // asks the device once, so a grown-up knows it works before it is switched on; resolves a small token to save (or '' in the app)
+    async enroll() {
+      try {
+        if (isApp) { await plugins().NativeBiometric.verifyIdentity({ reason: 'Use your fingerprint or phone lock for the grown-ups area', title: 'Grown-ups only', subtitle: 'Little Sprout Park', useFallback: true }); return 'app'; }
+        const cred = await navigator.credentials.create({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: 'Little Sprout Park' }, user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'grown-up', displayName: 'Grown-up' }, pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }], authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' }, timeout: 60000 } });
+        return cred ? b64(cred.rawId) : '';
+      } catch (_) { return ''; }
+    },
+    async verify(token) {
+      try {
+        if (isApp) { await plugins().NativeBiometric.verifyIdentity({ reason: 'Grown-ups only', title: 'Grown-ups only', subtitle: 'Little Sprout Park', useFallback: true }); return true; }
+        const r = await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: token && token !== 'app' ? [{ type: 'public-key', id: unb64(token) }] : [], userVerification: 'required', timeout: 60000 } });
+        return !!r;
+      } catch (_) { return false; }
+    }
+  };
   // The Android back button goes to the same place the browser's back button did: SPG.safe.onBack.
   if (isApp) {
     const App = plugins().App;

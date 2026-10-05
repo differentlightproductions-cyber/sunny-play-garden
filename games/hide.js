@@ -462,6 +462,18 @@
       // solid things (hiding places, trees, houses, the landmark) stop her; touching a hiding place looks behind it
       const push = (o, r, sp) => { const dx = me.x - o.x, dy = (me.y - o.y) * 1.6, d = Math.hypot(dx, dy), min = r + PR; if (d < min && d > .01) { me.x = o.x + dx / d * min; me.y = o.y + (dy / d * min) / 1.6; } if (sp && this.bumpT <= 0 && this.state === 'play' && d < min + S * .12 && (sp.friend ? !sp.friend.found : !sp.checked)) { this.bumpT = .6; this.look(sp); } };
       for (const sp of this.spots) push(sp, sp.r, sp);
+      // a hiding friend pops out beside its place every couple of seconds while she is nearby, so she can see where it is without relying on the arrow
+      if (play && !this.fadeTo) {
+        let nearest = null, nd = 1e9;
+        for (const sp of this.spots) { if (sp.friend && !sp.friend.found) { const d = Math.hypot(me.x - sp.x, me.y - sp.y); if (d < nd) { nd = d; nearest = sp; } } }
+        for (const sp of this.spots) {
+          if (!(sp.friend && !sp.friend.found)) { sp.peekP = 0; continue; }
+          const d = Math.hypot(me.x - sp.x, me.y - sp.y), near = d < S * 3.6;
+          if (sp.peekP > 0) { sp.peekP += dt; if (sp.peekP > 1.3) sp.peekP = 0; }
+          sp.peekT = (sp.peekT == null ? 1.2 : sp.peekT) - (near ? dt : 0);
+          if (near && sp.peekT <= 0 && !sp.peekP) { sp.peekT = 2.2 + Math.random() * 1.3; sp.peekP = .001; sp.peekSide = Math.random() < .5 ? -1 : 1; if (sp === nearest) sfx.squeak(); }
+        }
+      }
       for (const tr of this.trees) push(tr, tr.r);
       for (const o of this.lands) push(o, o.r);
       if (this.pondAt) { const p = this.pondAt, dx = (me.x - p.x) / (p.rx * .9), dy = (me.y - p.y) / (p.ry * .9), d = Math.hypot(dx, dy); if (d < 1) { me.x = p.x + dx / d * p.rx * .9; me.y = p.y + dy / d * p.ry * .9; } }
@@ -545,6 +557,10 @@
       const S = this.S, f = o.friend, W = this.pal, hot = f && !f.found && this.state === 'play' && Math.hypot(this.me.x - o.x, this.me.y - o.y) < S * 1.8;
       c.save(); c.translate(o.x - this.cam.x, o.y - this.cam.y);
       c.fillStyle = 'rgba(40,60,40,.2)'; c.beginPath(); c.ellipse(0, 3, S * .55, S * .08, 0, 0, TAU); c.fill();
+      if (f && !f.found && o.peekP > 0) {   // a head and ears slide out from behind the place, wiggle, and slide back
+        const u = o.peekP / 1.3, k = Math.sin(Math.PI * clamp(u * 1.05, 0, 1)), sd = o.peekSide || 1;
+        c.save(); c.translate(sd * S * (.22 + .2 * k), -S * (.2 + .32 * k)); c.rotate(sd * .22 * k + Math.sin(this.t * 14) * .05 * k); c.globalAlpha = Math.min(1, k * 2.2); this.friendArt(c, f.kind, S * .4, 0, 'happy'); c.restore();
+      }
       c.save(); c.rotate(Math.sin(o.shake * 26) * o.shake * .06 + (hot ? Math.sin(this.t * 14) * .025 : 0)); c.globalAlpha = o.checked && !(f && f.found) ? .84 : 1; SPOT[o.kind](c, S, o.pal); if (this.season === 'winter') snowCap(c, S, o.kind); c.restore();
       if (hot) { for (let k = 0; k < 3; k++) { c.globalAlpha = .5 + Math.sin(this.t * 6 + k * 2) * .5; art.star(c, (k - 1) * S * .3, -S * ((SPOT_H[o.kind] || .85) + .12 + Math.sin(this.t * 2 + k) * .06), S * .09, '#ffe066', this.t + k); } c.globalAlpha = 1; }
       if (o.halo > 0) {   // after looking behind an empty place: how close is the nearest friend? snowflake (far), sun (closer), flame (very close)

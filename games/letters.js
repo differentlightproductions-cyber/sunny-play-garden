@@ -257,6 +257,155 @@
     }
   }
 
+
+  /* ================================================================ Practice page: one letter written over and over on handwriting lines */
+  // Capital and small letters sit side by side on lines (a top line, a dashed middle line and a baseline) like a page in a writing book.
+  // She traces each one in turn (or touches any of them to start there); when the whole page is done she gets a star and a fresh page of the
+  // same letter, so she can keep practising as long as she likes. Nothing moves on to another letter unless she chooses to.
+  class Practice {
+    constructor(host, { onPage, onCell }) {
+      this.canvas = el('canvas', 'lg-canvas'); host.append(this.canvas); this.c = this.canvas.getContext('2d'); this.fx = new art.Fx();
+      this.onPage = onPage; this.onCell = onCell; this.t = 0; this.running = false; this.pid = null; this.engaged = false; this.cells = []; this.cur = 0; this.clearT = 0; this.pages = 0;
+      const cv = this.canvas;
+      cv.addEventListener('pointerdown', e => this.down(e));
+      cv.addEventListener('pointermove', e => this.move(e));
+      for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) cv.addEventListener(t, e => this.up(e));
+      this.resize();
+    }
+    resize() {
+      const r = this.canvas.getBoundingClientRect(); if (!r.width || !r.height) return;
+      this.w = r.width; this.h = r.height; const dpr = SPG.ui.dpr();
+      this.canvas.width = Math.round(this.w * dpr); this.canvas.height = Math.round(this.h * dpr); this.c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (this.ch) this.layout();
+      this.render();
+    }
+    setLetter(ch) { this.ch = ch.toLowerCase(); this.pages = 0; this.layout(); this.fresh(); }
+    // lay the page out: rows of lines, pairs of capital + small along each row
+    layout() {
+      const { w, h } = this, m = Math.min(w, h), ui = Math.max(46, Math.min(76, m * .11)), edge = Math.max(8, Math.min(14, m * .02)), arrow = Math.max(58, Math.min(92, m * .14));
+      const side = w > h && h < 520, top = ui + edge + 14, bottom = side ? ui * .9 + edge : arrow + edge + 16, inset = side ? arrow + edge + 12 : w * .04;
+      const U = glyphs.get(this.ch.toUpperCase()), L = glyphs.get(this.ch), pairW = Math.max(U.w, L.w) * 2 + 90, rowU = 180;
+      const availH = h - top - bottom, panelW = w - inset * 2;
+      const rows = side ? 2 : h > w * 1.2 ? 4 : 3;
+      let k = Math.min(availH / (rows * rowU), panelW / (pairW * 1.6));
+      const pairs = Math.max(1, Math.floor((panelW - 40 * k) / (pairW * k)));
+      this.k = k; this.rows = rows; this.pairs = pairs; this.pairW = pairW; this.rowU = rowU;
+      const pageW = pairs * pairW * k, pageH = rows * rowU * k;
+      this.page = { x: (w - pageW) / 2, y: top + (availH - pageH) / 2, w: pageW, h: pageH };
+      this.panel = { x: this.page.x - 22, y: this.page.y - 16, w: pageW + 44, h: pageH + 32 };
+      this.cells.forEach(cl => this.place(cl));
+    }
+    place(cl) {
+      const { k, rowU, pairW } = this, P = this.page, g = cl.g, x0 = P.x + (cl.pair * pairW + (cl.up ? 0 : pairW / 2) + 0) * k, cellW = pairW / 2;
+      cl.ox = x0 + (cellW - g.w) / 2 * k; cl.oy = P.y + cl.row * rowU * k + 12 * k; cl.box = { x: x0, y: P.y + cl.row * rowU * k, w: cellW * k, h: rowU * k };
+    }
+    fresh() {
+      const U = glyphs.get(this.ch.toUpperCase()), L = glyphs.get(this.ch); this.cells = [];
+      for (let r = 0; r < this.rows; r++) for (let p = 0; p < this.pairs; p++) for (const up of [true, false]) { const g = up ? U : L; const cl = { row: r, pair: p, up, g, si: 0, prog: 0, done: false, pop: 0 }; this.place(cl); this.cells.push(cl); }
+      this.cur = 0; this.idle = 0; this.demoT = 0; this.miss = 0; this.hint = 0; this.allDone = false; this.clearT = 0;
+    }
+    start() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(t => this.frame(t)); }
+    pause() { this.running = false; cancelAnimationFrame(this.raf); this.pid = null; this.engaged = false; }
+    resume() { this.start(); }
+    destroy() { this.pause(); this.canvas.remove(); }
+    pt(e) { const r = this.canvas.getBoundingClientRect(); return { px: e.clientX - r.left, py: e.clientY - r.top }; }
+    units(e, cl) { const q = this.pt(e); return { x: (q.px - cl.ox) / this.k, y: (q.py - cl.oy) / this.k, px: q.px, py: q.py }; }
+    cellAt(q) { return this.cells.findIndex(cl => q.px >= cl.box.x && q.px <= cl.box.x + cl.box.w && q.py >= cl.box.y && q.py <= cl.box.y + cl.box.h); }
+    down(e) {
+      if (!this.cells.length || this.pid !== null || this.allDone) return;
+      e.preventDefault(); this.pid = e.pointerId; try { this.canvas.setPointerCapture(e.pointerId); } catch (_) { /* optional */ }
+      const q = this.pt(e); let i = this.cellAt(q);
+      if (i >= 0 && !this.cells[i].done && i !== this.cur) { this.cur = i; this.cells[i].si = 0; this.cells[i].prog = 0; }   // touch any cell to start there
+      const cl = this.cells[this.cur]; this.idle = 0; this.finger = this.units(e, cl);
+      const st = cl.g.strokes[cl.si], p = st.pts[cl.prog];
+      if (dist(this.finger, p) <= PG_START) { this.engaged = true; if (glyphs.isDot(st)) this.strokeDone(cl); }
+      else { this.engaged = false; if (++this.miss >= 2) this.hint = 1.6; sfx.squeak(); }
+    }
+    move(e) {
+      if (e.pointerId !== this.pid) return; e.preventDefault();
+      const cl = this.cells[this.cur]; if (!cl) return;
+      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      for (const ev of (evs.length ? evs : [e])) {
+        const u = this.units(ev, cl), prev = this.finger || u; this.finger = u;
+        this.fx.burst(u.px, u.py, 1, { colors: [COLORS[(cl.si + 2) % 6], '#fff'], speed: 34, g: 0, life: .45, size: 3 });
+        if (!this.engaged || cl.done) continue;
+        const n = Math.max(1, Math.ceil(dist(prev, u) / 4)), stepLen = dist(prev, u) / n;
+        for (let i = 1; i <= n && !cl.done; i++) this.advance(cl, { x: prev.x + (u.x - prev.x) * i / n, y: prev.y + (u.y - prev.y) * i / n }, Math.ceil(stepLen / 2.5) + 2);
+      }
+    }
+    up(e) { if (e.pointerId !== this.pid) return; this.pid = null; this.engaged = false; this.finger = null; }
+    advance(cl, u, ahead) {
+      const pts = cl.g.strokes[cl.si].pts, max = Math.min(pts.length - 1, cl.prog + ahead); let best = -1, bd = Infinity;
+      for (let j = cl.prog; j <= max; j++) { const d = dist(u, pts[j]); if (d < bd) { bd = d; best = j; } }
+      if (bd > PG_TOL) return;
+      if (best > cl.prog) { if (Math.floor(best / 8) !== Math.floor(cl.prog / 8)) sfx.note(Math.floor(best / 8) % 7, .07); cl.prog = best; this.idle = 0; }
+      if (cl.prog >= pts.length - 2) this.strokeDone(cl);
+    }
+    strokeDone(cl) {
+      const st = cl.g.strokes[cl.si], end = st.pts[st.pts.length - 1];
+      this.fx.burst(cl.ox + end.x * this.k, cl.oy + end.y * this.k, 6, { colors: [COLORS[cl.si % 6], '#fff', '#ffd54a'], speed: 120, g: 200, life: .5, size: 4, shape: 'star' });
+      cl.si++; cl.prog = 0; this.demoT = 0; this.idle = 0; this.engaged = false; this.miss = 0;
+      if (cl.si >= cl.g.strokes.length) {
+        cl.done = true; cl.pop = 1; this.pid = null; sfx.chime();
+        this.fx.burst(cl.box.x + cl.box.w / 2, cl.oy + 50 * this.k, 14, { colors: COLORS, speed: 260, g: 420, life: .9, size: 6, shape: 'confetti', up: 80 });
+        this.onCell && this.onCell(cl);
+        const nxt = this.cells.findIndex((c2, j) => !c2.done && j > this.cur); const any = nxt >= 0 ? nxt : this.cells.findIndex(c2 => !c2.done);
+        if (any >= 0) this.cur = any; else this.pageDone();
+      } else sfx.chime();
+    }
+    pageDone() {
+      this.allDone = true; this.pages++; this.clearT = 2.2; sfx.win();
+      this.fx.burst(this.w / 2, this.h * .4, 36, { colors: COLORS, speed: 460, g: 500, life: 1.3, size: 8, shape: 'confetti', up: 160 });
+      this.fx.burst(this.w / 2, this.h * .4, 10, { colors: ['#ffd54a', '#fff'], speed: 320, g: 120, life: 1, size: 12, shape: 'star' });
+      this.onPage && this.onPage(this.ch);
+    }
+    beePos() {
+      const cl = this.cells[this.cur]; if (!cl || cl.done) return null; const st = cl.g.strokes[cl.si], pts = st.pts;
+      if (cl.prog > 0 && this.idle < 3.5) return { cl, p: pts[cl.prog] };
+      const from = cl.prog, span = pts.length - 1 - from, dur = Math.max(.9, span * 2.5 / 60), cycle = dur + .9, s = this.demoT % cycle;
+      if (glyphs.isDot(st)) return { cl, p: pts[0] };
+      return { cl, p: pts[Math.min(from + Math.round(Math.min(1, s / dur) * span), pts.length - 1)] };
+    }
+    frame(now) {
+      if (!this.running) return; const dt = Math.min((now - this.last) / 1000, .05); this.last = now;
+      this.t += dt; if (this.pid === null) { this.idle += dt; this.demoT += dt; } else this.demoT = 0;
+      if (this.hint > 0) this.hint -= dt;
+      for (const cl of this.cells) if (cl.pop > 0) cl.pop = Math.max(0, cl.pop - dt * 1.5);
+      if (this.allDone && (this.clearT -= dt) <= 0) this.fresh();   // a fresh page of the same letter
+      this.fx.update(dt); this.render(); this.raf = requestAnimationFrame(t => this.frame(t));
+    }
+    render() {
+      const c = this.c, { w, h, k } = this; if (!w || !this.cells.length) return;
+      c.clearRect(0, 0, w, h); const P = this.panel, G = this.page;
+      c.fillStyle = 'rgba(90,63,94,.1)'; art.rr(c, P.x, P.y + 10, P.w, P.h, 34); c.fill(); c.fillStyle = 'rgba(255,255,255,.9)'; art.rr(c, P.x, P.y, P.w, P.h, 34); c.fill();
+      // the paper: a top line, a dashed middle line and a solid baseline for every row
+      c.save(); c.lineCap = 'round';
+      for (let r = 0; r < this.rows; r++) {
+        const y0 = G.y + r * this.rowU * k + 12 * k, line = (y, dash, col, lw) => { c.setLineDash(dash); c.strokeStyle = col; c.lineWidth = lw; c.beginPath(); c.moveTo(G.x - 8, y0 + y * k); c.lineTo(G.x + G.w + 8, y0 + y * k); c.stroke(); };
+        line(0, [], 'rgba(120,150,210,.4)', 2.5); line(45, [10, 12], 'rgba(120,150,210,.5)', 2.5); line(100, [], 'rgba(220,110,130,.65)', 3.2);
+      }
+      c.restore();
+      this.cells.forEach((cl, i) => {
+        const active = i === this.cur && !this.allDone, g = cl.g, bounce = cl.pop ? 1 + Math.sin(cl.pop * Math.PI * 3) * .06 * cl.pop : 1;
+        if (active) { c.fillStyle = 'rgba(255,224,102,.22)'; art.rr(c, cl.box.x + 3, cl.box.y + 2, cl.box.w - 6, cl.box.h - 4, 14 * k); c.fill(); }
+        c.save(); c.translate(cl.ox + g.w * k / 2, cl.oy + 60 * k); c.scale(bounce, bounce); c.translate(-(cl.ox + g.w * k / 2), -(cl.oy + 60 * k)); c.translate(cl.ox, cl.oy); c.scale(k, k); c.lineCap = c.lineJoin = 'round';
+        g.strokes.forEach(st => { c.lineWidth = 22; c.strokeStyle = cl.done ? 'rgba(205,188,247,0)' : 'rgba(205,188,247,.45)'; c.stroke(st.path); });
+        g.strokes.forEach((st, si) => {
+          if (si < cl.si || cl.done) { c.lineWidth = 15; c.strokeStyle = COLORS[(si + (cl.up ? 0 : 3)) % 6]; c.stroke(st.path); c.lineWidth = 4.5; c.strokeStyle = 'rgba(255,255,255,.35)'; c.stroke(st.path); return; }
+          c.setLineDash([.01, 9]); c.lineWidth = 4.2; c.strokeStyle = active && si === cl.si ? '#fff' : 'rgba(255,255,255,.75)'; c.stroke(st.path); c.setLineDash([]);
+          if (si === cl.si && cl.prog > 0 && !glyphs.isDot(st)) { c.lineWidth = 15; c.strokeStyle = COLORS[si % 6]; c.beginPath(); st.pts.slice(0, cl.prog + 1).forEach((p, j) => j ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.stroke(); }
+        });
+        if (!cl.done && (active || cl.si === 0)) {   // the numbered start dot of the stroke to do next
+          const st = cl.g.strokes[cl.si]; if (st && !(cl.prog > 0)) { const p = st.pts[0], pulse = active ? 1 + Math.sin(this.t * 6) * .12 + (this.hint > 0 ? .25 : 0) : .75; c.fillStyle = active ? COLORS[cl.si % 6] : 'rgba(90,63,94,.28)'; c.beginPath(); c.arc(p.x, p.y, 8 * pulse, 0, TAU); c.fill(); c.lineWidth = 2.5; c.strokeStyle = '#fff'; c.stroke(); }
+        }
+        c.restore();
+      });
+      if (!this.allDone) { const b = this.beePos(); if (b) { const bx = b.cl.ox + b.p.x * k, by = b.cl.oy + b.p.y * k - Math.sin(this.t * 7) * 3; c.save(); c.translate(bx, by - Math.min(w, h) * .025); const sz = Math.min(w, h) * .045; c.fillStyle = 'rgba(90,63,94,.12)'; c.beginPath(); c.ellipse(0, sz * .9, sz * .5, sz * .15, 0, 0, TAU); c.fill(); art.bee(c, sz, this.t, { mood: 'happy' }); c.restore(); } }
+      this.fx.draw(c);
+    }
+  }
+  const PG_TOL = 16, PG_START = 30;   // a little more forgiving than the big single-letter tracer, because the letters are smaller on the page
+
   /* ================================================================ Game */
   class LettersGame {
     constructor(host) {
@@ -417,12 +566,42 @@
           const done = this.bag.done[ch];
           const b = btn('lg-tile' + (done ? ' done' : ''), 'Letter ' + ch, glyphs.canvas(ch, px, { color: COLORS[i % 6], width: 13 }));
           if (done) { const f = el('canvas', 'lg-flower'); b.append(f); paint(f, (c, w, h) => { c.translate(w / 2, h / 2); for (let p = 0; p < 5; p++) { c.rotate(TAU / 5); c.fillStyle = '#ff9db8'; c.beginPath(); c.arc(0, -w * .24, w * .2, 0, TAU); c.fill(); } c.fillStyle = '#ffd54a'; c.beginPath(); c.arc(0, 0, w * .17, 0, TAU); c.fill(); }); }
-          SPG.ui.press(b, () => { sfx.pop(); this.trace(list, i); });
+          SPG.ui.press(b, () => { sfx.pop(); if (this.bag.traceMode === 'lines') this.practice(ch); else this.trace(list, i); });
           return b;
         }));
       };
       build();
-      this.root.append(this.backButton(), this.caseChip(() => { list.splice(0, 26, ...ALPHA.map(ch => withCase(ch, this.bag.case))); build(); }), wrap);
+      // two ways to practise: one letter after another (it moves on by itself), or a lined page of one letter, over and over
+      const mode = btn('lg-modechip', 'Change how to practise');
+      const paintMode = () => {
+        const lines = this.bag.traceMode === 'lines', cv = el('canvas', 'lg-modechip-art'); cv.width = 132; cv.height = 56; const c = cv.getContext('2d');
+        if (lines) { c.strokeStyle = 'rgba(120,150,210,.7)'; c.lineWidth = 2; c.setLineDash([5, 5]); c.beginPath(); c.moveTo(4, 24); c.lineTo(128, 24); c.stroke(); c.setLineDash([]); c.strokeStyle = 'rgba(220,110,130,.8)'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(4, 46); c.lineTo(128, 46); c.stroke(); for (const [ch, x, col] of [['A', 6, '#ff7a8a'], ['a', 36, '#4fb3e8'], ['A', 66, '#ff7a8a'], ['a', 96, '#4fb3e8']]) { const g = glyphs.get(ch); glyphs.draw(c, ch, x, ch === 'A' ? 4 : 17, ch === 'A' ? 31 : 29, { color: col, width: 14 }); } }
+        else { glyphs.draw(c, 'A', 44, 3, 50, { color: '#ff7a8a', width: 14 }); c.fillStyle = '#5a3f5e'; for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(100 + i * 9, 28, 3, 0, TAU); c.fill(); } art.star(c, 20, 28, 9, '#ffd54a', 0); }
+        mode.replaceChildren(cv);
+      };
+      paintMode();
+      SPG.ui.press(mode, () => { this.bag.traceMode = this.bag.traceMode === 'lines' ? 'one' : 'lines'; store.save(); sfx.tap(); paintMode(); });
+      this.root.append(this.backButton(), this.caseChip(() => { list.splice(0, 26, ...ALPHA.map(ch => withCase(ch, this.bag.case))); build(); }), mode, wrap);
+    }
+
+    /* ---------------- trace: a lined practice page for one letter ---------------- */
+    practice(start) {
+      this.reset('lg-trace lg-practice');
+      let i = Math.max(0, ALPHA.indexOf(start.toLowerCase()));
+      const prev = btn('lg-btn lg-arrow left', 'Previous letter', icon('left')), next = btn('lg-btn lg-arrow right', 'Next letter', icon('right'));
+      const say = btn('lg-btn lg-say big', 'Hear the letter', icon('speaker')), again = btn('lg-btn lg-again', 'New page', icon('again'));
+      const back = btn('lg-back lg-btn', 'Back', icon('back'));
+      this.tracer = new Practice(this.root, {
+        onPage: ch => { store.addStars(1); this.bag.done[ch.toUpperCase()] = true; this.bag.done[ch] = true; store.save(); voice.say('great-job'); },
+        onCell: () => {}
+      });
+      const go = n => { i = (n + ALPHA.length) % ALPHA.length; const ch = ALPHA[i]; this.tracer.setLetter(ch); voice.say('letter/' + ch.toLowerCase(), 'sound/' + ch.toLowerCase()); };
+      SPG.ui.press(back, () => { sfx.tap(); this.traceGrid(); });
+      SPG.ui.press(prev, () => { sfx.tap(); go(i - 1); }); SPG.ui.press(next, () => { sfx.tap(); go(i + 1); });
+      SPG.ui.press(say, () => { const lc = ALPHA[i].toLowerCase(); voice.say('letter/' + lc, 'sound/' + lc); });
+      SPG.ui.press(again, () => { sfx.whoosh(); this.tracer.fresh(); });
+      this.root.append(back, say, prev, again, next);
+      this.tracer.resize(); go(i); this.tracer.start();
     }
 
     /* ---------------- trace: one letter (or the name) ---------------- */
@@ -816,8 +995,8 @@
   SPG.games.push({
     id: 'letters', name: 'Letter Garden', order: 1, dom: true,
     icon(c, w, h) {
-      const s = Math.min(w, h * 1.1);
-      [['A', -.36, '#ff7a8a', -.12], ['b', 0, '#4fb3e8', .05], ['C', .36, '#59b96e', -.06]].forEach(([ch, dx, col, rot]) => {
+      const s = Math.min(w, h) * .82;   // the three cards must sit fully inside the (square) tile with room round them
+      [['A', -.34, '#ff7a8a', -.12], ['b', 0, '#4fb3e8', .05], ['C', .34, '#59b96e', -.06]].forEach(([ch, dx, col, rot]) => {
         c.save(); c.translate(w / 2 + dx * s, h * .52); c.rotate(rot);
         c.fillStyle = '#fff'; art.rr(c, -s * .16, -s * .28, s * .32, s * .52, s * .06); c.fill();
         const gs = s * .26, gw = glyphs.get(ch).w * gs / 100;

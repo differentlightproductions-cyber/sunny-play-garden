@@ -868,12 +868,18 @@
     c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = R * .024; c.beginPath(); s.pts.forEach(([x, y], i) => i ? c.lineTo(x * R - R * .015, y * R - R * .02) : c.moveTo(x * R - R * .015, y * R - R * .02)); c.stroke();
     const t = clock(); s.pts.forEach(([x, y], i) => { if (i % 4 === 1) { c.globalAlpha = .4 + .6 * Math.abs(Math.sin(t * 3 + i)); twinkle(c, x * R, y * R, R * .05, '#fff'); } }); c.globalAlpha = 1;
   }
+  // one icing line on a cookie (clipped to the cookie, piped) or on a cupcake/cake (a row of glossy beads); `bare` = already in the food's own transform
+  function drawBeads(c, s, R) { let acc = 0; s.pts.forEach(([x, y], i) => { if (i) { const [px, py] = s.pts[i - 1], d = Math.hypot(x - px, y - py) * R; for (acc += d; acc >= R * .07; acc -= R * .07) { const k = 1 - (acc - R * .07) / Math.max(1e-6, d), bx = (px + (x - px) * Math.min(1, k)) * R, by = (py + (y - py) * Math.min(1, k)) * R; circ(c, bx, by + R * .012, R * .05, shade(s.col, -.15)); circ(c, bx, by, R * .045, s.col); circ(c, bx - R * .012, by - R * .014, R * .016, 'rgba(255,255,255,.6)'); } } else { circ(c, x * R, y * R, R * .045, s.col); } }); }
+  function drawStrokeOp(c, p, st, R, bare) {
+    c.save();
+    if (!bare) { if (p.type === 'cupcake') c.translate(0, -R * .3); else if (p.type === 'cake') c.scale(1, .9); }
+    if (p.type === 'cookie') { if (p.shape) c.clip(shapePath(p.shape, R * .97)); drawPiped(c, st, R); } else drawBeads(c, st, R);
+    c.restore();
+  }
   function drawDeco(c, deco, R, o = {}) {
     if (!deco) return;
     if (deco.fill && o.shape) drawCookieIcing(c, o.shape, R, deco.fill);
-    const clipIt = o.shape && !o.beads && (deco.strokes || []).length; if (clipIt) { c.save(); c.clip(shapePath(o.shape, R * .97)); }
-    for (const s of deco.strokes || []) { if (o.beads) { let acc = 0; s.pts.forEach(([x, y], i) => { if (i) { const [px, py] = s.pts[i - 1], d = Math.hypot(x - px, y - py) * R; for (acc += d; acc >= R * .07; acc -= R * .07) { const k = 1 - (acc - R * .07) / Math.max(1e-6, d), bx = (px + (x - px) * Math.min(1, k)) * R, by = (py + (y - py) * Math.min(1, k)) * R; circ(c, bx, by + R * .012, R * .05, shade(s.col, -.15)); circ(c, bx, by, R * .045, s.col); circ(c, bx - R * .012, by - R * .014, R * .016, 'rgba(255,255,255,.6)'); } } else { circ(c, x * R, y * R, R * .045, s.col); } }); continue; } drawPiped(c, s, R); }
-    if (clipIt) c.restore();
+    if (!o.skipStrokes) for (const st of deco.strokes || []) drawStrokeOp(c, { type: o.shape ? 'cookie' : 'cupcake', shape: o.shape }, st, R, true);
     for (const d of deco.dots || []) {
       c.save(); c.translate(d.x * R, d.y * R); c.rotate(d.rot || 0);
       if (d.id === 'sprinkles') drawSprinkle(c, d.kind || 'rainbow', R * .14, d.col, 0);
@@ -890,7 +896,7 @@
   function drawCookie(c, p, R, t = 0) {
     cookieShape(c, p.shape, R, p.choc ? mixHex(CHOCDOUGH, CHOCBAKED, p.baked || 0) : mixHex(DOUGH, BAKED, p.baked || 0), { speckle: true });
     if (p.chips) for (let i = 0; i < 6; i++) { c.save(); c.translate((rnd(i + 21) - .5) * R * 1.0, (rnd(i + 31) - .5) * R * .9); tri(c, [[0, -R * .09], [R * .08, R * .07], [-R * .08, R * .07]], '#4a2a1a'); c.restore(); }
-    drawDeco(c, p.deco, R, { shape: p.shape });
+    drawDeco(c, p.deco, R, { shape: p.shape, skipStrokes: true });
   }
   const mixHex = (a, b, k) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * k).toString(16).padStart(2, '0')).join(''); };
   function drawCupcake(c, p, R, t = 0) {
@@ -902,7 +908,7 @@
     if (p.empty) return;
     const cake = p.baked >= 1 ? (p.choc ? '#8a5a38' : '#e8b868') : p.baked > 0 ? mixHex(p.choc ? '#c89a62' : '#f3dca4', p.choc ? '#8a5a38' : '#e8b868', p.baked) : (p.batter ? (p.choc ? '#a87a52' : '#f6e8c0') : '#f6e8c0');
     c.fillStyle = cake; c.beginPath(); c.moveTo(-R * .52, -R * .06); c.bezierCurveTo(-R * .6, -R * .55, R * .6, -R * .55, R * .52, -R * .06); c.closePath(); c.fill();
-    if (p.frost) { drawFrostSwirl(c, R, p.frost.col, p.frost.t == null ? 1 : p.frost.t); c.save(); c.translate(0, -R * .3); drawDeco(c, p.deco, R * 1.0, { beads: true }); c.restore(); }
+    if (p.frost) { drawFrostSwirl(c, R, p.frost.col, p.frost.t == null ? 1 : p.frost.t); c.save(); c.translate(0, -R * .3); drawDeco(c, p.deco, R * 1.0, { beads: true, skipStrokes: true }); c.restore(); }
     else if (p.batter && !p.baked) { /* just batter in the liner */ }
   }
   // a two-layer cake seen a little from above; its top face is centred on y = 0
@@ -925,7 +931,7 @@
     if (fr) { for (let i = 0; i <= 18; i++) { const a = i / 18 * TAU, x = Math.cos(a) * rx * .93, y = Math.sin(a) * ry * .9; circ(c, x, y, R * .055, shade(fr, -.04)); circ(c, x - R * .012, y - R * .012, R * .03, shade(fr, .3)); } }
     c.fillStyle = 'rgba(255,255,255,.3)'; c.beginPath(); c.ellipse(-rx * .3, -ry * .35, rx * .25, ry * .14, -.2, 0, TAU); c.fill();
     if (fr) { c.save(); c.beginPath(); c.ellipse(0, 0, rx * .78, ry * .72, 0, 0, TAU); c.clip(); glitterField(c, 29, rx * 1.5, ry * 1.4, 26, rx, fr); c.restore(); shine(c, -rx * .38, -ry * .4, rx * .2, ry * .1, -.3, .7); }
-    c.save(); c.scale(1, .9); drawDeco(c, p.deco, R * 1.0, { beads: true }); c.restore();
+    c.save(); c.scale(1, .9); drawDeco(c, p.deco, R * 1.0, { beads: true, skipStrokes: true }); c.restore();
   }
   // toppings dropped on the top of a flat thing (a stack, a hot dog, a sundae): at height y, in widths of W
   function drawFlatDots(c, dots, W, y) {
@@ -1051,8 +1057,21 @@
     else if (p.type === 'sundae') drawSundae(c, p, R * 2, t);
     else if (p.type === 'pizza') drawPizza(c, p, R, t);
     else drawStack(c, p, R * 2, t);
-    if (p.paint) { if (p.type === 'pizza') { c.save(); pizzaClip(c, R); drawPaintList(c, p.paint.filter(s => s.pizza), R); c.restore(); drawPaintList(c, p.paint.filter(s => !s.pizza), R); } else drawPaintList(c, p.paint, R); }
-    drawTops(c, p, R);
+    // everything she puts on the food is drawn in the order she put it, so what comes later goes on top (icing over sprinkles, sprinkles over icing, ...)
+    const ops = []; let n = 0;
+    for (const st of (p.deco && p.deco.strokes) || []) ops.push({ z: st.z || 0, n: n++, k: 's', v: st });
+    for (const st of p.paint || []) ops.push({ z: st.z || 0, n: n++, k: 'p', v: st });
+    for (const d of p.tops || []) ops.push({ z: d.z || 0, n: n++, k: 't', v: d });
+    ops.sort((a, b) => a.z - b.z || a.n - b.n);
+    for (let i = 0; i < ops.length;) {
+      let j = i; while (j < ops.length && ops[j].k === ops[i].k) j++;
+      const run = ops.slice(i, j).map(o => o.v), k = ops[i].k;
+      if (k === 's') for (const st of run) drawStrokeOp(c, p, st, R, false);
+      else if (k === 't') drawTops(c, { ...p, tops: run }, R);
+      else if (p.type === 'pizza') { c.save(); pizzaClip(c, R); drawPaintList(c, run.filter(s => s.pizza), R); c.restore(); drawPaintList(c, run.filter(s => !s.pizza), R); }
+      else drawPaintList(c, run, R);
+      i = j;
+    }
     c.restore();
   }
   // a sandwich cut with a character cutter: seen from above, with a face
@@ -1143,7 +1162,8 @@
     pass('rgba(60,20,10,1)', 1.12, .06, .14, .16); pass(dark, 1.06, 0, .05, 1); pass(st.col, 1, 0, 0, 1); pass(lite, .3, -.18, -.2, st.kind === 'sauce' ? .65 : .5);
   };
   const grainPts = (c, st, k) => { c.fillStyle = st.col; for (const q of st.pts) { c.beginPath(); c.arc(q.x * k, q.y * k, Math.max(.8, q.w * k), 0, TAU); c.fill(); } };
-  function drawPaintList(c, list, k) { if (!list) return; c.save(); for (const st of list) (st.kind === 'grain' ? grainPts : saucePts)(c, st, k); c.restore(); }
+  function drawPaintList(c, list, k) { if (!list) return; c.save(); for (const st of list) { if (st.kind === 'pen') { c.save(); c.scale(k, k); drawPiped(c, st, PEN_R); c.restore(); } else (st.kind === 'grain' ? grainPts : saucePts)(c, st, k); } c.restore(); }
+  const PEN_R = .17;   // icing pen drawn on the plate: points are stored in units of PEN_R * plate unit
 
   const drawShadowDisc = (c, x, y, r) => { c.fillStyle = 'rgba(80,40,20,.14)'; c.beginPath(); c.ellipse(x + r * .06, y, r * 1.0, r * .32, 0, 0, TAU); c.fill(); };
   // piece centred at (x, y); tall pieces are drawn from their base so the middle lands on the point
@@ -1163,5 +1183,5 @@
     c.drawImage(oc, x - S / 2 / dpr, y - S / 2 / dpr, S / dpr, S / dpr);
   }
 
-  SPG.cookArt = { shapePath, F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, SPRINKLE_KINDS, drawSprinkle, CANDY_KINDS, drawCandy, CANDLE_KINDS, drawCandle, FRUIT_KINDS, ICING12, drawIcingPen, drawPaintBucket, drawMeasure, drawPile, drawEgg, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU };
+  SPG.cookArt = { PEN_R, shapePath, F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, SPRINKLE_KINDS, drawSprinkle, CANDY_KINDS, drawCandy, CANDLE_KINDS, drawCandle, FRUIT_KINDS, ICING12, drawIcingPen, drawPaintBucket, drawMeasure, drawPile, drawEgg, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU };
 })();

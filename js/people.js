@@ -11,7 +11,7 @@
   P.HAIRC = ['#2b2230', '#4a2f24', '#7a4b2f', '#a0522d', '#c8442a', '#e58a3a', '#f2cf6b', '#f7edc9', '#b9b9c6', '#ff8fc0', '#5aa8f0', '#a77be0', '#4fd0b8', 'rainbow'];
   P.CLOTH = ['#ff8fc0', '#ff4f9a', '#ef4a4a', '#ff9a3d', '#ffd54a', '#7ed9a0', '#3fb56b', '#3cc5c0', '#7fc8f8', '#4f8fe8', '#8a6ad9', '#c9a8f0', '#ffffff', '#3a3a4a', '#e8c86a', '#c8ccd8'];
   P.NAIL = ['#ff8fc0', '#ff4f9a', '#ef4a4a', '#ff9a3d', '#ffd54a', '#7ed9a0', '#3cc5c0', '#7fc8f8', '#4f8fe8', '#8a6ad9', '#f2e6ff', '#ffffff', '#3a3a4a', '#e8c86a', '#c8ccd8', '#b83a3a'];
-  P.LIPS = [null, '#ff8fa8', '#ef4a6a', '#d6336c', '#ff9a7a', '#c94a4a', '#b9407a', '#8a2a4a'];
+  P.LIPS = [null, '#ff8fa8', '#ef4a6a', '#d6336c', '#ff9a7a', '#c94a4a', '#b9407a', '#8a2a4a', 'rainbow'];
   P.SHADOW = [null, '#f5b3d1', '#c9a8f0', '#8fcaf5', '#9fe0b8', '#ffd27a', '#ff9fa0', '#b6a08a'];
   P.BLUSH = [null, '#ff9fb0', '#ff7a90', '#ffb38a'];
   P.GEMS = ['none', 'stars', 'hearts', 'dots', 'flowers'];
@@ -141,7 +141,7 @@
     // nose and mouth
     c.strokeStyle = dark; c.lineWidth = R * .045; c.lineCap = 'round'; c.beginPath(); c.moveTo(-R * .06, R * .3); c.quadraticCurveTo(0, R * .36, R * .06, R * .3); c.stroke();
     const lp = P.LIPS[look.lips || 0];
-    if (lp) { c.fillStyle = lp; c.beginPath(); c.moveTo(-R * .22, R * .53); c.quadraticCurveTo(-R * .1, R * .45, 0, R * .5); c.quadraticCurveTo(R * .1, R * .45, R * .22, R * .53); c.quadraticCurveTo(0, R * .8, -R * .22, R * .53); c.fill(); }
+    if (lp) { if (lp === 'rainbow') { const g = c.createLinearGradient(-R * .22, 0, R * .22, 0); ['#ff6b81', '#ffa64d', '#ffe066', '#7ed957', '#5cc8f2', '#8a7cf0'].forEach((k, i, a) => g.addColorStop(i / (a.length - 1), k)); c.fillStyle = g; } else c.fillStyle = lp; c.beginPath(); c.moveTo(-R * .22, R * .53); c.quadraticCurveTo(-R * .1, R * .45, 0, R * .5); c.quadraticCurveTo(R * .1, R * .45, R * .22, R * .53); c.quadraticCurveTo(0, R * .8, -R * .22, R * .53); c.fill(); }
     else { c.strokeStyle = '#b5524f'; c.lineWidth = R * .06; c.beginPath(); c.arc(0, R * .42, R * .2, .25, Math.PI - .25); c.stroke(); }
     // face gems (little stickers on the cheek and forehead)
     const gm = P.GEMS[look.gems || 0];
@@ -187,8 +187,7 @@
     W.dress && W.dress(c, look, t);
     if (look.dress && W.shoes) W.shoes(c, look, t);   // the shoes peek out in front of the hem
     // hands with polish on the fingertips
-    const hand = (sd, wave) => { c.save(); c.translate(sd * 11.8, -47.6 + breathe * .2); c.rotate(sd * ((wave ? -2.3 - Math.sin(t * 9) * .3 : 0) - spread)); c.translate(0, 20.6); c.fillStyle = skin; c.beginPath(); c.arc(0, 1, 3.5, 0, TAU); c.fill(); W.handNails && W.handNails(c, look, sd < 0 ? 0 : 5); if (W.handItem && sd > 0) W.handItem(c, look, t); c.restore(); };
-    hand(-1, false); hand(1, o.wave);
+    const hand = (sd, wave) => { c.save(); c.translate(sd * 11.8, -47.6 + breathe * .2); c.rotate(sd * ((wave ? -2.3 - Math.sin(t * 9) * .3 : 0) - spread)); c.translate(0, 20.2); if (W.miniHand) W.miniHand(c, look, skin, sd, t); else { c.fillStyle = skin; c.beginPath(); c.arc(0, 1, 3.5, 0, TAU); c.fill(); } if (W.handItem && sd > 0) W.handItem(c, look, t); c.restore(); };
     // neck and head
     c.fillStyle = skinD; rr(c, -4.2, -55, 8.4, 7, 2); c.fill();
     W.neck && W.neck(c, look, t);
@@ -198,6 +197,7 @@
     c.save(); c.translate(0, -R); c.transform(1, 0, hsw * .5, 1, 0, 0); c.translate(0, R); style.front(c, R, hairFill(c, hairCol, R)); c.restore();
     W.hat && W.hat(c, look, R, t);
     c.restore();
+    hand(-1, false); hand(1, o.wave);   // hands (and their polish) are drawn last, in front of every hairstyle and hat
     c.restore();
   };
   const rr = art.rr;

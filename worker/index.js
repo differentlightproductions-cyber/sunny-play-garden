@@ -1,8 +1,8 @@
 // Little Sprout Park cloud backup: a tiny Cloudflare Worker plus one Durable Object per family.
 //
 // What it stores: one encrypted blob per family. The app encrypts everything on the device with a key made
-// from the family code, so this server only ever sees ciphertext and a hash-like id. It cannot read names,
-// progress or drawings, and there are no emails, passwords or accounts.
+// from the family code. During normal backup it sees only ciphertext and a hash-like id. Optional grown-up
+// email recovery processes the code in memory to send it to a verified inbox, without reading backup contents.
 //
 // Routes (all under /api, same origin as the app):
 //   GET    /api/backup   -> 200 { rev, updated, blob } | 404
@@ -13,11 +13,14 @@
 //   GET    /api/voice?k=<64 hex> -> 200 the encrypted bytes | 404
 //   PUT    /api/voice?k=<64 hex> (X-Stamp: when it was recorded) -> 204 | 413 | 429
 //   DELETE /api/voice?k=<64 hex> -> 204    DELETE /api/voice (no k) -> 204, removes every voice file
+//   POST   /api/recovery/start   { code, email } -> sends a one-time inbox verification code
+//   POST   /api/recovery/confirm { code, verificationCode } -> sends the family code to the verified inbox
 // Voice files are encrypted on the device like the backup, and the names they are stored under are scrambled (a keyed
 // hash), so the server cannot tell whose voice it is or which line it says.
 // The website and the Android app (origin https://localhost) may both call these routes.
 // Every backup request carries `X-Family: <64 hex chars>`.
 import { DurableObject } from 'cloudflare:workers';
+import { deriveFamilyId, handleRecovery } from './recovery.js';
 
 const MAX_BLOB = 2_400_000;          // characters of ciphertext (about 1.8 MB), far more than a family will ever use
 const CHUNK = 400_000;               // stored in pieces so no single row gets too big
@@ -58,6 +61,57 @@ export class Backups extends DurableObject {
   async vclear() { await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); }
   meta(k) { const r = this.sql.exec('SELECT v FROM meta WHERE k = ?', k).toArray(); return r.length ? r[0].v : null; }
   setMeta(k, v) { this.sql.exec('INSERT OR REPLACE INTO meta (k, v) VALUES (?, ?)', k, String(v)); }
+  hasBackup() { this.tables(); return Number(this.meta('rev') || 0) > 0; }
+  clearRecoveryPending() {
+    this.sql.exec("DELETE FROM meta WHERE k IN ('recEmail', 'recEmailHash', 'recDigest', 'recSalt', 'recExpiry', 'recAttempts', 'recConfirming')");
+  }
+  async restoreBackupAlarm() {
+    const updated = Number(this.meta('updated') || 0);
+    if (updated) await this.ctx.storage.setAlarm(updated + KEEP_DAYS * 864e5);
+  }
+  async startRecovery(email, emailHash, digest, salt) {
+    this.tables();
+    const bound = this.meta('recBound');
+    if (bound && bound !== emailHash) return 'linked';
+    const now = Date.now(), hour = Math.floor(now / 3.6e6);
+    const count = Number(this.meta('recHour') || 0) === hour ? Number(this.meta('recCount') || 0) : 0;
+    if (count >= 5 || now - Number(this.meta('recLastStart') || 0) < 60_000) return 'slow';
+    this.setMeta('recHour', hour); this.setMeta('recCount', count + 1); this.setMeta('recLastStart', now);
+    this.setMeta('recEmail', email); this.setMeta('recEmailHash', emailHash);
+    this.setMeta('recDigest', digest); this.setMeta('recSalt', salt);
+    this.setMeta('recExpiry', now + 10 * 60_000); this.setMeta('recAttempts', 0);
+    this.sql.exec("DELETE FROM meta WHERE k = 'recConfirming'");
+    await this.ctx.storage.setAlarm(now + 10 * 60_000 + 1000);
+    return 'ok';
+  }
+  async cancelRecoveryStart() { this.tables(); this.clearRecoveryPending(); await this.restoreBackupAlarm(); }
+  async confirmRecovery(otp) {
+    this.tables();
+    const now = Date.now();
+    if (!this.meta('recEmail') || now > Number(this.meta('recExpiry') || 0)) {
+      this.clearRecoveryPending(); await this.restoreBackupAlarm(); return { error: 'verification expired' };
+    }
+    if (Number(this.meta('recAttempts') || 0) >= 5) return { error: 'too many attempts' };
+    if (now - Number(this.meta('recConfirming') || 0) < 60_000) return { error: 'slow down' };
+    this.setMeta('recConfirming', now);
+    const raw = new TextEncoder().encode(this.meta('recSalt') + ':' + otp);
+    const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', raw))].map(b => b.toString(16).padStart(2, '0')).join('');
+    const expected = this.meta('recDigest') || '';
+    let equal = digest.length === expected.length;
+    for (let i = 0; i < digest.length && i < expected.length; i++) equal = (digest.charCodeAt(i) === expected.charCodeAt(i)) && equal;
+    if (!equal) {
+      const n = Number(this.meta('recAttempts') || 0) + 1;
+      this.setMeta('recAttempts', n);
+      this.sql.exec("DELETE FROM meta WHERE k = 'recConfirming'");
+      return { error: n >= 5 ? 'too many attempts' : 'wrong verification code' };
+    }
+    return { email: this.meta('recEmail') };
+  }
+  async finishRecovery(sent) {
+    this.tables();
+    if (sent) { this.setMeta('recBound', this.meta('recEmailHash')); this.clearRecoveryPending(); await this.restoreBackupAlarm(); }
+    else this.sql.exec("DELETE FROM meta WHERE k = 'recConfirming'");
+  }
 
   async get() {
     this.tables();
@@ -79,11 +133,18 @@ export class Backups extends DurableObject {
     for (let i = 0, k = 0; i < blob.length; i += CHUNK, k++) this.sql.exec('INSERT INTO chunks (i, b) VALUES (?, ?)', k, blob.slice(i, i + CHUNK));
     const updated = Date.now();
     this.setMeta('rev', rev + 1); this.setMeta('updated', updated);
-    await this.ctx.storage.setAlarm(updated + KEEP_DAYS * 864e5);
+    const pending = Number(this.meta('recExpiry') || 0);
+    await this.ctx.storage.setAlarm(pending > updated ? Math.min(pending + 1000, updated + KEEP_DAYS * 864e5) : updated + KEEP_DAYS * 864e5);
     return { rev: rev + 1, updated };
   }
   async remove() { await this.ctx.storage.deleteAlarm(); await this.ctx.storage.deleteAll(); }
-  async alarm() { await this.ctx.storage.deleteAll(); }
+  async alarm() {
+    this.tables();
+    const now = Date.now(), updated = Number(this.meta('updated') || 0), pending = Number(this.meta('recExpiry') || 0);
+    if (pending && now >= pending) this.clearRecoveryPending();
+    if (updated && now < updated + KEEP_DAYS * 864e5) { await this.ctx.storage.setAlarm(updated + KEEP_DAYS * 864e5); return; }
+    await this.ctx.storage.deleteAll();
+  }
   // A tiny counter used to slow down anyone creating backups in bulk (per network address).
   async hit(max, seconds) {
     this.tables();
@@ -92,10 +153,11 @@ export class Backups extends DurableObject {
     const n = Number(this.meta('n') || 0) + 1; this.setMeta('n', n);
     return n <= max;
   }
+  async deriveFamilyId(code) { return deriveFamilyId(code); }
 }
 
 const corsFor = origin => origin && APP_ORIGINS.has(origin) ? {
-  'Access-Control-Allow-Origin': origin, 'Vary': 'Origin', 'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Origin': origin, 'Vary': 'Origin', 'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'X-Family, X-Stamp, Content-Type', 'Access-Control-Max-Age': '86400'
 } : null;
 
@@ -118,6 +180,7 @@ export default {
 
 async function route(request, env, url) {
     if (url.pathname === '/api/health') return new Response('ok', { headers: { 'Cache-Control': 'no-store' } });
+    if (url.pathname === '/api/recovery/start' || url.pathname === '/api/recovery/confirm') return handleRecovery(request, env, url.pathname);
     if (url.pathname !== '/api/backup' && url.pathname !== '/api/voice') return json({ error: 'not found' }, 404);
 
     const id = request.headers.get('X-Family') || '';

@@ -463,7 +463,7 @@
 
 
   /* ------------------------------------------------------------ backups */
-  let backupMsg = '';
+  let backupMsg = '', pendingRecoveryEmail = '';
   const SAY = {
     offline: 'No internet connection right now. Everything is still safe on this device; try again later.',
     failed: 'The backup service could not be reached. Everything is still safe on this device; try again later.',
@@ -489,11 +489,11 @@
     };
     if (!sync.supported()) sec.append(h('p', {}, 'Cloud backup needs a newer browser. You can still save a backup file below.'));
     else if (!info.on) {
-      sec.append(h('p', {}, 'Turn on the cloud backup so players, stars and drawings come back if this device is reset, lost or replaced. It is private: everything is scrambled on the device before it is sent, and there are no emails or passwords, just a family code.'));
+      sec.append(h('p', {}, 'Turn on the cloud backup so players, stars and drawings come back if this device is reset, lost or replaced. It is private: everything is scrambled on the device before it is sent. A family code is all you need; email recovery is optional in the Android app.'));
       const row = h('div', { class: 'btn-row' },
         busyBtn('Turn on cloud backup', 'go', async () => {
           const r = await sync.create();
-          if (r.ok) { backupMsg = ''; showCode(r.code, true); } else say(SAY[r.error] || SAY.failed);
+          if (r.ok) { backupMsg = ''; pendingRecoveryEmail = ''; showCode(r.code, true); } else say(SAY[r.error] || SAY.failed);
         }));
       const input = h('input', { type: 'text', maxlength: '32', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'XXXXX-XXXXX-XXXXX-XXXXX' });
       const join = busyBtn('Restore from this code', 'go', async () => {
@@ -507,8 +507,33 @@
         h('div', { class: 'btn-row' },
           busyBtn('Sync now', 'go', async () => { const r = await sync.syncNow(); say(r.ok ? 'Saved! Everything is backed up and up to date' + (r.voices && (r.voices.sent || r.voices.got) ? ` (voices: ${r.voices.sent} sent, ${r.voices.got} received).` : '.') : (SAY[r.error] || SAY.failed)); }),
           (() => { const b = h('button', { class: 'btn small', type: 'button' }, 'Show family code'); b.addEventListener('click', () => showCode(sync.code(), false)); return b; })(),
-          confirmButton('Turn off and delete cloud copy', 'danger', async () => { const r = await sync.turnOff(); say(r.ok ? 'Cloud backup is off and the cloud copy was deleted. Your data is still on this device.' : (SAY[r.error] || SAY.failed)); })),
+          confirmButton('Turn off and delete cloud copy', 'danger', async () => { const r = await sync.turnOff(); if (r.ok) pendingRecoveryEmail = ''; say(r.ok ? 'Cloud backup is off and the cloud copy was deleted. Your data is still on this device.' : (SAY[r.error] || SAY.failed)); })),
         h('p', { class: 'fine' }, 'Changes, including recorded voices, are also saved in the background whenever the device is online (recordings are encrypted first). To use the same players on another device, choose “I already have a family code” there.'));
+    }
+    if (info.on && sync.emailRecoveryAvailable()) {
+      const recovery = h('div', {},
+        h('h4', {}, 'Keep the family code in your inbox'),
+        h('p', { class: 'fine' }, 'Optional for grown-ups. Enter your email, then type the six-digit code we send to prove the inbox is yours. Only then will we email your family code. This backup will be linked to that verified inbox. Anyone with the family code can still restore the backup, so keep the email private.'));
+      if (!pendingRecoveryEmail) {
+        const email = h('input', { type: 'email', inputmode: 'email', autocomplete: 'email', maxlength: '254', placeholder: 'you@example.com' });
+        recovery.append(h('label', { class: 'field small-field' }, 'Grown-up email address', email),
+          busyBtn('Send verification code', 'go', async () => {
+            const r = await sync.startEmailRecovery(email.value);
+            if (r.ok) { pendingRecoveryEmail = email.value.trim(); say('Check your inbox for the six-digit verification code. It expires after 10 minutes.'); }
+            else say({ 'bad email': 'Check the email address and try again.', 'linked to another email': 'This backup is already linked to another verified inbox.', 'slow down': 'Please wait before trying again.', unavailable: 'Email recovery is not available yet. Your family code still works.', 'email unavailable': 'Email is unavailable right now. Your family code is still safe on this device.' }[r.error] || SAY[r.error] || SAY.failed);
+          }));
+      } else {
+        const code = h('input', { type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '6', pattern: '[0-9]{6}', placeholder: '123456' });
+        recovery.append(h('p', { class: 'fine' }, `Verification email sent to ${pendingRecoveryEmail}.`),
+          h('label', { class: 'field small-field' }, 'Six-digit code from email', code),
+          busyBtn('Verify and email family code', 'go', async () => {
+            const r = await sync.confirmEmailRecovery(code.value);
+            if (r.ok) { pendingRecoveryEmail = ''; say(`Family code sent to ${r.email}. Keep that message private.`); }
+            else { if (r.error === 'verification expired' || r.error === 'too many attempts') pendingRecoveryEmail = ''; say({ 'wrong verification code': 'That code did not match. Check the email and try again.', 'verification expired': 'That code expired. Start again with your email address.', 'too many attempts': 'Too many tries. Start again after a short wait.', 'slow down': 'Please wait before trying again.', 'email unavailable': 'Email is unavailable right now. You can retry the same verification code.' }[r.error] || SAY[r.error] || SAY.failed); }
+          }),
+          (() => { const b = h('button', { class: 'btn small quiet', type: 'button' }, 'Use a different email'); b.addEventListener('click', () => { pendingRecoveryEmail = ''; renderParent(); }); return b; })());
+      }
+      sec.append(recovery);
     }
     // backup file
     const file = h('input', { type: 'file', accept: '.json,application/json', style: 'display:none' });
@@ -606,8 +631,9 @@
           h('li', {}, 'Tap the app icon at the top of its card and choose Pin.'),
           h('li', {}, 'To unpin later, hold Back and Recent apps together (or swipe up and hold, depending on the tablet).'))),
       h('section', {}, h('h3', {}, 'About'),
-        h('p', {}, `Little Sprout Park version ${SPG.version}. No ads, no accounts, no tracking. Everything stays on this device.`),
-        h('p', { class: 'fine' }, 'Names, stars, gardens, coloring pictures and any voice recordings are stored only on this device. Nothing is sent to anyone. The full privacy policy is at /privacy.html on this site.')),
+        h('p', {}, `Little Sprout Park version ${SPG.version}. No ads or tracking. Children's play needs no account.`),
+        h('p', { class: 'fine' }, 'Names, stars, gardens, coloring pictures and voice recordings stay on this device unless a grown-up turns on cloud backup. Grown-ups can optionally email their family code to a verified inbox.'),
+        h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener noreferrer' }, 'Read the privacy policy')),
       h('section', {}, h('h3', {}, 'Voice recordings'),
         h('p', {}, 'Prompts are spoken by the tablet’s built-in voice until you add recordings. See RECORDING.md in the project for the list of lines and where the files go.')));
   }

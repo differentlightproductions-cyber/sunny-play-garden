@@ -28,6 +28,9 @@ For the **signed** bundle Play accepts, add four repository secrets (Settings > 
 `ANDROID_KEYSTORE_BASE64` (your upload keystore, `base64 -w0 upload.keystore`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`,
 `ANDROID_KEY_PASSWORD`. It must be the **same upload key** used for the first upload (1.0.0-alpha1), or Play will refuse the update.
 Also add the repository variable `SPG_API_BASE` (for example `https://your-site.workers.dev`), the address where the cloud backup lives.
+For optional grown-up email recovery, verify `littlesproutpark.online` with Resend and put a **send-only** API key in the
+Cloudflare Worker secret `RESEND_API_KEY`. Never put this key in GitHub, app files, or the Android bundle. Email recovery
+is hidden outside the Android app and does not add a sign-in SDK or Android permission.
 
 Version code: every upload to Play needs a number higher than the last. The first upload was **1**; the workflow asks for it when run by hand
 (default 2).
@@ -43,6 +46,9 @@ On your own computer: `cd android-app && npm install && SPG_API_BASE=https://...
     not shared, can be deleted by the grown-up (Turn off and delete cloud copy).
   * *App activity / other user-generated content* (player names, progress, drawings): the same, optional and encrypted.
   * "All user data is encrypted in transit": yes. "You can request that data is deleted": yes (inside the app).
+  * Optional email recovery: a grown-up may submit an email address to receive a verification code, then a copy of
+    the family code. Disclose optional email collection and its use for recovery. The address is kept briefly during
+    verification, then only its hash is stored with the backup; Resend delivers the messages.
 * **Permissions** shown in the console: Internet (cloud backup only), Record audio (grown-ups' voice recording only), Modify audio settings.
   Microphone and touchscreen are marked *not required*.
 * Privacy policy (`privacy.html`) is updated for recorded voices in the cloud copy and for the app being offline. Check it still reads right for you.

@@ -1,9 +1,10 @@
 // Backups for grown-ups: an optional encrypted cloud copy (Cloudflare, see worker/index.js) and backup files.
 //
 // How the cloud copy works, in plain words:
-// - A grown-up turns it on and gets a "family code" (20 letters and numbers). There is no email or password.
-// - The code never leaves the device. From it the app makes (1) a lookup id and (2) an encryption key.
-//   Only the lookup id and encrypted data are sent, so the server cannot read names, progress or drawings.
+// - A grown-up turns it on and gets a "family code" (20 letters and numbers). No account or password is required.
+// - From the code the app makes (1) a lookup id and (2) an encryption key. Normally only the lookup id and encrypted
+//   data are sent, so the server does not read names, progress or drawings. If a grown-up opts into email recovery,
+//   the code is sent to their verified inbox but is not stored with the backup.
 // - "Sync now" downloads the cloud copy, merges it with this device (newer wins per player, nothing a child
 //   finished is lost), then uploads the result. It also happens quietly in the background after changes.
 // - On a new device, enter the same code to get everything back.
@@ -58,6 +59,18 @@
     try {
       return await fetch(API, { method, headers: Object.assign({ 'X-Family': id }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined, cache: 'no-store', signal: ctl.signal });
     } finally { clearTimeout(timer); }
+  }
+  async function recovery(path, body) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const response = await fetch(API.replace('/backup', '/recovery/' + path), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body), cache: 'no-store', signal: ctl.signal
+      });
+      const result = await response.json();
+      return response.ok ? result : fail(result.error || 'failed');
+    } catch (e) { return problem(e); }
+    finally { clearTimeout(timer); }
   }
   /* ------------------------------------------------------------ recorded voices (one encrypted file per line) */
   // Each recording is sealed with the family key and stored under a scrambled name, so the server learns nothing about whose
@@ -179,6 +192,15 @@
     info: () => ({ on: !!load().code, last: load().last || 0, syncing: status.syncing, error: status.error }),
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     normalize, pretty, validCode,
+    emailRecoveryAvailable: () => !!(SPG.native && SPG.native.isApp && SPG.native.apiBase),
+    async startEmailRecovery(email) {
+      const code = load().code;
+      return code ? recovery('start', { code, email }) : fail('nocode');
+    },
+    async confirmEmailRecovery(verificationCode) {
+      const code = load().code;
+      return code ? recovery('confirm', { code, verificationCode }) : fail('nocode');
+    },
 
     // Turn the cloud copy on for this family and upload what is here now.
     async create() {

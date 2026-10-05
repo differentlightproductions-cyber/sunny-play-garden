@@ -19,12 +19,12 @@
 <body>
 <main>
   <h1>Privacy Policy</h1>
-  <p class="muted">Little Sprout Park &middot; Last updated 3 October 2026</p>
+  <p class="muted">Little Sprout Park &middot; Last updated 5 October 2026</p>
 
   <div class="card">
-    <strong>In short:</strong> Little Sprout Park collects no personal information. There are no ads, no accounts,
-    no analytics and no tracking. Everything a child or grown-up creates in the app stays on their own device,
-    unless a grown-up chooses to turn on the optional private cloud backup described below.
+    <strong>In short:</strong> There are no ads, analytics or tracking. Children's play needs no account.
+    Game data stays on the device unless a grown-up turns on optional cloud backup. In the Android app, a grown-up
+    may also choose to send the family recovery code to an email inbox they verify.
   </div>
 
   <h2>Who we are</h2>
@@ -43,17 +43,19 @@
     <li>Settings chosen by a grown-up (sound, voice, daily play-time limit, and so on).</li>
     <li>Optional voice recordings that a grown-up records in the Grown-ups &rarr; Voices screen.</li>
   </ul>
-  <p>None of this is sent to us or to anyone else. We cannot see it, unless a grown-up turns on the optional cloud
-  backup below.</p>
+  <p>None of this is sent to us or to anyone else unless a grown-up turns on the optional cloud backup below.</p>
 
   <h2>Optional cloud backup (grown-ups only)</h2>
   <p>A grown-up can turn on a backup so that players, stars, drawings and the voice recordings described below can be brought back if a device is lost or
   replaced, or shared with a second device in the same family. It is off by default and is controlled from the Grown-ups screen, which is protected by a grown-up check.</p>
   <ul>
-    <li>The app makes a random <strong>family code</strong>. There is no email address, password or account.</li>
+    <li>The app makes a random <strong>family code</strong>. No account or password is required for backup.</li>
     <li>Everything is <strong>encrypted on the device</strong> using a key made from the family code before it is sent.
-    The code itself never leaves the device. We store only the encrypted data and an identifier made from the code,
-    so <strong>we cannot read names, progress, drawings or voice recordings</strong>, and we cannot recover a lost code.</li>
+    The code normally stays on the device. We store only the encrypted data and an identifier made from the code,
+    so we do not read names, progress, drawings or voice recordings. If a grown-up chooses email recovery,
+    the code briefly passes through our server and email provider to their verified inbox. This gives the server
+    the technical ability to derive the encryption key during that request, but we do not fetch or decrypt the backup
+    for email recovery and do not store the code with it.</li>
     <li>The encrypted copy is stored with Cloudflare, Inc., our hosting provider. We do not use it for anything else,
     and never for advertising or analytics.</li>
     <li>A grown-up can delete the cloud copy at any time (Grown-ups &rarr; Turn off and delete cloud copy). A backup that has not
@@ -61,6 +63,18 @@
   </ul>
   <p>A grown-up can also save a backup file to the device and restore it later. That file is kept only where the
   grown-up saves it.</p>
+
+  <h2>Optional email recovery (Android app, grown-ups only)</h2>
+  <p>A grown-up can enter their email address in the Grown-ups screen and ask for a six-digit verification code.
+  We send that code to the address through Resend, our email delivery provider. It expires after 10 minutes and
+  cannot restore a backup by itself. After the grown-up enters it in the app, we email the family code to that same
+  verified inbox. The email address is stored on our server only while verification is pending; afterward we keep
+  only a hash of it with the encrypted backup so another address cannot claim that backup. We do not store the family
+  code on the server. Resend and the email provider process the messages needed to deliver them.</p>
+  <p>The family code message stays in the grown-up's inbox until they delete it there. Anyone who sees the code can
+  restore the family's cloud backup, so keep the email private. Email recovery is optional and children never need
+  to use it. Deleting the cloud backup also deletes its linked email hash from our server, but does not delete a
+  message already delivered to the inbox.</p>
 
   <h2>Microphone</h2>
   <p>The microphone is used <strong>only</strong> when a grown-up taps Record in the Grown-ups &rarr; Voices screen, so the
@@ -71,16 +85,18 @@
   Turning the cloud backup off and deleting the cloud copy removes the uploaded recordings too. The app never records in the background.</p>
 
   <h2>Children</h2>
-  <p>The app is designed for young children to use with a grown-up nearby. We do not knowingly collect personal
-  information from anyone. Settings, adding or removing players, and anything that could leave the app are behind a
+  <p>The app is designed for young children to use with a grown-up nearby. We do not ask children for personal
+  information. Settings, adding or removing players, and anything that could leave the app are behind a
   grown-up check. The app contains no links to other websites, no advertising and no in-app purchases.</p>
 
   <h2>Third parties</h2>
-  <p>The app uses no advertising networks, analytics, social media, or other third-party software that collects data.
-  Fonts and images are included with the app.</p>
+  <p>The app uses no advertising networks, analytics or social sign-in SDKs. The optional cloud backup uses Cloudflare.
+  The optional email recovery uses Resend to deliver messages to the grown-up's email provider. These providers process
+  only the information described above to deliver their services. Fonts and images are included with the app.</p>
 
   <h2>How the app is delivered</h2>
-  <p>The Android app contains all of its files and works fully offline; it goes online only if a grown-up turns on the optional cloud backup.
+  <p>The Android app contains all of its game files and works fully offline; it goes online only if a grown-up turns on
+  the optional cloud backup or chooses email recovery.
   The cloud backup (and the web version of the game) is served by our web host (Cloudflare). Like any website, the host may keep
   standard technical logs such as IP address, time, and browser type for security and to deliver the files. We do not
   use these logs to identify players.</p>

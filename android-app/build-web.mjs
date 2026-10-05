@@ -13,7 +13,7 @@ const api = (process.env.SPG_API_BASE || cfg.apiBase || '').replace(/\/+$/, '');
 if (api && !/^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(api)) throw new Error('apiBase must look like https://your-domain.example (no path)');
 
 rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
-for (const f of ['styles.css']) cpSync(join(root, f), join(out, f));
+for (const f of ['styles.css', 'privacy.html']) cpSync(join(root, f), join(out, f));
 for (const d of ['js', 'games', 'fonts', 'audio', 'icons']) cpSync(join(root, d), join(out, d), { recursive: true });
 
 // index.html already carries the Content-Security-Policy as a <meta> tag; the app only adds permission to reach the backup service

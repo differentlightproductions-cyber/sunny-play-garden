@@ -49,3 +49,7 @@ Rules that matter: big touch targets, spoken prompts, no reading needed, nothing
 ## Update (pet name screen + icing)
 - Pet Shop name screen: Done/Cancel were pushed off-screen on tablets and short phones; now pinned (CSS at the end of styles.css, `askName` in games/petshop.js; first-time naming has no Cancel, renaming does). Player setup got sticky Back / Let's play! buttons. Long names shrink in `SPG.ui.nameGrid`.
 - Kitchen icing redrawn in `games/cook-art.js` (`drawFrostSwirl` cupcakes, `drawCookieIcing`, `drawPiped`, `glitterField`/`twinkle`; cake gets gloss and sparkle). Needs a fresh Android build to reach the app.
+
+## Update (reordering, device unlock, layering)
+- Added: hub rearranging (hold 2 s + gate), fingerprint/phone-lock gate button (needs `npm install` in android-app so the biometric plugin is bundled, then `cap sync`; verify on a real phone: Grown-ups > Fingerprint or phone lock > Turn on), kitchen layering/plate pen/mini plates/camera cooldown, train shape previews, Hide and Seek peeking. See CLAUDE.md 'Latest round'.
+- Not verified on hardware: the biometric prompt and long-press feel on a real tablet.

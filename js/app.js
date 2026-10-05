@@ -136,7 +136,7 @@
   const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'], aquarium: ['#d8f2ff', '#7fc8ec'], cook: ['#fff0dc', '#f5c690'] };
   function renderCards() {
     const all = SPG.games.slice().sort((a, b) => a.order - b.order);
-    const games = all.filter(g => !g.shop), shops = all.filter(g => g.shop);
+    const games = orderedGames(all.filter(g => !g.shop)), shops = all.filter(g => g.shop);
     const paint = (canvas, g) => () => {
       const r = canvas.getBoundingClientRect();
       if (!r.width) return;
@@ -152,17 +152,25 @@
     const strip = h('div', { class: 'pages' }, ...pages.map((list, pi) => h('div', { class: 'cards page', 'aria-label': `Page ${pi + 1} of ${pages.length}` }, ...list.map((g, k) => {
       const [tint, edge] = tints[g.id] || ['#fff', '#ddd'];
       const canvas = document.createElement('canvas');
-      const card = h('button', { class: 'card', type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-(pi * PER_PAGE + k) * 1.1}s` },
+      const card = h('button', { class: 'card' + (hubEdit && hubEdit.drag && hubEdit.drag.id === g.id ? ' drag-src' : ''), type: 'button', 'aria-label': g.name, style: `--tint:${tint};--edge:${edge};--d:${-(pi * PER_PAGE + k) * 1.1}s` },
         h('span', { class: 'lamp', 'aria-hidden': 'true' }), canvas, h('span', { class: 'card-name' }, g.name));
       // A swipe must turn the page, not start a game, so a card opens on a short tap (the browser cancels the touch when it becomes a swipe).
       let down = null;
-      card.addEventListener('pointerdown', e => { if (e.button > 0) return; down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+      const cancelHold = () => { clearTimeout(card._hold); clearTimeout(card._hl); card.classList.remove('holding'); };
+      card.addEventListener('pointerdown', e => {
+        if (e.button > 0) return; down = { x: e.clientX, y: e.clientY, t: performance.now() };
+        if (hubEdit) { down = null; startHubDrag(e, g, card); return; }
+        // hold an app for about two seconds, then a grown-up confirms and the apps can be moved around
+        cancelHold(); card._hl = setTimeout(() => card.classList.add('holding'), 350);
+        card._hold = setTimeout(() => { if (!down) return; down = null; cancelHold(); SPG.sfx.pop(); askGate(enterHubEdit); }, 2000);
+      });
+      card.addEventListener('pointermove', e => { if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 14) cancelHold(); });
       card.addEventListener('pointerup', e => {
-        if (!down) return; const d = down; down = null;
+        cancelHold(); if (hubEdit || !down) return; const d = down; down = null;
         if (!strip._dragged && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 14 && performance.now() - d.t < 900) openGame(g);
       });
-      for (const n of ['pointercancel', 'pointerleave']) card.addEventListener(n, () => { down = null; });
-      card.addEventListener('click', e => { if (e.detail === 0) openGame(g); });   // keyboard / assistive tech
+      for (const n of ['pointercancel', 'pointerleave']) card.addEventListener(n, () => { down = null; cancelHold(); });
+      card.addEventListener('click', e => { if (e.detail === 0 && !hubEdit) openGame(g); });   // keyboard / assistive tech
       card._draw = paint(canvas, g);
       return card;
     }))));
@@ -176,6 +184,7 @@
       prev.classList.toggle('off', i === 0); next.classList.toggle('off', i === pages.length - 1);
       [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
     };
+    strip._go = go; strip._where = where;
     SPG.ui.press(prev, () => { SPG.sfx.tap(); go(where() - 1); });
     SPG.ui.press(next, () => { SPG.sfx.tap(); go(where() + 1); });
     [...dots.children].forEach((d, k) => SPG.ui.press(d, () => { SPG.sfx.tap(); go(k); }));
@@ -198,11 +207,56 @@
     $('hub-shop').replaceChildren(...shops.map(g => {
       const canvas = document.createElement('canvas');
       const front = h('button', { class: 'shopfront', type: 'button', 'aria-label': g.name }, canvas, h('span', { class: 'shop-sign' }, g.name));
-      SPG.ui.press(front, () => openGame(g));
+      SPG.ui.press(front, () => { if (!hubEdit) openGame(g); });
       front._draw = paint(canvas, g);
       return front;
     }));
     drawCards();
+  }
+  /* ------------------------------------------------------------ rearranging the apps (grown-ups): hold an app ~2 s, confirm, then drag */
+  let hubEdit = null;   // while rearranging: { drag }
+  const orderedGames = list => { const ord = store.settings.hubOrder || [], idx = g => { const i = ord.indexOf(g.id); return i < 0 ? 1000 + g.order : i; }; return list.slice().sort((a, b) => idx(a) - idx(b)); };
+  const gameIds = () => orderedGames(SPG.games.filter(g => !g.shop)).map(g => g.id);
+  function enterHubEdit() {
+    if (hubEdit) return; hubEdit = { drag: null }; document.body.classList.add('hub-editing');
+    const bar = h('div', { id: 'hub-editbar', class: 'hub-editbar' },
+      h('span', { class: 'hub-edit-msg' }, 'Drag an app to move it. Hold at the screen edge to go to another page.'),
+      h('button', { class: 'btn quiet small', type: 'button', id: 'hub-edit-reset' }, 'Original order'),
+      h('button', { class: 'btn go', type: 'button', id: 'hub-edit-done' }, icon('check'), ' Done'));
+    $('hub').append(bar);
+    SPG.ui.press($('hub-edit-done'), exitHubEdit);
+    SPG.ui.press($('hub-edit-reset'), () => { delete store.settings.hubOrder; store.save(); SPG.sfx.tap(); renderCards(); });
+    renderCards();
+  }
+  function exitHubEdit() {
+    if (!hubEdit) return; hubEdit = null; document.body.classList.remove('hub-editing');
+    const bar = $('hub-editbar'); if (bar) bar.remove(); document.querySelectorAll('.card-ghost').forEach(n => n.remove());
+    store.save(); renderCards(); SPG.sfx.chime();
+  }
+  function startHubDrag(e, g, card) {
+    const r = card.getBoundingClientRect(), src = card.querySelector('canvas'), ghost = h('div', { class: 'card-ghost', style: `width:${r.width}px;height:${r.height}px;--tint:${(tints[g.id] || ['#fff'])[0]};--edge:${(tints[g.id] || [0, '#ddd'])[1]}` });
+    const gc = document.createElement('canvas'); gc.width = src.width; gc.height = src.height; gc.getContext('2d').drawImage(src, 0, 0); gc.style.width = src.getBoundingClientRect().width + 'px'; ghost.append(gc, h('span', { class: 'card-name' }, g.name)); document.body.append(ghost);
+    const D = hubEdit.drag = { id: g.id, ghost, ox: e.clientX - r.left, oy: e.clientY - r.top, dwell: 0, dir: 0, pid: e.pointerId };
+    const place = ev => { ghost.style.transform = `translate(${ev.clientX - D.ox}px, ${ev.clientY - D.oy}px) scale(1.08) rotate(-3deg)`; };
+    place(e); SPG.sfx.tap(); card.classList.add('drag-src');
+    const move = ev => {
+      if (!hubEdit || hubEdit.drag !== D) return; place(ev);
+      const el = document.elementFromPoint(ev.clientX, ev.clientY), tc = el && el.closest && el.closest('#hub-games .card');
+      if (tc && tc.getAttribute('aria-label') !== g.name) {
+        const tg = SPG.games.find(x => x.name === tc.getAttribute('aria-label')); if (tg) {
+          const ids = gameIds(), from = ids.indexOf(g.id), to = ids.indexOf(tg.id); ids.splice(from, 1); ids.splice(to, 0, g.id);   // takes the place of the app it is dropped on
+          store.settings.hubOrder = ids; SPG.sfx.plink(1); renderCards();
+        }
+      }
+      // holding at the left or right edge turns the page
+      const dir = ev.clientX < 70 ? -1 : ev.clientX > innerWidth - 70 ? 1 : 0, now = performance.now();
+      if (!dir) D.dir = 0; else if (D.dir !== dir) { D.dir = dir; D.since = now; } else if (now - D.since > 650) { const st = document.querySelector('#hub-games .pages'); if (st && st._go) { st._go(st._where() + dir); SPG.sfx.tap(); } D.since = now; }
+    };
+    const end = () => {
+      document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', end); document.removeEventListener('pointercancel', end);
+      ghost.remove(); if (hubEdit && hubEdit.drag === D) { hubEdit.drag = null; store.save(); SPG.sfx.pop(); renderCards(); }
+    };
+    document.addEventListener('pointermove', move); document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
   }
   let hubPage = 0, hubPer = 8, hubFirst = 0, hubFrozen = false;   // hubFirst: the first game on the page she is looking at (kept steady while the screen turns)
   // Must match the grid in styles.css: tall screens (portrait, not a short landscape phone) are 3 x 3, everything else 4 x 2.
@@ -256,6 +310,8 @@
   function openGateSheet(title, hint, forgot) {
     $('gate-title').textContent = title; $('gate-hint').textContent = hint;
     $('gate-forgot').classList.toggle('hidden', !forgot);
+    // a grown-up can also use the device's fingerprint or screen lock (switched on in Grown-ups); not when a new PIN is being typed in or for the recovery sums
+    $('gate-device').classList.toggle('hidden', !(store.settings.deviceAuth && gateState && !gateState.capture && gateState.mode !== 'recover'));
     openOverlay(overlays.gate);
   }
   function askGate(onPass) {
@@ -332,6 +388,12 @@
     }
   })();
   SPG.ui.press($('gate-forgot'), forgotPin);
+  $('gate-device').addEventListener('click', async () => {   // a real tap (the system prompt needs one)
+    const g = gateState; if (!g || g.busy) return; g.busy = true;
+    const ok = await SPG.native.deviceAuth.verify(store.settings.deviceAuth);
+    if (gateState !== g) return; g.busy = false;
+    if (ok) { const cb = g.onPass; gateState = null; closeOverlay(overlays.gate); cb && cb(); } else { SPG.sfx.oops(); $('gate-hint').textContent = 'That did not work. You can still use the PIN or the question.'; }
+  });
   SPG.ui.press($('gate-back'), () => { gateState = null; closeOverlay(overlays.gate); });
 
   /* ------------------------------------------------------------ grown-ups panel */
@@ -504,6 +566,7 @@
       voicesSection(),
       timerSection(),
       pinSection(),
+      deviceAuthSection(),
       nightSection(),
       levelSection(),
       photoSection(),
@@ -684,6 +747,23 @@
       h('div', { class: 'row' }, ...kids), note ? h('p', { class: 'fine' }, note) : null);
   }
   let pinNote = '';
+  // fingerprint / screen lock as another way to open the grown-up areas (only offered if this device can do it)
+  let deviceAuthOk = null;
+  function deviceAuthSection() {
+    if (deviceAuthOk === null) { deviceAuthOk = false; SPG.native.deviceAuth.available().then(v => { if (v) { deviceAuthOk = true; renderParent(); } }); }
+    if (!deviceAuthOk) return null;
+    const on = !!store.settings.deviceAuth;
+    const btn = h('button', { class: 'btn small ' + (on ? 'quiet' : 'go'), type: 'button' }, on ? 'Turn off' : 'Turn on');
+    btn.addEventListener('click', async () => {
+      if (on) { store.settings.deviceAuth = ''; store.save(); pinNote = 'Fingerprint / phone lock is off.'; renderParent(); return; }
+      const tok = await SPG.native.deviceAuth.enroll();
+      if (tok) { store.settings.deviceAuth = tok; store.save(); pinNote = 'Done. The grown-up screens now also have a "Use fingerprint or phone lock" button. The PIN still works too.'; } else pinNote = 'That did not work, so it was not turned on.';
+      renderParent();
+    });
+    return h('section', {}, h('h3', {}, 'Fingerprint or phone lock'),
+      h('p', {}, on ? 'On: grown-up screens can be opened with this device\u2019s fingerprint, face or screen lock, as well as the PIN or question.' : 'Let a grown-up open the grown-up screens with this device\u2019s own fingerprint, face or screen lock, as well as the PIN. It stays on this device.'),
+      h('div', { class: 'row' }, btn));
+  }
 
   function timerSection() {
     const cur = store.settings.timer || 0;

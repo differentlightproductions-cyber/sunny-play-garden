@@ -816,8 +816,8 @@
   SPG.games.push({
     id: 'letters', name: 'Letter Garden', order: 1, dom: true,
     icon(c, w, h) {
-      const s = Math.min(w, h * 1.1);
-      [['A', -.36, '#ff7a8a', -.12], ['b', 0, '#4fb3e8', .05], ['C', .36, '#59b96e', -.06]].forEach(([ch, dx, col, rot]) => {
+      const s = Math.min(w, h) * .82;   // the three cards must sit fully inside the (square) tile with room round them
+      [['A', -.34, '#ff7a8a', -.12], ['b', 0, '#4fb3e8', .05], ['C', .34, '#59b96e', -.06]].forEach(([ch, dx, col, rot]) => {
         c.save(); c.translate(w / 2 + dx * s, h * .52); c.rotate(rot);
         c.fillStyle = '#fff'; art.rr(c, -s * .16, -s * .28, s * .32, s * .52, s * .06); c.fill();
         const gs = s * .26, gw = glyphs.get(ch).w * gs / 100;

@@ -1028,3 +1028,23 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 .lg-numcard { display: block; width: min(94vw, 900px); height: min(36vh, 360px); margin-bottom: clamp(8px, 2vh, 20px); touch-action: none; flex: none; }
 .lg-num .lg-opt { padding: 8px 18px; }
 @media (max-height: 520px) and (orientation: landscape) { .lg-numcard { height: min(40vh, 150px); margin-bottom: 6px; } }
+.gate .gate-device { width: 100%; margin-top: 10px; min-height: 60px; font-size: 1.15rem; display: flex; align-items: center; justify-content: center; gap: .5em; }
+.gate .gate-device svg { width: 1.3em; height: 1.3em; }
+
+/* ---- rearranging the apps on the games page (grown-ups: hold an app for two seconds) ---- */
+#hub-games .card { transition: transform 1.6s ease; }
+#hub-games .card.holding { transform: scale(1.07); }
+.hub-editing #hub-games .card { touch-action: none; transition: none; animation: hubJiggle .26s ease-in-out infinite alternate; animation-delay: calc(var(--d, 0s) * .1); cursor: grab; }
+.hub-editing #hub-games .card.drag-src { opacity: .22; animation: none; }
+@keyframes hubJiggle { from { transform: rotate(-1.8deg); } to { transform: rotate(1.8deg); } }
+.card-ghost { position: fixed; left: 0; top: 0; z-index: 400; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35em; filter: drop-shadow(0 14px 12px rgba(60, 40, 70, .35)); font-size: 1rem; }
+.card-ghost canvas { flex: 1; min-height: 0; width: 100%; display: block; }
+.hub-editbar { position: absolute; left: 50%; bottom: calc(var(--safe-b, 0px) + 10px); transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: min(96vw, 900px); padding: 10px 14px; border-radius: 28px; background: rgba(255, 255, 255, .96); box-shadow: 0 6px 0 rgba(90, 63, 94, .2); font-weight: 700; }
+.hub-editbar .hub-edit-msg { flex: 1 1 260px; text-align: center; color: var(--ink); font-size: clamp(.9rem, 2.6vmin, 1.15rem); }
+.hub-editing .hub-shop, .hub-editing #hub-shop { pointer-events: none; opacity: .5; }
+.card-ghost canvas { aspect-ratio: 1; flex: none; width: 100%; height: auto; border-radius: 22%; background: var(--tint, #fff); }
+
+/* the lifted copy while dragging an app looks exactly like the real icon */
+.card-ghost { gap: .35em; }
+.card-ghost canvas { width: min(100%, calc(100% - 3.2em)); }
+.card-ghost .card-name { display: block; background: rgba(255, 255, 255, .92); color: var(--ink); border-radius: 999px; padding: .12em .8em .16em; font-weight: 700; font-size: clamp(1rem, 2.9vmin, 1.7rem); box-shadow: 0 3px 0 rgba(90, 63, 94, .14); white-space: nowrap; }

@@ -661,7 +661,14 @@
     playLog().sec++; store.save();
     if (limitReached()) showBreak();
   }, 1000);
-  if (widget) { syncWidgetTimer(); setInterval(syncWidgetTimer, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWidgetTimer(); }); }
+  if (widget) {
+    SPG.coloring?.syncSaved?.();
+    syncWidgetTimer();
+    setInterval(syncWidgetTimer, 10000);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) { SPG.coloring?.syncSaved?.(); syncWidgetTimer(); }
+    });
+  }
 
   function voicesSection() {
     const keys = voice.allKeys();

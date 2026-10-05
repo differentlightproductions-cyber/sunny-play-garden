@@ -1067,9 +1067,10 @@
 
     // ---- photos: the camera button on the left (a little bigger than the home button) and her own album of food photos
     camBtn() {
-      // The finished dish is the photo moment. Some recipes bake after decorating,
-      // so showing this during every "decorate" step exposes unfinished food.
-      if (this.screen !== 'cook' || this.trans || !this.st || this.st.k !== 'serve' || this.st.n > 0 || this.finishedAll) return null;
+      // The camera only comes out for the finishing touches: the last decorating step before serving, and then the plate itself (even when empty).
+      if (this.screen !== 'cook' || this.trans || !this.st) return null;
+      const steps = this.R.steps, nxt = steps[this.stIdx + 1];
+      if (!(this.st.k === 'serve' || (this.st.k === 'decorate' && nxt && nxt.k === 'serve'))) return null;
       const r = this.uiR * .6; return { x: r + 16, y: clamp((this.y0 + this.y1) / 2, this.y0 + r + 8, this.y1 - r * 2.4), r };
     },
     albumBtn() { const r = this.uiR * .6; return { x: 14 + this.uiR + 18 + r, y: 14 + this.uiR / 2, r }; },
@@ -1213,6 +1214,7 @@
       if (titleH) y += titleH + 12;
       if (this.narrow) y = Math.max(y, 118);   // below the stars and the counter in the corner
       const tabH = compact ? 58 : clamp(short * .15, 62, 92), tabW = clamp((w - 36 - 20) / 3, 92, 210);
+      if (!compact && (w / 2 - 1.5 * (tabW + 10) < ab.x + ab.r + 10 || w / 2 + 1.5 * (tabW + 10) > w - 112)) y = Math.max(y, 152);   // the tabs would run into the camera album or the star counters in the corners
       this.tabBox = { h: tabH, w: tabW, y: y + tabH / 2 };
       CATS.forEach((cat, i) => this.menuHit.push({ x: w / 2 + (i - 1) * (tabW + 10), y: y + tabH / 2, w: tabW, h: tabH, tab: i }));
       y += tabH + 14;

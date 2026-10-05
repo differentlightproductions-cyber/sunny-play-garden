@@ -17,16 +17,18 @@
     return new Promise(res => { try { const t = db.transaction('photos', mode), rq = fn(t.objectStore('photos')); t.oncomplete = () => res(rq ? rq.result : true); t.onerror = t.onabort = () => res(null); } catch (_) { res(null); } });
   };
   const P = SPG.photos = {
-    // [{ id, pid, t, blob, recipe, name }] for one player, newest first
-    async list(pid) { return ((await tx('readonly', st => st.index('pid').getAll(pid))) || []).sort((a, b) => b.t - a.t); },
+    // [{ id, pid, t, blob, recipe, name, game }] for one player, newest first. `game` keeps the games' albums apart: 'kitchen' (the default) or 'clay'.
+    async list(pid, game = 'kitchen') { return ((await tx('readonly', st => st.index('pid').getAll(pid))) || []).filter(p => (p.game || 'kitchen') === game).sort((a, b) => b.t - a.t); },
     async add(pid, blob, meta = {}) {
       const id = await tx('readwrite', st => st.add(Object.assign({ pid, t: Date.now(), blob }, meta)));
-      for (const old of (await P.list(pid)).slice(MAX)) await P.remove(old.id);
+      for (const old of (await P.list(pid, meta.game || 'kitchen')).slice(MAX)) await P.remove(old.id);
       if (SPG.store.settings.photoSave && SPG.native && SPG.native.saveToGallery) SPG.native.saveToGallery(blob, 'sprout-park-' + new Date().toISOString().slice(0, 19).replace(/\D/g, '') + '.jpg').catch(() => {});
       return id;
     },
     remove(id) { return tx('readwrite', st => st.delete(id)); },
-    async count() { return (await tx('readonly', st => st.count())) || 0; },
-    clear() { return tx('readwrite', st => st.clear()); }
+    // how many pictures one game's album holds on this device (all players), or every picture when no game is given
+    async count(game) { if (!game) return (await tx('readonly', st => st.count())) || 0; return ((await tx('readonly', st => st.getAll())) || []).filter(p => (p.game || 'kitchen') === game).length; },
+    // delete one game's pictures (all players), or everything when no game is given
+    async clear(game) { if (!game) return tx('readwrite', st => st.clear()); for (const p of ((await tx('readonly', st => st.getAll())) || []).filter(p => (p.game || 'kitchen') === game)) await P.remove(p.id); return true; }
   };
 })();

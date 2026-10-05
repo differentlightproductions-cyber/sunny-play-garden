@@ -1,4 +1,4 @@
 package com.toastygames.littlesproutpark;
 
-// Samsung's Flex Window discovers a separate provider with its own size metadata.
-public class SproutCoverWidget extends SproutWidget { }
+/** The same mini games, listed for the Samsung Galaxy Z Flip cover screen (Settings > Cover screen > Widgets). */
+public class SproutCoverWidget extends SproutMiniWidget { }

@@ -29,8 +29,20 @@
     return c;
   }
 
+  // The picture behind the menus. She changes it by touching the empty background of the main menu: each touch shows the next one
+  // (saved per player, `bag('hubbg')`). The look of each is in styles.css under `.backdrop[data-bg=...]`.
+  const BACKDROPS = ['meadow', 'sunset', 'beach', 'snow', 'space', 'autumn', 'candy'];
+  const backdropEl = document.querySelector('.backdrop');
+  const bgBag = () => (store.active ? store.bag('hubbg', () => ({ i: 0 })) : { i: 0 });
+  function applyBackdrop() { backdropEl.dataset.bg = BACKDROPS[((bgBag().i | 0) % BACKDROPS.length + BACKDROPS.length) % BACKDROPS.length]; }
+  function nextBackdrop() {
+    if (!store.active) return;
+    const b = bgBag(); b.i = ((b.i | 0) + 1) % BACKDROPS.length; store.save(); applyBackdrop();
+    backdropEl.classList.remove('bg-swap'); void backdropEl.offsetWidth; backdropEl.classList.add('bg-swap');
+    SPG.sfx.chime?.();
+  }
   function show(name) {
-    current = name; document.body.dataset.screen = name;
+    current = name; document.body.dataset.screen = name; applyBackdrop();
     for (const [id, el] of Object.entries(screens)) el.classList.toggle('hidden', id !== name);
     if (name === 'hub') requestAnimationFrame(drawCards);
   }
@@ -133,7 +145,7 @@
   SPG.ui.press($('hub-who'), () => { voice.stop(); renderWho(); });
   SPG.ui.press($('hub-lock'), () => askGate(openParent));
 
-  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'], aquarium: ['#d8f2ff', '#7fc8ec'], cook: ['#fff0dc', '#f5c690'] };
+  const tints = { letters: ['#ffe3ec', '#f5b8cb'], fruit: ['#ffe9c7', '#f5c98a'], rain: ['#d8efff', '#a8d3f2'], fire: ['#ffe1d6', '#f5a58f'], band: ['#ffe3f0', '#f2a9c9'], train: ['#e3f0ff', '#9cc5f0'], puzzle: ['#e6f7ec', '#98d4ae'], care: ['#fff0d9', '#f2c88c'], hide: ['#e8f6d8', '#a7d78a'], garden: ['#dff5d0', '#a9d98f'], color: ['#efe4ff', '#cdbcf7'], pets: ['#ffe8ef', '#f6b9cc'], style: ['#ffe3f1', '#f7a8cf'], aquarium: ['#d8f2ff', '#7fc8ec'], cook: ['#fff0dc', '#f5c690'], clay: ['#ffe9d4', '#f2b98c'] };
   function renderCards() {
     const all = SPG.games.slice().sort((a, b) => a.order - b.order);
     const games = orderedGames(all.filter(g => !g.shop)), shops = all.filter(g => g.shop);
@@ -214,6 +226,17 @@
     drawCards();
   }
   /* ------------------------------------------------------------ rearranging the apps (grown-ups): hold an app ~2 s, confirm, then drag */
+  // touching the empty background of the main menu (not an icon, button, arrow or the shop) changes the picture behind it
+  (() => {
+    const hub = $('hub'); let d = null;
+    const empty = t => t.closest('.card, button, .chip, .shopfront, .pg-nav, .hub-editbar, a, input, select') === null;
+    hub.addEventListener('pointerdown', e => { d = e.isPrimary && empty(e.target) ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; });
+    hub.addEventListener('pointercancel', () => { d = null; });
+    hub.addEventListener('pointerup', e => {
+      if (!d) return; const m = Math.hypot(e.clientX - d.x, e.clientY - d.y), long = performance.now() - d.t > 600; d = null;
+      if (m < 14 && !long && !hubEdit && current === 'hub' && !anyOverlay() && empty(e.target)) nextBackdrop();
+    });
+  })();
   let hubEdit = null;   // while rearranging: { drag }
   const orderedGames = list => { const ord = store.settings.hubOrder || [], idx = g => { const i = ord.indexOf(g.id); return i < 0 ? 1000 + g.order : i; }; return list.slice().sort((a, b) => idx(a) - idx(b)); };
   const gameIds = () => orderedGames(SPG.games.filter(g => !g.shop)).map(g => g.id);
@@ -262,7 +285,9 @@
   // Match the CSS grid using the current window, including when a foldable opens or closes.
   // A nearly square inner display has room for nine existing icons without enlarging their art.
   const squareOpen = () => matchMedia('(min-width: 600px) and (min-height: 600px) and (min-aspect-ratio: 4/5) and (max-aspect-ratio: 5/4)').matches;
-  const perPage = () => (squareOpen() ? 9 : matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
+  // A Flip-style cover screen (both sides about 400 px or less) shows one game at a time (big icon, arrows at the sides, swipe).
+  const coverTiny = () => matchMedia('(max-width: 420px) and (max-height: 420px)').matches;
+  const perPage = () => (coverTiny() ? 1 : squareOpen() ? 9 : matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
@@ -595,17 +620,6 @@
     return s.playLog;
   };
   const limitReached = () => { const m = store.settings.timer || 0; return m > 0 && playLog().sec >= m * 60; };
-  const widget = SPG.native.widget;
-  const syncWidgetTimer = async () => {
-    if (!widget) return;
-    const day = dayKey();
-    try {
-      const extra = await widget.consumeWidgetTime(day);
-      if (extra && extra.seconds > 0) { playLog().sec += extra.seconds; store.save(); }
-      await widget.syncTimer(day, playLog().sec, store.settings.timer || 0);
-      if (limitReached()) checkLimit();
-    } catch (_) { /* the game remains playable if widget storage is unavailable */ }
-  };
 
   // The rest screen: the pets she owns dance under the moon while a soft lullaby plays (no owned pets: three friends dance).
   let restRaf = 0, restT = 0;
@@ -661,14 +675,14 @@
     playLog().sec++; store.save();
     if (limitReached()) showBreak();
   }, 1000);
-  if (widget) {
-    SPG.coloring?.syncSaved?.();
-    syncWidgetTimer();
-    setInterval(syncWidgetTimer, 10000);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) { SPG.coloring?.syncSaved?.(); syncWidgetTimer(); }
-    });
-  }
+
+  // The Android home / Flip cover widget rests with the app when today's play time is used up (and wakes again the next day).
+  let widgetRest = null;
+  setInterval(() => {
+    const w = SPG.native.widget; if (!w) return;
+    const r = limitReached(); if (r === widgetRest) return;
+    widgetRest = r; try { Promise.resolve(w.setRest(r)).catch(() => { widgetRest = null; }); } catch (_) { widgetRest = null; }
+  }, 3000);
 
   function voicesSection() {
     const keys = voice.allKeys();
@@ -738,13 +752,19 @@
     const sw = h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': String(!!store.settings.photoSave), 'aria-label': 'Save kitchen photos to this device' });
     sw.addEventListener('click', () => { store.settings.photoSave = !store.settings.photoSave; store.save(); sw.setAttribute('aria-checked', String(store.settings.photoSave)); });
     const count = h('p', { class: 'fine' }, 'Counting photos…');
-    if (SPG.photos) SPG.photos.count().then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
-    const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear(); renderParent(); });
+    if (SPG.photos) SPG.photos.count('kitchen').then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
+    const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear('kitchen'); renderParent(); });
+    const clayCount = h('p', { class: 'fine' }, 'Counting clay pictures…');
+    if (SPG.photos) SPG.photos.count('clay').then(n => { clayCount.textContent = `${n} picture${n === 1 ? '' : 's'} in the Clay Corner album on this device (the newest 60 for each player are kept). The clay a child is working on is kept too, until they start over.`; });
+    const clayClear = confirmButton('Delete all clay pictures', 'danger', async () => { if (SPG.photos) await SPG.photos.clear('clay'); renderParent(); });
     return h('section', {}, h('h3', {}, 'Photos and pictures'),
-      h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made. Photos are always kept in the kitchen\u2019s own photo album, on this device only.'),
+      h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made, and in Clay Corner it takes a picture of the clay creation. Pictures are always kept in the game\u2019s own album, on this device only.'),
       h('p', {}, app ? 'In the Coloring Book the Save picture button always puts the finished picture into this phone\u2019s photo gallery (album \u201CSprout Park\u201D). Every picture also stays in the Coloring Book\u2019s own gallery.' : 'In the Coloring Book the Save picture button downloads the picture to this device. Every picture also stays in the Coloring Book\u2019s own gallery.'),
       ios ? h('p', { class: 'fine' }, 'On iPhone and iPad the photos stay in the kitchen album.') : h('div', { class: 'setting' }, h('span', {}, app ? 'Also save them to this phone\u2019s photo gallery (album \u201CSprout Park\u201D)' : 'Also save them to this device (as a download)'), sw),
-      count, clear);
+      count, clear,
+      h('h4', {}, 'Clay Corner pictures'),
+      h('p', {}, 'The camera in Clay Corner takes a picture of the clay creation. Pictures are kept in the game\u2019s own album, and the same switch above also sends them to the device\u2019s photo gallery.'),
+      clayCount, clayClear);
   }
 
   function pinSection() {

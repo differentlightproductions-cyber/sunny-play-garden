@@ -236,7 +236,6 @@
         this.dirty = false;
         this.staleTiles.add(this.cur.id);
         store.save();
-        syncSavedPaintings();
       }
       if (flush) store.flush();
     }
@@ -604,32 +603,9 @@
     });
   }
 
-  // Widgets cannot read this WebView's localStorage. Export small previews of the
-  // active player's actual saved paint to app-private storage. The source ops stay
-  // here and the full-resolution Coloring Book is never replaced by thumbnails.
-  let widgetSignature = '', widgetQueue = Promise.resolve();
-  function syncSavedPaintings() {
-    if (!SPG.native.widget) return;
-    const player = store.active;
-    const records = player && player.data && player.data.color && player.data.color.pics || {};
-    const items = PICS.filter(def => records[def.id] && records[def.id].ops && hasPaint(records[def.id].ops))
-      .map(def => ({ def, rec: records[def.id], id: `${player.id}-${def.id}` }));
-    const signature = (player ? player.id : '') + '|' + items.map(x => `${x.id}:${x.rec.t || 0}`).join('|');
-    if (signature === widgetSignature) return;
-    widgetSignature = signature;
-    widgetQueue = widgetQueue.catch(() => {}).then(async () => {
-      for (const { def, rec, id } of items) {
-        const cv = document.createElement('canvas'); cv.width = 280; cv.height = 224;
-        render(cv.getContext('2d'), def, rec.ops, cv.width);
-        await SPG.native.widget.savePainting(id, cv.toDataURL('image/png'));
-        await new Promise(resolve => requestAnimationFrame(resolve));
-      }
-      await SPG.native.widget.setGallery(items.map(x => ({ id: x.id, name: x.def.name })));
-    }).catch(() => { widgetSignature = ''; });
-  }
+  SPG.coloring = { compile, render, compact, PALETTE };
   // For other games (Puzzle Pond): draw one of her pictures with her own colors, or a bright sample if she has not painted it.
   SPG.coloring = {
-    syncSaved: syncSavedPaintings,
     hasPaint: id => { const r = (store.bag('color', () => ({ v: 1, pics: {} })).pics || {})[id]; return !!(r && r.ops && hasPaint(r.ops)); },
     draw(ctx, def, width) {
       const r = (store.bag('color', () => ({ v: 1, pics: {} })).pics || {})[def.id];

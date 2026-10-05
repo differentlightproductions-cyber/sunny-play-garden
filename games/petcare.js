@@ -8,6 +8,7 @@
   const TAU = Math.PI * 2;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, u) => a + (b - a) * u;
+  const BED_LOCK = 5;   // seconds after putting the pet to bed before it can be woken
   const FOODS = [0, 1, 3, 4, 5];   // art.fruit types: apple, orange, strawberry, banana, peach
 
   // Wallpapers, floors and rug colors. She unlocks one more wallpaper for every few cares (so the room has levels too).
@@ -212,7 +213,7 @@
       for (const t of this.tools) if (near(t, this.bs * .85)) { this.chooseTool(t.id); return; }
       if (this.sleeping) {
         const l = this.lampPos(); if (near(l, this.s * .3)) { this.bag.lamp = (this.bag.lamp + 1) % LAMPS.length; sfx.tap(); this.save(); return; }   // change the night light's color
-        this.wakeUp(); return;
+        if (!this.bedLocked()) this.wakeUp(); return;
       }
       if (this.tool === 'deco') { this.pressDeco(x, y, id); return; }
       if (this.tool === 'food') {
@@ -232,6 +233,7 @@
       if (this.ztool === 'spray') sfx.spray();
     }
     chooseTool(id) {
+      if (this.bedLocked()) return;   // still settling into bed: nothing happens, no sounds, no lines
       sfx.tap(); this.picking = false;
       if (id === 'bed') { this.tool = null; this.hold = null; if (this.sleeping) this.wakeUp(); else this.goSleep(); return; }
       if (this.sleeping) this.wakeUp();
@@ -259,7 +261,8 @@
     }
 
     /* ---------------------------------------------------------------- sleeping (it sleeps until she wakes it) */
-    goSleep() { this.sleeping = true; this.sleepT = 0; this.pet.target = this.bedX; sfx.lullaby(); this.lull = 0; voice.say('care-sleep'); }
+    bedLocked() { return this.sleeping && this.t < (this.bedUntil || 0); }   // for 5 seconds after she puts it to bed it cannot be woken (so it can walk over and lie down, and the lines are not spammed)
+    goSleep() { this.sleeping = true; this.sleepT = 0; this.bedUntil = this.t + BED_LOCK; this.pet.target = this.bedX; sfx.lullaby(); this.lull = 0; voice.say('care-sleep'); }
     wakeUp() {
       const slept = this.sleepT >= 5;
       this.sleeping = false; this.pet.target = this.homeX; this.pet.hop = 1; this.pet.cheer = 2.4;
@@ -538,6 +541,11 @@
         c.fillStyle = on ? '#fff3c4' : '#fff'; c.beginPath(); c.arc(t.x, t.y, this.bs * (hint ? .72 + Math.sin(this.t * 6) * .03 : .72), 0, TAU); c.fill();
         if (on) { c.strokeStyle = '#59b96e'; c.lineWidth = 6; c.stroke(); }
         c.save(); c.translate(t.x, t.y); this.icon(c, t.id, this.bs * .55); c.restore();
+        if (t.id === 'bed' && this.bedLocked()) {   // resting: a ring fills round the button until it can be touched again
+          const k = clamp(1 - (this.bedUntil - this.t) / BED_LOCK, 0, 1);
+          c.fillStyle = 'rgba(90,63,94,.28)'; c.beginPath(); c.arc(t.x, t.y, this.bs * .72, 0, TAU); c.fill();
+          c.strokeStyle = '#59b96e'; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.arc(t.x, t.y, this.bs * .72, -Math.PI / 2, -Math.PI / 2 + TAU * k); c.stroke();
+        }
       }
     }
     // little tools for the close-up: a hand, a brush and a spray bottle

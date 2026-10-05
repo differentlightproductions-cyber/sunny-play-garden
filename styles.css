@@ -1008,6 +1008,7 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
   .hub-right { gap: 5px; }
   .hub-top .chip { min-height: 44px; font-size: .95rem; padding-right: .45em; }
   .hub-top .chip.round { width: 44px; padding: 0; }
+  .hub-top .chip.stars { padding: .3em .75em; justify-content: center; }   /* the star and its count sit centred in the chip (the shared rule above only trims the right side) */
   .hub-top .chip canvas { width: 36px; height: 36px; flex: none; }
   #hub-games .cards.page { gap: 5px; padding-inline: 1px; }
   #hub-games .card { font-size: .72rem; }
@@ -1131,4 +1132,5 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
   .hub-top .chip { min-height: 40px; }
   .hub-top .chip canvas { width: 30px; height: 30px; }
   .hub-top .chip.round { width: 40px; }
+  .hub-top .chip.stars { padding: .3em .75em; justify-content: center; }
 }

@@ -4,4 +4,8 @@
     <string name="title_activity_main">Sprout Park</string>
     <string name="package_name">com.toastygames.littlesproutpark</string>
     <string name="custom_url_scheme">com.toastygames.littlesproutpark</string>
+    <string name="mini_desc">Sprout Park mini games: tap to play</string>
+    <string name="mini_cover_desc">Sprout Park mini games for the cover screen</string>
+    <string name="mini_name">Sprout Park mini games</string>
+    <string name="mini_cover_name">Sprout Park mini games (cover screen)</string>
 </resources>

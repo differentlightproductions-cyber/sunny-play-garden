@@ -651,6 +651,14 @@
     if (limitReached()) showBreak();
   }, 1000);
 
+  // The Android home / Flip cover widget rests with the app when today's play time is used up (and wakes again the next day).
+  let widgetRest = null;
+  setInterval(() => {
+    const w = SPG.native.widget; if (!w) return;
+    const r = limitReached(); if (r === widgetRest) return;
+    widgetRest = r; try { Promise.resolve(w.setRest(r)).catch(() => { widgetRest = null; }); } catch (_) { widgetRest = null; }
+  }, 3000);
+
   function voicesSection() {
     const keys = voice.allKeys();
     const n = set => keys.filter(k => voice.hasClip(set, k)).length;

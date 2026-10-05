@@ -193,11 +193,11 @@
   const wfoot = (c, fn) => shoePair(c, fn);
   // dresses
   add('dress', [{ id: 'royal', name: 'Royal gown' }, { id: 'skater', name: 'Twirly dress' }, { id: 'tiers', name: 'Ruffle dress' }, { id: 'pinafore', name: 'Pinafore' }, { id: 'snow', name: 'Ice queen gown' }]);
-  DRESS.royal = (c, k, t) => { DRESS.ball(c, k, t); c.strokeStyle = '#f0b429'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-31, -7); c.quadraticCurveTo(0, -1.5, 31, -7); c.stroke(); c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(0, -34); c.lineTo(-9, -3); c.lineTo(9, -3); c.closePath(); c.fill(); c.fillStyle = '#fff'; for (let i = -4; i <= 4; i++) dot(c, i * 2.5, -49.6 + Math.abs(i) * .35, 2.4); c.fillStyle = '#3a2a30'; for (const i of [-3, -1, 1, 3]) dot(c, i * 2.5, -49.2 + Math.abs(i) * .3, .5); };
+  DRESS.royal = (c, k, t) => { DRESS.ball(c, k, t); c.save(); c.beginPath(); c.moveTo(-9, -36); c.bezierCurveTo(-13, -26, -32, -14, -33, -3); c.lineTo(33, -3); c.bezierCurveTo(32, -14, 13, -26, 9, -36); c.closePath(); c.clip(); c.strokeStyle = '#f0b429'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-34, -8); c.quadraticCurveTo(0, -2, 34, -8); c.stroke(); c.restore(); c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(0, -34); c.lineTo(-9, -3); c.lineTo(9, -3); c.closePath(); c.fill(); c.fillStyle = '#fff'; for (let i = -4; i <= 4; i++) dot(c, i * 2.5, -49.6 + Math.abs(i) * .35, 2.4); c.fillStyle = '#3a2a30'; for (const i of [-3, -1, 1, 3]) dot(c, i * 2.5, -49.2 + Math.abs(i) * .3, .5); };
   DRESS.skater = (c, k, t) => { sleeveCap(c, k); c.fillStyle = grad(c, -36, -20, k, .16); c.beginPath(); c.moveTo(-9, -36); c.lineTo(-22, -20); c.quadraticCurveTo(0, -15, 22, -20); c.lineTo(9, -36); c.closePath(); c.fill(); bodice(c, k); c.fillStyle = shade(k, -.3); rr(c, -9.5, -37.6, 19, 3.4, 1.4); c.fill(); c.fillStyle = 'rgba(255,255,255,.75)'; for (const [x, y] of [[-12, -24], [-4, -21], [5, -24], [13, -21], [0, -28]]) dot(c, x, y, 1.4); twinkle(c, [[-15, -22], [16, -24]], t); };
   DRESS.tiers = (c, k, t) => { bodice(c, k); for (let l = 2; l >= 0; l--) { const y = -34 + l * 6, hw = 11 + l * 4.5; c.fillStyle = l % 2 ? shade(k, .12) : shade(k, -.04); c.beginPath(); c.moveTo(-hw + 2, y); c.lineTo(hw - 2, y); c.lineTo(hw + 1.5, y + 8); for (let i = 0; i < 6; i++) c.quadraticCurveTo(hw - (i + .5) * (2 * hw + 3) / 6, y + 11, hw + 1.5 - (i + 1) * (2 * hw + 3) / 6, y + 8); c.closePath(); c.fill(); } sleeveCap(c, shade(k, .1)); twinkle(c, [[-10, -22], [9, -14]], t); };
   DRESS.pinafore = (c, k, t) => { c.fillStyle = '#fff'; c.beginPath(); c.moveTo(-10.5, -49); c.quadraticCurveTo(0, -51.5, 10.5, -49); c.lineTo(9.6, -34); c.lineTo(-9.6, -34); c.closePath(); c.fill(); for (const sd of [-1, 1]) { c.fillStyle = '#fff'; dot(c, sd * 11.2, -47, 4.8); } c.fillStyle = grad(c, -36, -18, k, .18); c.beginPath(); c.moveTo(-9.5, -44); c.lineTo(9.5, -44); c.lineTo(9, -36); c.lineTo(17, -18); c.quadraticCurveTo(0, -14, -17, -18); c.lineTo(-9, -36); c.closePath(); c.fill(); c.fillStyle = shade(k, -.1); for (const sd of [-1, 1]) { rr(c, sd * 5.4 - 1.6, -50, 3.2, 8, 1.4); c.fill(); } c.fillStyle = '#ffe680'; dot(c, -5.4, -43, 1.2); dot(c, 5.4, -43, 1.2); c.fillStyle = 'rgba(255,255,255,.7)'; rr(c, -5, -39, 10, 5, 1.6); c.fill(); };
-  DRESS.snow = (c, k, t) => { const k2 = shade(k, .25); c.fillStyle = 'rgba(255,255,255,.55)'; for (const sd of [-1, 1]) { c.beginPath(); c.moveTo(sd * 8, -50); c.lineTo(sd * 22, -46); c.lineTo(sd * 17, -38); c.closePath(); c.fill(); } c.fillStyle = grad(c, -36, -2, k2, .1); c.beginPath(); c.moveTo(-9, -36); c.bezierCurveTo(-14, -24, -20, -12, -30, -2); for (let i = 0; i < 5; i++) { const x = -30 + (i + .5) * 12; c.lineTo(x, -8 + (i % 2 ? 0 : 6)); c.lineTo(-30 + (i + 1) * 12, -2); } c.bezierCurveTo(20, -12, 14, -24, 9, -36); c.closePath(); c.fill(); bodice(c, k2, true); art.star(c, 0, -42, 4, '#fff', 0); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = .7; for (let a = 0; a < 3; a++) { c.beginPath(); c.moveTo(Math.cos(a * Math.PI / 3) * 6, -42 + Math.sin(a * Math.PI / 3) * 6); c.lineTo(-Math.cos(a * Math.PI / 3) * 6, -42 - Math.sin(a * Math.PI / 3) * 6); c.stroke(); } twinkle(c, [[-14, -16], [12, -22], [22, -8], [-22, -8], [2, -12], [-4, -28]], t, '#e8f7ff'); };
+  DRESS.snow = (c, k, t) => { const k2 = shade(k, .25); c.fillStyle = 'rgba(255,255,255,.55)'; for (const sd of [-1, 1]) { c.save(); c.translate(sd * 11.8, -47.6); c.rotate(sd * -SPREAD.snow); c.beginPath(); c.moveTo(-4.2, -1.5); c.quadraticCurveTo(-7.5, 8, -7, 17); c.quadraticCurveTo(0, 20, 7, 17); c.quadraticCurveTo(7.5, 8, 4.2, -1.5); c.closePath(); c.fill(); c.restore(); } c.fillStyle = grad(c, -36, -2, k2, .1); c.beginPath(); c.moveTo(-9, -36); c.bezierCurveTo(-14, -24, -20, -12, -30, -2); for (let i = 0; i < 5; i++) { const x = -30 + (i + .5) * 12; c.lineTo(x, -8 + (i % 2 ? 0 : 6)); c.lineTo(-30 + (i + 1) * 12, -2); } c.bezierCurveTo(20, -12, 14, -24, 9, -36); c.closePath(); c.fill(); bodice(c, k2, true); art.star(c, 0, -42, 4, '#fff', 0); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = .7; for (let a = 0; a < 3; a++) { c.beginPath(); c.moveTo(Math.cos(a * Math.PI / 3) * 6, -42 + Math.sin(a * Math.PI / 3) * 6); c.lineTo(-Math.cos(a * Math.PI / 3) * 6, -42 - Math.sin(a * Math.PI / 3) * 6); c.stroke(); } twinkle(c, [[-14, -16], [12, -22], [22, -8], [-22, -8], [2, -12], [-4, -28]], t, '#e8f7ff'); };
   // tops
   add('top', [{ id: 'polo', name: 'Polo shirt' }, { id: 'jersey', name: 'Sports shirt' }, { id: 'flannel', name: 'Checked shirt' }, { id: 'cardigan', name: 'Cardigan' }, { id: 'puffer', name: 'Puffy jacket' }, { id: 'blazer', name: 'Blazer' }, { id: 'hearttee', name: 'Heart shirt' }]);
   Object.assign(SLEEVE, { polo: 9, jersey: 9, flannel: 19.5, cardigan: 19.5, puffer: 19.5, blazer: 19.5, hearttee: 9 });
@@ -266,26 +266,45 @@
   W.faceAcc = (c, look, R, t) => { const f = look.face && FACE[look.face]; if (f) f(c, R, col(P.CLOTH, look.extraCol), t); };
   W.hat = (c, look, R, t) => { const f = look.hat && HAT[look.hat]; if (f) f(c, R, cloth(look.hatCol), t); };
   W.handItem = (c, look, t) => { const f = look.hand && HAND[look.hand]; if (f) f(c, col(P.CLOTH, look.extraCol), t); };
-  W.handNails = (c, look, base) => {
-    for (let i = 0; i < 5; i++) { const k = look.nails && look.nails[base + i]; if (k == null || k < 0) continue; const a = Math.PI * (.22 + i * .14); c.fillStyle = col(P.NAIL, k); c.beginPath(); c.ellipse(Math.cos(a) * 3.3, 1 + Math.sin(a) * 3.3, .8, 1.1, a - Math.PI / 2, 0, TAU); c.fill(); }
+  // The small hand on the end of each arm (fingers pointing down, back of the hand toward us): a palm, four fingers and a thumb, with polish
+  // on each fingertip, lined up with its finger. Drawn for the character's left or right (sd -1 / 1); the thumb is on the inside.
+  const MINI = [{ x: -2.3, len: 3.0 }, { x: -.78, len: 3.7 }, { x: .78, len: 3.9 }, { x: 2.3, len: 3.4 }];
+  W.miniHand = (c, look, skin, sd, t = 0) => {
+    const base = sd < 0 ? 0 : 5, dark = shade(skin, -.2), lite = shade(skin, .12);
+    c.save(); c.translate(0, -.3); c.scale(1.35, 1.35); if (sd > 0) c.scale(-1, 1); c.lineJoin = c.lineCap = 'round';
+    const finger = (x, y0, len, w, rot) => { c.save(); c.translate(x, y0); c.rotate(rot); c.beginPath(); c.moveTo(-w / 2, -.4); c.lineTo(-w * .46, len - w * .45); c.arc(0, len - w * .45, w * .46, Math.PI, 0, true); c.lineTo(w / 2, -.4); c.closePath(); c.fillStyle = skin; c.fill(); c.strokeStyle = shade(skin, -.32); c.lineWidth = .26; c.stroke(); c.restore(); };
+    // thumb behind the palm, angled outward and down
+    finger(3.0, 1.6, 3.3, 1.75, 2.5 - Math.PI);
+    for (const f of MINI) finger(f.x, 3.6, f.len, 1.45, 0);
+    c.beginPath(); c.moveTo(-3.1, -1.2); c.lineTo(3.1, -1.2); c.quadraticCurveTo(3.7, 1.8, 3.0, 4.4); c.quadraticCurveTo(0, 5.1, -3.0, 4.4); c.quadraticCurveTo(-3.7, 1.8, -3.1, -1.2); c.closePath();
+    const g = c.createRadialGradient(-.8, .6, .4, 0, 1.6, 4.4); g.addColorStop(0, lite); g.addColorStop(1, skin); c.fillStyle = g; c.fill();
+    c.strokeStyle = 'rgba(0,0,0,.07)'; c.lineWidth = .18; for (const x of [-1.55, 0, 1.55]) { c.beginPath(); c.moveTo(x, 3.3); c.lineTo(x * .8, 4.4); c.stroke(); }
+    // polish: one nail per fingertip, following the finger
+    const nails = [...MINI.map(f => ({ x: f.x, y: 3.6 + f.len - 1.05, rot: Math.PI })), { x: 3.0 + .597 * 2.35, y: 1.6 + .8 * 2.35, rot: 2.5 }];
+    nails.forEach((n, i) => { const k = look.nails && look.nails[base + i]; if (k == null || k < 0) return; c.save(); c.translate(n.x, n.y); c.scale(.1, .1); nailDraw(c, { x: 0, y: -6, w: 9.4, h: 12, rot: n.rot }, col(P.NAIL, k), look.nailGlitter && look.nailGlitter[base + i], look.nailArt && look.nailArt[base + i], t); c.restore(); });
+    c.restore();
   };
 
   /* ------------------------------------------------------------ the big hands for the nail salon */
-  // Each finger (0 = pinky ... 4 = thumb, seen from the back of the hand) with its nail rectangle, in a 100-wide hand.
-  const FING = [{ x: -29, len: 44, w: 17 }, { x: -10, len: 58, w: 17.5 }, { x: 9.5, len: 64, w: 18 }, { x: 28, len: 56, w: 17.5 }];
-  P.nailRects = () => {
-    const r = FING.map(f => ({ x: f.x, y: -f.len + 9, w: f.w * .74, h: 19, rot: 0 }));
-    r.push({ x: 47, y: 4, w: 14, h: 17, rot: .95 }); return r;   // the thumb's nail (pivot at its centre)
-  };
+  // The back of a hand, 100 units wide: four tapered fingers that fan out a little, a thumb at the side, and a nail on every fingertip that is
+  // worked out from its finger (same angle, same width), so polish always lines up. 0 = pinky ... 3 = index, 4 = thumb.
+  const FING = [{ x: -27, by: 14, a: -.14, len: 45, w: 15.5 }, { x: -9, by: 9, a: -.05, len: 58, w: 17 }, { x: 10, by: 7, a: .03, len: 64, w: 17.5 }, { x: 28, by: 11, a: .12, len: 55, w: 17 }, { x: 37, by: 42, a: .8, len: 41, w: 19 }];
+  const nailGeom = f => { const h = f.w * .98, nw = f.w * .7, cy = -f.len + f.w * .08 + h / 2; return { x: f.x - cy * Math.sin(f.a), y: f.by + cy * Math.cos(f.a), w: nw, h, rot: f.a }; };
+  P.nailRects = () => FING.map(f => { const g = nailGeom(f); return { x: g.x, y: g.y - g.h / 2, w: g.w, h: g.h, rot: g.rot }; });   // y is the top (the nail is drawn around its centre)
   P.NAILART = ['none', 'star', 'heart', 'flower', 'dots', 'stripe', 'gem'];
+  // a natural nail shape: a softly squared free edge, curving in to the cuticle
+  function nailPath(c, w, h) { c.beginPath(); c.moveTo(-w / 2, h * .1); c.bezierCurveTo(-w / 2, -h * .34, -w * .38, -h / 2, 0, -h / 2); c.bezierCurveTo(w * .38, -h / 2, w / 2, -h * .34, w / 2, h * .1); c.bezierCurveTo(w / 2, h * .36, w * .3, h / 2, 0, h / 2); c.bezierCurveTo(-w * .3, h / 2, -w / 2, h * .36, -w / 2, h * .1); c.closePath(); }
   function nailDraw(c, r, colr, glitter, artId, t) {
     c.save(); c.translate(r.x, r.y + r.h / 2); c.rotate(r.rot);
     const w = r.w, h = r.h;
-    c.beginPath(); c.moveTo(-w / 2, h / 2); c.lineTo(-w / 2, -h / 2 + w / 2); c.arc(0, -h / 2 + w / 2, w / 2, Math.PI, TAU); c.lineTo(w / 2, h / 2); c.closePath();
+    nailPath(c, w, h);
     if (colr) {
-      const g = c.createLinearGradient(-w / 2, 0, w / 2, 0); g.addColorStop(0, shade(colr, .1)); g.addColorStop(.5, colr); g.addColorStop(1, shade(colr, -.14)); c.fillStyle = g; c.fill();
-      c.save(); c.clip(); c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(-w * .22, -h * .18, w * .1, h * .3, .1, 0, TAU); c.fill();
-      if (glitter) { for (let i = 0; i < 9; i++) { const a = .3 + .7 * Math.abs(Math.sin(t * 2 + i * 2.1)); c.globalAlpha = a; c.fillStyle = '#fff'; dot(c, Math.sin(i * 12.9) * w * .38, Math.cos(i * 7.7) * h * .4, .9 + (i % 3) * .35); } c.globalAlpha = 1; }
+      const g = c.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, shade(colr, .22)); g.addColorStop(.5, colr); g.addColorStop(1, shade(colr, -.16)); c.fillStyle = g; c.fill();
+      c.save(); c.clip();
+      c.strokeStyle = 'rgba(80,30,30,.22)'; c.lineWidth = h * .1; c.beginPath(); c.ellipse(0, h * .48, w * .5, h * .2, 0, Math.PI * 1.05, Math.PI * 1.95, true); c.stroke();   // the soft shadow of the cuticle
+      c.fillStyle = 'rgba(255,255,255,.62)'; c.beginPath(); c.ellipse(-w * .2, -h * .12, w * .09, h * .3, .12, 0, TAU); c.fill();   // glossy shine
+      c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.ellipse(w * .2, h * .22, w * .05, h * .08, .1, 0, TAU); c.fill();
+      if (glitter) { for (let i = 0; i < 10; i++) { const a = .3 + .7 * Math.abs(Math.sin(t * 2 + i * 2.1)); c.globalAlpha = a; c.fillStyle = '#fff'; dot(c, Math.sin(i * 12.9) * w * .38, Math.cos(i * 7.7) * h * .4, .9 + (i % 3) * .35); } c.globalAlpha = 1; }
       const dk = P.NAILART[artId | 0];
       if (dk === 'star') art.star(c, 0, -h * .04, w * .3, '#fff', 0);
       else if (dk === 'heart') art.heart(c, 0, -h * .04, w * .3, '#fff');
@@ -294,20 +313,40 @@
       else if (dk === 'stripe') { c.fillStyle = '#fff'; c.fillRect(-w / 2, h * .12, w, h * .1); c.fillRect(-w / 2, h * .3, w, h * .06); }
       else if (dk === 'gem') { c.fillStyle = '#bfe6ff'; c.beginPath(); c.moveTo(0, -h * .2); c.lineTo(w * .22, -h * .04); c.lineTo(0, h * .14); c.lineTo(-w * .22, -h * .04); c.closePath(); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(0, -h * .2); c.lineTo(w * .1, -h * .06); c.lineTo(0, -h * .04); c.closePath(); c.fill(); }
       c.restore();
-    } else { c.fillStyle = 'rgba(255,225,215,.55)'; c.fill(); c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = .8; c.stroke(); }
+      nailPath(c, w, h); c.strokeStyle = shade(colr, -.3); c.lineWidth = .6; c.stroke();
+    } else {   // a natural nail: pale pink, a white free edge, a little half-moon at the bottom
+      const g = c.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, 'rgba(255,228,222,.95)'); g.addColorStop(1, 'rgba(255,196,190,.9)'); c.fillStyle = g; c.fill();
+      c.save(); c.clip(); c.fillStyle = 'rgba(255,255,255,.55)'; c.fillRect(-w, -h * .55, w * 2, h * .17);
+      c.fillStyle = 'rgba(255,255,255,.4)'; c.beginPath(); c.ellipse(0, h * .5, w * .28, h * .17, 0, Math.PI, TAU); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(-w * .2, -h * .05, w * .07, h * .22, .1, 0, TAU); c.fill(); c.restore();
+      nailPath(c, w, h); c.strokeStyle = 'rgba(190,120,115,.55)'; c.lineWidth = .6; c.stroke();
+    }
     c.restore();
   }
   P.nailDraw = nailDraw;
+  // one tapered finger, base at (0, 0), pointing up
+  function fingerPath(c, f) { const w = f.w, tr = w * .46; c.beginPath(); c.moveTo(-w / 2, 12); c.lineTo(-w * .47, -f.len + tr); c.arc(0, -f.len + tr, tr, Math.PI, 0); c.lineTo(w / 2, 12); c.closePath(); }
   // Draws one hand (0 = left, 1 = right) centred on (0, 0) with the 100-unit hand scaled by `s`.
   P.drawHand = (c, look, hand, s, t = 0) => {
-    const skin = P.SKIN[look.skin % P.SKIN.length], dark = shade(skin, -.1), U = s / 100;
+    const skin = P.SKIN[look.skin % P.SKIN.length], dark = shade(skin, -.12), edge = shade(skin, -.24), lite = shade(skin, .12), U = s / 100;
     c.save(); c.scale(hand ? -U : U, U); c.translate(0, 8); c.lineJoin = c.lineCap = 'round';
-    c.fillStyle = dark; rr(c, -26, 50, 52, 40, 14); c.fill();                       // wrist
-    // thumb first (behind the palm)
-    c.save(); c.translate(47, 12); c.rotate(.95); c.fillStyle = skin; rr(c, -9.5, -14, 19, 44, 9.5); c.fill(); c.restore();
-    c.fillStyle = skin; rr(c, -38, -6, 76, 66, 26); c.fill();                        // palm
-    FING.forEach(f => { c.fillStyle = skin; rr(c, f.x - f.w / 2, -f.len, f.w, f.len + 14, f.w / 2); c.fill(); c.strokeStyle = 'rgba(0,0,0,.06)'; c.lineWidth = .8; c.beginPath(); c.moveTo(f.x - f.w / 2 + 1, -f.len * .35); c.lineTo(f.x + f.w / 2 - 1, -f.len * .35); c.stroke(); });
-    c.fillStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.ellipse(-10, 24, 14, 22, .2, 0, TAU); c.fill();
+    // wrist and a little forearm
+    const wg = c.createLinearGradient(-24, 0, 24, 0); wg.addColorStop(0, dark); wg.addColorStop(.5, skin); wg.addColorStop(1, dark); c.fillStyle = wg;
+    c.beginPath(); c.moveTo(-23, 58); c.lineTo(23, 58); c.lineTo(25, 96); c.quadraticCurveTo(0, 101, -25, 96); c.closePath(); c.fill();
+    const fingerSkin = f => { const g = c.createLinearGradient(-f.w / 2, 0, f.w / 2, 0); g.addColorStop(0, lite); g.addColorStop(.45, skin); g.addColorStop(1, dark); return g; };
+    const drawFinger = f => {
+      c.save(); c.translate(f.x, f.by); c.rotate(f.a); fingerPath(c, f); c.fillStyle = fingerSkin(f); c.fill(); c.strokeStyle = edge; c.lineWidth = .9; c.stroke();
+      c.strokeStyle = 'rgba(70,30,20,.16)'; c.lineWidth = .7; for (const k of [.4, .66]) { const y = -f.len * k; c.beginPath(); c.moveTo(-f.w * .3, y); c.quadraticCurveTo(0, y + 1.5, f.w * .3, y); c.stroke(); }   // knuckle creases
+      c.restore();
+    };
+    drawFinger(FING[4]);                                                          // the thumb sits behind the palm
+    for (let i = 0; i < 4; i++) drawFinger(FING[i]);
+    // the back of the hand
+    c.beginPath(); c.moveTo(-24, 72); c.bezierCurveTo(-41, 58, -44, 34, -38, 14); c.lineTo(39, 14); c.bezierCurveTo(45, 34, 42, 58, 25, 72); c.closePath();
+    const pg = c.createRadialGradient(-6, 36, 6, 0, 40, 52); pg.addColorStop(0, lite); pg.addColorStop(1, skin); c.fillStyle = pg; c.fill(); c.strokeStyle = edge; c.lineWidth = .9; c.stroke();
+    c.strokeStyle = 'rgba(70,30,20,.1)'; c.lineWidth = .8; for (const f of FING.slice(0, 4)) { c.beginPath(); c.moveTo(f.x, 22); c.quadraticCurveTo(f.x * .8, 44, f.x * .6, 64); c.stroke(); }   // the tendons
+    c.fillStyle = 'rgba(70,30,20,.1)'; for (const f of FING.slice(0, 4)) { c.beginPath(); c.ellipse(f.x, 18, 3.2, 2, 0, 0, TAU); c.fill(); }   // knuckle dimples
+    // nails, lined up with their fingers
     const rects = P.nailRects();
     rects.forEach((r, i) => { const idx = hand * 5 + i, k = look.nails && look.nails[idx]; nailDraw(c, r, k >= 0 ? col(P.NAIL, k) : null, look.nailGlitter && look.nailGlitter[idx], look.nailArt && look.nailArt[idx], t); });
     c.restore();

@@ -1048,3 +1048,30 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 .card-ghost { gap: .35em; }
 .card-ghost canvas { width: min(100%, calc(100% - 3.2em)); }
 .card-ghost .card-name { display: block; background: rgba(255, 255, 255, .92); color: var(--ink); border-radius: 999px; padding: .12em .8em .16em; font-weight: 700; font-size: clamp(1rem, 2.9vmin, 1.7rem); box-shadow: 0 3px 0 rgba(90, 63, 94, .14); white-space: nowrap; }
+
+/* ---- Style Studio: compact choice tiles that open a pop-out picker (skin, eyes, lips, eyeshadow, cheeks) ---- */
+.st-chip { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 14px 8px 10px; border: 0; border-radius: 22px; background: rgba(255, 255, 255, .85); font: inherit; font-weight: 700; font-size: clamp(1.05rem, 2.8vmin, 1.6rem); color: var(--ink); box-shadow: 0 4px 0 rgba(90, 63, 94, .16); cursor: pointer; text-align: left; }
+.st-chip .st-sec-ico { width: clamp(48px, 8vmin, 72px); height: clamp(48px, 8vmin, 72px); border-radius: 50%; background: #fff; flex: none; }
+.st-chip b { flex: 1; }
+.st-chip svg { width: 1.3em; height: 1.3em; flex: none; opacity: .55; }
+.st-chip:active, .st-chip.open { transform: translateY(2px); box-shadow: 0 2px 0 rgba(90, 63, 94, .16); outline: 4px solid #ff9ec8; }
+.st-modal { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; padding: 14px; background: rgba(90, 63, 94, .42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.st-modal-card { width: min(94%, 620px); max-height: 92%; overflow-y: auto; background: #fff8ef; border-radius: 30px; padding: 14px 16px 18px; box-shadow: 0 10px 0 rgba(90, 63, 94, .25); }
+.st-modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-weight: 700; font-size: clamp(1.2rem, 3.2vmin, 1.8rem); }
+.st-modal-head .st-sec-ico { width: 52px; height: 52px; border-radius: 50%; background: #fff; flex: none; }
+.st-modal-head b { flex: 1; }
+.st-modal-x { width: clamp(48px, 8vmin, 64px); height: clamp(48px, 8vmin, 64px); border-radius: 50%; border: 0; background: #ece4f4; color: var(--ink); display: grid; place-items: center; box-shadow: 0 4px 0 rgba(90, 63, 94, .2); cursor: pointer; }
+.st-modal-x svg { width: 55%; height: 55%; }
+.st-modal .st-sw-row.big .st-sw { width: clamp(56px, 11vmin, 92px); height: clamp(56px, 11vmin, 92px); }
+.st > .st-modal { border-radius: 0; }
+
+/* ---- Letter Garden: lined practice page and its switch ---- */
+.lg-modechip { position: absolute; top: calc(var(--safe-t) + 14px); right: calc(var(--safe-r) + 230px); height: 76px; padding: 0 20px; border: 0; border-radius: 999px; background: #fff; box-shadow: 0 6px 0 rgba(90, 63, 94, .16); z-index: 6; display: grid; place-items: center; }
+.lg-modechip canvas { display: block; width: 132px; height: 56px; }
+.lg-modechip:active { transform: translateY(3px); }
+.lg-again { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--safe-b) + 28px); }
+.lg-again:active { transform: translateX(-50%) translateY(3px); }
+@media (max-height: 520px) and (orientation: landscape) { .lg-modechip { height: 56px; padding: 0 12px; } .lg-modechip canvas { width: 100px; height: 42px; } .lg-again { bottom: calc(var(--safe-b) + 14px); } }
+@media (max-width: 760px) { .lg-modechip { right: auto; left: 50%; transform: translateX(-50%); top: calc(var(--safe-t) + 100px); } .lg-modechip:active { transform: translateX(-50%) translateY(3px); } }
+.st-modal .st-sw-row { gap: 10px; }
+@media (max-width: 520px) { .st-modal .st-sw-row.big .st-sw { width: 46px; height: 46px; } }

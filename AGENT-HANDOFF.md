@@ -53,3 +53,7 @@ Rules that matter: big touch targets, spoken prompts, no reading needed, nothing
 ## Update (reordering, device unlock, layering)
 - Added: hub rearranging (hold 2 s + gate), fingerprint/phone-lock gate button (needs `npm install` in android-app so the biometric plugin is bundled, then `cap sync`; verify on a real phone: Grown-ups > Fingerprint or phone lock > Turn on), kitchen layering/plate pen/mini plates/camera cooldown, train shape previews, Hide and Seek peeking. See CLAUDE.md 'Latest round'.
 - Not verified on hardware: the biometric prompt and long-press feel on a real tablet.
+
+## Update (Style Studio, practice lines)
+- Style Studio: pop-out pickers (compact tiles) for skin/eyes/lips/eyeshadow/cheeks, rainbow lipstick, silent colour taps, redrawn hands and aligned realistic nails, hands drawn in front of hair, snow/royal dress fixes. Letter Garden: new lined Practice page mode (switch in the trace letter picker). Hub: hold-to-rearrange. Gate: fingerprint/phone lock (needs `npm install` in android-app + real-device test). See CLAUDE.md 'Style Studio and Letter Garden updates'.
+- Outfit fit: only the issues visible in the sheets were fixed (floating snow sleeves, royal trim); if more specific misfits are reported, render `P.draw` for the item (see the outfit-sheet approach: loop `P.CATS[cat]`) and adjust in js/people-wear.js.

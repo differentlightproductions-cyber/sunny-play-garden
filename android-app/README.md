@@ -54,3 +54,8 @@ enter the family code (this also brings the recorded voices).
 
 ## The cloud server
 `worker/index.js` (Cloudflare) now also allows the app (`https://localhost`) and stores recorded voices (`/api/voice`). Deploy it as before (`npx wrangler deploy`).
+
+## Small-screen widget and foldables
+The Android build includes a parent-added, tap-based widget. It has mini versions of Pet Care, Letter Garden, Rain Bucket, Fruit Splash, Coloring Book (three tiny pages), and Fish Tank. **My paintings** shows the active child's actual saved Coloring Book pictures. When the app opens or a picture is saved, it renders small previews into app-private storage for the widget; the editable originals stay in the game. Open the updated app once after installation to bring in older paintings. The widget does not read voice recordings, connect to the cloud, show ads, or ask for new permissions. Its play taps count toward the existing daily timer and show Rest time when that limit is reached.
+
+On regular Android home screens, a grown-up adds **Sprout Park** from the widget picker. On Samsung Z Flip5 and newer Flex Windows, a grown-up can enable it under **Settings > Cover screen > Widgets**; Samsung's cover-screen widget support varies by model and One UI version. Older tiny Z Flip cover screens may not offer third-party widgets. Full game controls use the current app window size, including narrow front displays and the unfolded near-square display. The widget uses taps only, because Android widgets do not support the game's full drag/canvas gestures. Test the widget and fold transitions on the target phone before a Play upload.

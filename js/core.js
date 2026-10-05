@@ -63,7 +63,7 @@
       get settings() { return data.settings; },
       get profiles() { return data.profiles; },
       get active() { return data.profiles.find(p => p.id === data.activeId) || null; },
-      setActive(id) { data.activeId = id; save(); },
+      setActive(id) { data.activeId = id; save(); SPG.coloring?.syncSaved?.(); },
       // extra: { gender: 'girl' | 'boy' | '', level: { mode: 'group', group } | { mode: 'age', age } } (both optional, both editable later in Grown-ups)
       addProfile(name, avatar, extra = {}) {
         const p = { id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: name.trim().slice(0, 16), avatar, stars: 0, data: {} };
@@ -81,11 +81,11 @@
         const clash = data.profiles.findIndex(q => q.id === p.id);
         if (clash >= 0) data.profiles[clash] = p; else data.profiles.push(p);
         data.trash.splice(i, 1); if (!data.activeId) data.activeId = p.id;
-        commit(); return p;
+        commit(); SPG.coloring?.syncSaved?.(); return p;
       },
       resetProfile(id) {
         const p = data.profiles.find(q => q.id === id); if (!p) return;
-        store.trashAdd(p, 'reset'); p.stars = 0; p.data = {}; save();
+        store.trashAdd(p, 'reset'); p.stars = 0; p.data = {}; save(); SPG.coloring?.syncSaved?.();
       },
       saveFailed: false, onChange: null,
       get rev() { return rev; },
@@ -101,19 +101,19 @@
           if (i < 0) { data.profiles.push(clone(r)); added++; } else data.profiles[i] = mergeProfile(data.profiles[i], r);
         }
         if (!data.activeId && data.profiles[0]) data.activeId = data.profiles[0].id;
-        commit(); return { added, total: data.profiles.length };
+        commit(); SPG.coloring?.syncSaved?.(); return { added, total: data.profiles.length };
       },
       // A copy of everything as it was just before a restore, so a restore can be undone.
       snapshot() { try { localStorage.setItem(KEY + '.undo', JSON.stringify({ t: Date.now(), data })); } catch (_) { /* no room */ } },
       undoInfo() { try { const r = JSON.parse(localStorage.getItem(KEY + '.undo')); return r && r.t ? { t: r.t, players: (r.data.profiles || []).length } : null; } catch (_) { return null; } },
       undoRestore() {
-        try { const r = JSON.parse(localStorage.getItem(KEY + '.undo')); if (!r || !r.data) return false; data = Object.assign(fresh(), r.data); localStorage.removeItem(KEY + '.undo'); commit(); return true; } catch (_) { return false; }
+        try { const r = JSON.parse(localStorage.getItem(KEY + '.undo')); if (!r || !r.data) return false; data = Object.assign(fresh(), r.data); localStorage.removeItem(KEY + '.undo'); commit(); SPG.coloring?.syncSaved?.(); return true; } catch (_) { return false; }
       },
       removeProfile(id) {
         const gone = data.profiles.find(p => p.id === id); if (gone) store.trashAdd(gone, 'removed');
         data.profiles = data.profiles.filter(p => p.id !== id);
         if (data.activeId === id) data.activeId = data.profiles[0]?.id ?? null;
-        save();
+        save(); SPG.coloring?.syncSaved?.();
       },
       addStars(n = 1) {
         const p = store.active; if (!p) return;

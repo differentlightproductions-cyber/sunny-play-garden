@@ -1067,7 +1067,9 @@
 
     // ---- photos: the camera button on the left (a little bigger than the home button) and her own album of food photos
     camBtn() {
-      if (this.screen !== 'cook' || this.trans || !this.st) return null;
+      // The finished dish is the photo moment. Some recipes bake after decorating,
+      // so showing this during every "decorate" step exposes unfinished food.
+      if (this.screen !== 'cook' || this.trans || !this.st || this.st.k !== 'serve' || this.st.n > 0 || this.finishedAll) return null;
       const r = this.uiR * .6; return { x: r + 16, y: clamp((this.y0 + this.y1) / 2, this.y0 + r + 8, this.y1 - r * 2.4), r };
     },
     albumBtn() { const r = this.uiR * .6; return { x: 14 + this.uiR + 18 + r, y: 14 + this.uiR / 2, r }; },
@@ -1099,7 +1101,7 @@
     },
     // takes a photo of the food on its plate (without any hints or buttons), keeps it in her album and, if a grown-up allows it, the device's photos
     snap() {
-      if (this.snapping || !this.R) return;
+      if (this.snapping || !this.R || !this.camBtn()) return;
       if (this.t < (this.camUntil || 0)) { sfx.oops(); this.camShake = 1; return; }   // the camera is recharging: no photo spam
       this.camUntil = this.t + CAM_COOL; this.snapping = true; this.flash = 1; sfx.snap(); setTimeout(() => sfx.chime(), 140);
       let out = null;

@@ -26,7 +26,9 @@
       return id;
     },
     remove(id) { return tx('readwrite', st => st.delete(id)); },
-    async count() { return (await tx('readonly', st => st.count())) || 0; },
-    clear() { return tx('readwrite', st => st.clear()); }
+    // how many pictures one game's album holds on this device (all players), or every picture when no game is given
+    async count(game) { if (!game) return (await tx('readonly', st => st.count())) || 0; return ((await tx('readonly', st => st.getAll())) || []).filter(p => (p.game || 'kitchen') === game).length; },
+    // delete one game's pictures (all players), or everything when no game is given
+    async clear(game) { if (!game) return tx('readwrite', st => st.clear()); for (const p of ((await tx('readonly', st => st.getAll())) || []).filter(p => (p.game || 'kitchen') === game)) await P.remove(p.id); return true; }
   };
 })();

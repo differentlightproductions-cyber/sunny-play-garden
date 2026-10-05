@@ -752,13 +752,19 @@
     const sw = h('button', { class: 'switch', type: 'button', role: 'switch', 'aria-checked': String(!!store.settings.photoSave), 'aria-label': 'Save kitchen photos to this device' });
     sw.addEventListener('click', () => { store.settings.photoSave = !store.settings.photoSave; store.save(); sw.setAttribute('aria-checked', String(store.settings.photoSave)); });
     const count = h('p', { class: 'fine' }, 'Counting photos…');
-    if (SPG.photos) SPG.photos.count().then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
-    const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear(); renderParent(); });
+    if (SPG.photos) SPG.photos.count('kitchen').then(n => { count.textContent = `${n} photo${n === 1 ? '' : 's'} in the kitchen album on this device (the newest 60 for each player are kept).`; });
+    const clear = confirmButton('Delete all kitchen photos', 'danger', async () => { if (SPG.photos) await SPG.photos.clear('kitchen'); renderParent(); });
+    const clayCount = h('p', { class: 'fine' }, 'Counting clay pictures…');
+    if (SPG.photos) SPG.photos.count('clay').then(n => { clayCount.textContent = `${n} picture${n === 1 ? '' : 's'} in the Clay Corner album on this device (the newest 60 for each player are kept). The clay a child is working on is kept too, until they start over.`; });
+    const clayClear = confirmButton('Delete all clay pictures', 'danger', async () => { if (SPG.photos) await SPG.photos.clear('clay'); renderParent(); });
     return h('section', {}, h('h3', {}, 'Photos and pictures'),
       h('p', {}, 'In Sprout Kitchen the camera button takes a photo of the food your child made, and in Clay Corner it takes a picture of the clay creation. Pictures are always kept in the game\u2019s own album, on this device only.'),
       h('p', {}, app ? 'In the Coloring Book the Save picture button always puts the finished picture into this phone\u2019s photo gallery (album \u201CSprout Park\u201D). Every picture also stays in the Coloring Book\u2019s own gallery.' : 'In the Coloring Book the Save picture button downloads the picture to this device. Every picture also stays in the Coloring Book\u2019s own gallery.'),
       ios ? h('p', { class: 'fine' }, 'On iPhone and iPad the photos stay in the kitchen album.') : h('div', { class: 'setting' }, h('span', {}, app ? 'Also save them to this phone\u2019s photo gallery (album \u201CSprout Park\u201D)' : 'Also save them to this device (as a download)'), sw),
-      count, clear);
+      count, clear,
+      h('h4', {}, 'Clay Corner pictures'),
+      h('p', {}, 'The camera in Clay Corner takes a picture of the clay creation. Pictures are kept in the game\u2019s own album, and the same switch above also sends them to the device\u2019s photo gallery.'),
+      clayCount, clayClear);
   }
 
   function pinSection() {

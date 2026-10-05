@@ -29,7 +29,7 @@
     ['puzzle', 'Puzzle Pond', ['Up to 6 pieces', 'Up to 12 pieces', 'Up to 20 pieces']],
     ['hide', 'Hide and Seek', ['Two friends in each place, the arrow comes sooner', 'Three to five friends in each place', 'At least four friends in each place, the arrow waits longer']],
     ['garden', 'Grow a Garden', ['Plants need less water', 'The usual amount of water', 'Plants need more water']],
-    ['cook', 'Sprout Kitchen', ['Ingredients measured out, at most two scoops of each', 'Real recipe amounts (cups, half cups, eggs, butter sticks), counted out loud', 'Real recipe amounts (cups, half cups, eggs, butter sticks), counted out loud']]
+    ['cook', 'Sprout Kitchen', ['Ingredients measured out, at most two scoops of each', 'Real recipe amounts (cups, half cups, eggs, butter sticks), counted out loud', 'Real recipe amounts (cups, half cups, eggs, butter sticks), counted out loud']],
     ['clay', 'Clay Corner', ['Seven big tools: clay, hand, pull, squish, rolling pin, cookie cutters, eyes and beads', 'Adds the knife, stamps, smoothing, pinch and poke', 'Adds colouring (every tool)']],
   ];
 

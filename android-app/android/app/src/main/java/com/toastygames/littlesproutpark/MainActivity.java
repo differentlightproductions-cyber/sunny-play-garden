@@ -12,6 +12,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(SproutWidgetBridge.class);
         super.onCreate(savedInstanceState);
         // Let the game extend behind system bars after the splash theme has changed.
         WindowCompat.enableEdgeToEdge(getWindow());

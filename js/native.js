@@ -47,6 +47,12 @@
       return N.saveFile(blob, name, blob.type || 'image/jpeg');
     }
   };
+  if (isApp && plugins().SproutWidget) N.widget = {
+    savePainting: (id, png) => plugins().SproutWidget.savePainting({ id, png }),
+    setGallery: items => plugins().SproutWidget.setGallery({ items }),
+    syncTimer: (day, seconds, limitMinutes) => plugins().SproutWidget.syncTimer({ day, seconds, limitMinutes }),
+    consumeWidgetTime: day => plugins().SproutWidget.consumeWidgetTime({ day })
+  };
   // Grown-up unlock with the device's own fingerprint, face or screen lock. In the app this is the phone's biometric prompt (with the screen
   // lock PIN, pattern or password as its fallback); on the website it is the browser's platform authenticator (WebAuthn: Windows Hello,
   // Touch ID, Android fingerprint). Nothing secret is stored: the device says "yes, the owner is here" and the PIN / sum always still works.

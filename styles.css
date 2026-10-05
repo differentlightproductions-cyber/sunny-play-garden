@@ -991,6 +991,29 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 /* tablets: one icon fewer in every row, so each is bigger and easier to hit (must match perPage() in js/app.js) */
 @media (min-width: 600px) and (min-height: 600px) { #hub-games .cards.page { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: clamp(14px, 3vmin, 34px); } #hub-games .card { font-size: clamp(1.1rem, 3.2vmin, 1.9rem); } }
 @media (min-width: 600px) and (min-height: 600px) and (orientation: portrait) { #hub-games .cards.page { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); } }
+/* Foldable inner screens are often almost square. Use the space for more games, not enlarged icons. */
+@media (min-width: 600px) and (min-height: 600px) and (min-aspect-ratio: 4/5) and (max-aspect-ratio: 5/4) {
+  #hub-games .cards.page { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 1.8vmin, 20px); }
+  #hub-games .card { font-size: clamp(.95rem, 2.2vmin, 1.35rem); }
+  #hub-games .card canvas { width: min(100cqw, calc(100cqh - 1.6em), 180px); }
+  .shopfront { height: clamp(76px, 11vh, 110px); }
+  .hub-shop { padding-bottom: 10px; }
+}
+/* Folded cover displays can be much narrower than an ordinary phone. */
+@media (max-width: 360px) {
+  .hub { --pad: 8px; gap: 6px; padding-top: calc(var(--safe-t) + 7px); }
+  .hub-top { grid-template-columns: minmax(0, 1fr) auto; gap: 5px; }
+  #hub-who { min-width: 0; max-width: 100%; overflow: hidden; }
+  #hub-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hub-right { gap: 5px; }
+  .hub-top .chip { min-height: 44px; font-size: .95rem; padding-right: .45em; }
+  .hub-top .chip.round { width: 44px; padding: 0; }
+  .hub-top .chip canvas { width: 36px; height: 36px; flex: none; }
+  #hub-games .cards.page { gap: 5px; padding-inline: 1px; }
+  #hub-games .card { font-size: .72rem; }
+  #hub-games .card-name { min-height: 2.3em; }
+  #hub-games .card canvas { width: min(100cqw, calc(100cqh - 4.1em)); }
+}
 
 /* Pet name screen: the picture, title and the buttons always stay on screen; only the list of names scrolls */
 .ps-sheet > * { flex: none; }

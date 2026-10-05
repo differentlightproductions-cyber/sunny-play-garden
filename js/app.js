@@ -259,9 +259,10 @@
     document.addEventListener('pointermove', move); document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
   }
   let hubPage = 0, hubPer = 8, hubFirst = 0, hubFrozen = false;   // hubFirst: the first game on the page she is looking at (kept steady while the screen turns)
-  // Must match the grid in styles.css: tall screens (portrait, not a short landscape phone) are 3 x 3, everything else 4 x 2.
-  // Tablets (at least 600 px both ways) show six big icons a page (3 x 2 wide, 2 x 3 tall); phones keep 8 or 9.
-  const perPage = () => (matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
+  // Match the CSS grid using the current window, including when a foldable opens or closes.
+  // A nearly square inner display has room for nine existing icons without enlarging their art.
+  const squareOpen = () => matchMedia('(min-width: 600px) and (min-height: 600px) and (min-aspect-ratio: 4/5) and (max-aspect-ratio: 5/4)').matches;
+  const perPage = () => (squareOpen() ? 9 : matchMedia('(min-width: 600px) and (min-height: 600px)').matches ? 6 : matchMedia('(orientation: portrait)').matches && !matchMedia('(max-height: 520px)').matches ? 9 : 8);
   function drawCards() {
     const strip = document.querySelector('#hub-games .pages'); if (strip && strip._restore) strip._restore();
     document.querySelectorAll('#hub-games .card, #hub-shop .shopfront').forEach(c => c._draw && c._draw()); }
@@ -594,6 +595,17 @@
     return s.playLog;
   };
   const limitReached = () => { const m = store.settings.timer || 0; return m > 0 && playLog().sec >= m * 60; };
+  const widget = SPG.native.widget;
+  const syncWidgetTimer = async () => {
+    if (!widget) return;
+    const day = dayKey();
+    try {
+      const extra = await widget.consumeWidgetTime(day);
+      if (extra && extra.seconds > 0) { playLog().sec += extra.seconds; store.save(); }
+      await widget.syncTimer(day, playLog().sec, store.settings.timer || 0);
+      if (limitReached()) checkLimit();
+    } catch (_) { /* the game remains playable if widget storage is unavailable */ }
+  };
 
   // The rest screen: the pets she owns dance under the moon while a soft lullaby plays (no owned pets: three friends dance).
   let restRaf = 0, restT = 0;
@@ -649,6 +661,7 @@
     playLog().sec++; store.save();
     if (limitReached()) showBreak();
   }, 1000);
+  if (widget) { syncWidgetTimer(); setInterval(syncWidgetTimer, 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) syncWidgetTimer(); }); }
 
   function voicesSection() {
     const keys = voice.allKeys();

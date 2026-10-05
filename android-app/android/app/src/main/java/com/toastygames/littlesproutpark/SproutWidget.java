@@ -76,7 +76,8 @@ public class SproutWidget extends AppWidgetProvider {
             if ("menu".equals(mode)) {
                 if (tile < MODES.length) e.putString(key(id, "mode"), MODES[tile]).putInt(key(id, "page"), 0);
             } else if ("paintings".equals(mode)) {
-                JSONArray list = gallery(p), index = (page * 9 + tile) % Math.max(1, list.length());
+                JSONArray list = gallery(p);
+                int index = (page * 9 + tile) % Math.max(1, list.length());
                 if (list.length() > 0) e.putString(key(id, "mode"), "painting-detail").putInt(key(id, "selected"), index);
             } else if ("letters".equals(mode)) {
                 String word = WORDS[Math.floorMod(round, WORDS.length)];

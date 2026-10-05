@@ -33,16 +33,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
-
-        <receiver android:name=".SproutWidget" android:exported="true">
-            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/sprout_widget_info" />
-        </receiver>
-        <receiver android:name=".SproutCoverWidget" android:exported="true" android:label="Sprout Park cover games">
-            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/sprout_widget_cover_info" />
-            <meta-data android:name="com.samsung.android.appwidget.provider" android:resource="@xml/sprout_widget_cover" />
-        </receiver>
     </application>
 
     <!-- Android 11+: lets the app see the phone's text-to-speech engine (the games read lines aloud with it). -->

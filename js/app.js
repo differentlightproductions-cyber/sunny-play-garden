@@ -595,17 +595,6 @@
     return s.playLog;
   };
   const limitReached = () => { const m = store.settings.timer || 0; return m > 0 && playLog().sec >= m * 60; };
-  const widget = SPG.native.widget;
-  const syncWidgetTimer = async () => {
-    if (!widget) return;
-    const day = dayKey();
-    try {
-      const extra = await widget.consumeWidgetTime(day);
-      if (extra && extra.seconds > 0) { playLog().sec += extra.seconds; store.save(); }
-      await widget.syncTimer(day, playLog().sec, store.settings.timer || 0);
-      if (limitReached()) checkLimit();
-    } catch (_) { /* the game remains playable if widget storage is unavailable */ }
-  };
 
   // The rest screen: the pets she owns dance under the moon while a soft lullaby plays (no owned pets: three friends dance).
   let restRaf = 0, restT = 0;
@@ -661,14 +650,6 @@
     playLog().sec++; store.save();
     if (limitReached()) showBreak();
   }, 1000);
-  if (widget) {
-    SPG.coloring?.syncSaved?.();
-    syncWidgetTimer();
-    setInterval(syncWidgetTimer, 10000);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) { SPG.coloring?.syncSaved?.(); syncWidgetTimer(); }
-    });
-  }
 
   function voicesSection() {
     const keys = voice.allKeys();

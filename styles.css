@@ -1108,20 +1108,27 @@ body.night #hub-games .lamp::after { width: min(100cqw, calc(100cqh - 3.2em)); h
 .vchoice .vt { font-size: .82rem; opacity: .75; }
 .vchoice.on { border-color: #59b96e; background: #eaf8ee; }
 
-/* A Flip-style cover screen (both sides 420 px or less): three games at a time in one row, with their pictures (must match coverTiny() in js/app.js) */
+/* A Flip-style cover screen (both sides 420 px or less): one game at a time, big, with an arrow on each side (swiping works too), and the Pet Shop along the bottom
+   (must match coverTiny() in js/app.js) */
 @media (max-width: 420px) and (max-height: 420px) {
   .hub { --pad: 8px; gap: 4px; padding-top: calc(var(--safe-t) + 6px); }
-  #hub-games .cards.page { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 5px; }
-  #hub-games .card { font-size: .7rem; }
-  #hub-games .card canvas { width: min(100cqw, calc(100cqh - 2.6em)); }
+  #hub-games { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr); column-gap: 6px; }
+  #hub-games .pages { grid-column: 2; grid-row: 1; }
+  #hub-games .pg-nav { display: contents; }
+  #hub-games .pg-arrow { align-self: center; }
+  #hub-games .pg-arrow:first-child { grid-column: 1; grid-row: 1; }
+  #hub-games .pg-arrow:last-child { grid-column: 3; grid-row: 1; }
+  #hub-games .pg-dots { display: none; }
+  #hub-games .cards.page { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 0; }
+  #hub-games .card { font-size: .85rem; gap: .3em; }
+  #hub-games .card canvas { width: min(100cqw, calc(100cqh - 1.9em)); }
+  #hub-games .card-name { min-height: 0; }
+  #hub-games.single .pg-nav { display: contents; }
+  .pg-nav .pg-arrow { width: 40px; height: 40px; min-height: 0; }
   .shopfront { height: 46px; }
   .hub-shop { padding-bottom: 6px; }
   #hub-name { display: none; }
   .hub-top .chip { min-height: 40px; }
   .hub-top .chip canvas { width: 30px; height: 30px; }
   .hub-top .chip.round { width: 40px; }
-  .pg-nav .pg-arrow { width: 34px; height: 34px; min-height: 0; }
-  .pg-nav .pg-dot { width: 9px; height: 9px; }
-  .pg-nav { gap: 6px; min-height: 0; }
-  #hub-games .card-name { min-height: 0; }
 }

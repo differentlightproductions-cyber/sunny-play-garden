@@ -5,11 +5,12 @@
 (() => {
   const SPG = window.SPG;
   const { art, sfx, voice, store } = SPG;
-  const { shapePath, F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, SPRINKLE_KINDS, drawSprinkle, CANDY_KINDS, drawCandy, CANDLE_KINDS, drawCandle, FRUIT_KINDS, ICING12, drawIcingPen, drawPaintBucket, drawMeasure, drawPile, drawEgg, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU } = SPG.cookArt;
+  const { PEN_R, shapePath, F, BUNS, BREADS, CHEESES, TOPL, SAUCE_L, drawPizza, drawTops, drawScoop, TOP_SZ, pizzaClip, FLAT, sundaeTop, clamp, lerp, ease, rr, rnd, shade, circ, ell, box, tri, shine, blob, FF, fancyText, fitLabel, gingham, ribbon, PIECES, SHAPES, starPath, heartPath, shapeFill, cookieShape, cutterArt, BUN, BREAD, CRUST, ING, TUBE, SCOOP, ICING, SCOOPS, NAME, LAYER, SAUCE, SEASON, drawTable, drawBoard, drawPlate, drawBowl, drawSpoon, drawPin, drawOven, drawGrill, drawToaster, LAYER_ICON, DOUGH, BAKED, CHOCDOUGH, CHOCBAKED, drawDeco, drawCookie, mixHex, drawCupcake, drawCake, drawFlatDots, drawStack, drawHotdog, drawSundae, drawPiece, drawCharSandwich, drawSliced, pieceHeight, sampleBox, drawSample, ICOL, BATTER, SPRINKLE, stepIcon, pan, drawSheet, drawCupcakeAt, drawTapHint, drawPieceC, drawUnit, lerpHex, SPRINKLE_KINDS, drawSprinkle, CANDY_KINDS, drawCandy, CANDLE_KINDS, drawCandle, FRUIT_KINDS, ICING12, drawIcingPen, drawPaintBucket, drawMeasure, drawPile, drawEgg, saucePts, grainPts, drawPaintList, drawShadowDisc, drawPieceAt, pieceBase, drawKnife, drawBittenAt, TAU } = SPG.cookArt;
 
   /* ---------------------------------------------------------------- recipes (three kinds, six each) */
   // steps: add (drop ingredients in the bowl) stir roll cut (character cutters) fill (batter/dough onto a tray) bake grill (grill, pan or toaster)
   //        stack (guided layers) decorate (icing, sprinkles, sauces, seasoning) slice serve (and take bites)
+  const CAM_COOL = 8;   // seconds the camera button rests after each photo
   const CATS = [{ id: 'sweets', name: 'Sweets' }, { id: 'sandwiches', name: 'Sandwiches' }, { id: 'burgers', name: 'Burgers & more' }];
   // each kind of food has its own colours: tabs, cloth, cards and ribbons
   const CAT_COL = [{ main: '#ff7aa8', dark: '#c93b73', light: '#ffe3ee' }, { main: '#ffae2e', dark: '#b8710a', light: '#fff0cc' }, { main: '#ff6a52', dark: '#b6372a', light: '#ffdcd5' }];
@@ -157,6 +158,18 @@
       return out;
     }
     // the plate or platter every step draws the food on, so nothing jumps around between steps
+    // several cupcakes each get their own little plate instead of crowding one big one
+    mini() { return this.pieces.length > 1 && this.pieces.every(p => p.type === 'cupcake'); }
+    miniPlate(q) { const r = q.r * 1.12; return { x: q.x, y: q.y + q.r * .5, r }; }
+    onPlate(p) {
+      if (this.mini()) return this.slots().some(q => { const m = this.miniPlate(q); return (p.x - m.x) ** 2 / (m.r * m.r) + (p.y - m.y) ** 2 / ((m.r * .68) ** 2) <= 1.02; });
+      const pl = this.plate(); return (p.x - pl.x) ** 2 / (pl.r * pl.r) + (p.y - pl.y) ** 2 / ((pl.r * .64) ** 2) <= 1.02;
+    }
+    drawPlates(c) {
+      if (this.mini()) { for (const q of this.slots()) { const m = this.miniPlate(q); drawPlate(c, m.x, m.y, m.r); } }
+      else { const pl = this.plate(); drawPlate(c, pl.x, pl.y, pl.r); }
+      drawPlatePaint(this, c);
+    }
     plate() {
       const U = this.U, n = this.pieces.length, p = this.pieces[0];
       if (n <= 1 && p && !p.shape && FLAT.includes(p.type)) { const B = this.foodBase(), pr = this.plateR(); return { x: B.x, y: B.y - pr * .03, r: pr }; }
@@ -188,6 +201,7 @@
         if (!it.drag && !it.fly) { it.x = it.hx; it.y = it.hy; }
       });
     }
+    zn() { return this.zseq = (this.zseq || 0) + 1; }
     wiggle(it) { it.wig = 1; }
 
     /* ------------------------------------------------------------ small helpers */
@@ -783,8 +797,8 @@
     target(g, p) {
       const sl = g.slots();
       for (let i = g.pieces.length - 1; i >= 0; i--) { const q = sl[i], pc = g.pieces[i]; if (!q || pc.gone) continue; const ox = q.x, oy = q.y + pieceBase(pc, q.r), lx = (p.x - ox) / q.r, ly = (p.y - oy) / q.r; if (inBox(pieceBox(pc), lx, ly)) return { piece: pc, slot: q, i, k: q.r, lx, ly }; }
-      const pl = g.plate(), dx = (p.x - pl.x) / pl.r, dy = (p.y - pl.y) / (pl.r * .64);
-      if (dx * dx + dy * dy <= 1) return { plate: true, k: g.U, lx: (p.x - pl.x) / g.U, ly: (p.y - pl.y) / g.U };
+      const pl = g.plate();
+      if (g.onPlate(p)) return { plate: true, k: g.U, lx: (p.x - pl.x) / g.U, ly: (p.y - pl.y) / g.U };
       return null;
     },
     hit(g, p) { const t = H.decorate.target(g, p); return t && t.piece ? t : null; },
@@ -801,16 +815,24 @@
       if (tool === 'bucket') { const pc = t && t.piece; if (!pc) return; const col = icingOf(g, tool); if (pc.type === 'cookie') (pc.deco = pc.deco || {}).fill = col; else if (pc.type === 'cupcake' || pc.type === 'cake') pc.frost = { col, t: 0 }; else return; sfx.squirt(); g.fx.burst(p.x, p.y, 14, { colors: [col, '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); return; }
       const pc = t && t.piece, icing = pc && ['cookie', 'cupcake', 'cake'].includes(pc.type) && icingOf(g, tool);
       if (icing) { s.cur = { piece: pc, slot: t.slot }; s.stroke = { pts: [] }; H.decorate.move(g, s, p); return; }
+      if (t && t.plate && tool === 'icing') {   // the icing pen also writes on the plate
+        s.penPlate = { col: icingOf(g, tool), kind: 'pen', pts: [], z: g.zn() }; g.paint.plate.push(s.penPlate); s.snd = sfx.squeeze(); sfx.squirt(); H.decorate.penMove(g, s, p, true); return;
+      }
       if (SAUCES.includes(tool) && t) {   // a squeeze bottle: paint it anywhere on the food or the plate
         s.sauce = { col: SAUCE[tool] || '#b8651a', st: null, key: null, last: { x: p.x, y: p.y, t: performance.now() }, moved: performance.now(), n: 0 };
         s.snd = sfx.squeeze(); sfx.squirt(); H.decorate.addSauce(g, s, p, t, 1);
       }
     },
+    penMove(g, s, p, first) {
+      const P = s.penPlate; if (!P) return; const pl = g.plate(), k = g.U * PEN_R, x = (p.x - pl.x) / k, y = (p.y - pl.y) / k;
+      if (!g.onPlate(p)) return;   // stay on the plate
+      const lp = P.pts[P.pts.length - 1]; if (first || !lp || Math.hypot(lp[0] - x, lp[1] - y) > .06) { P.pts.push([x, y]); if (s.snd) s.snd.set(.6); }
+    },
     addSauce(g, s, p, t, first) {
       const S = s.sauce; if (!t) { S.st = null; S.key = null; return; }
       const key = t.plate ? 'plate' : 'p' + t.i;
       const pz = g.tool === 'pizzasauce'; if (pz && (t.plate || t.piece.type !== 'pizza')) { S.st = null; S.key = null; return; }
-      if (!S.st || S.key !== key) { S.st = { col: S.col, kind: 'sauce', pts: [] }; if (pz) S.st.pizza = true; S.key = key; if (t.plate) g.paint.plate.push(S.st); else (t.piece.paint = t.piece.paint || []).push(S.st); S.k = t.k; }
+      if (!S.st || S.key !== key) { S.st = { col: S.col, kind: 'sauce', pts: [], z: g.zn() }; if (pz) S.st.pizza = true; S.key = key; if (t.plate) g.paint.plate.push(S.st); else (t.piece.paint = t.piece.paint || []).push(S.st); S.k = t.k; }
       const now = performance.now(), d = Math.hypot(p.x - S.last.x, p.y - S.last.y), v = d / Math.max(.016, (now - S.last.t) / 1000), U = g.U;
       const w = g.tool === 'pizzasauce' ? U * .085 : clamp(U * .03 * (1.5 - v / (U * 2.2)), U * .016, U * .046);
       const q = { x: t.lx, y: t.ly, w: w / t.k }, pts = S.st.pts, lp = pts[pts.length - 1];
@@ -826,6 +848,7 @@
     move(g, s, p) {
       if (s.shred) { if (Math.hypot(p.x - s.shred.x, p.y - s.shred.y) > g.U * .045) { const t = H.decorate.target(g, p); s.shred = { x: p.x, y: p.y }; if (t && t.piece) H.decorate.cheese(g, s, t); } return; }
       if (s.dotDrag) { if (Math.hypot(p.x - s.dotDrag.x, p.y - s.dotDrag.y) > g.U * .05) { const t = H.decorate.target(g, p); s.dotDrag = { x: p.x, y: p.y }; if (t && t.piece) { H.decorate.sprinkle(g, s, t, g.tool); sfx.plink(Math.floor(Math.random() * 5)); } } return; }
+      if (s.penPlate) { H.decorate.penMove(g, s, p); return; }
       if (s.sauce) { H.decorate.addSauce(g, s, p, H.decorate.target(g, p), 0); return; }
       if (!s.cur || !s.stroke) return; const h = s.cur, pc = h.piece, tool = g.tool;
       if (Math.hypot(p.x - s.sp0.x, p.y - s.sp0.y) > 10) s.dragged = true; if (!s.dragged && s.stroke.pts.length) return;
@@ -833,19 +856,20 @@
         if ((pc.type === 'cupcake' || pc.type === 'cake') && !pc.frost && icingOf(g, tool)) { pc.frost = { col: icingOf(g, tool), t: 0 }; sfx.squirt(); g.fx.burst(h.slot.x, h.slot.y, 14, { colors: [icingOf(g, tool), '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); s.cur = null; s.stroke = null; if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); return; }
       }
       const ck = pc.type === 'cookie', lx = clamp((p.x - h.slot.x) / h.slot.r, ck ? -1.2 : -.8, ck ? 1.2 : .8), ly = clamp((p.y - h.slot.y) / h.slot.r, ck ? -1.2 : -.7, ck ? 1.2 : .7);
-      if (!s.stroke.target) { const st = { col: icingOf(g, tool) || '#fff', pts: [] }; s.stroke.target = st; pc.deco = pc.deco || {}; (pc.deco.strokes = pc.deco.strokes || []).push(st); if (!s.snd) s.snd = sfx.squeeze(); }
+      if (!s.stroke.target) { const st = { col: icingOf(g, tool) || '#fff', pts: [], z: g.zn() }; s.stroke.target = st; pc.deco = pc.deco || {}; (pc.deco.strokes = pc.deco.strokes || []).push(st); if (!s.snd) s.snd = sfx.squeeze(); }
       const last = s.stroke.pts[s.stroke.pts.length - 1]; if (!last || Math.hypot(last[0] - lx, last[1] - ly) > .05) { s.stroke.pts.push([lx, ly]); s.stroke.target.pts = s.stroke.pts.slice(); if (s.snd) s.snd.set(.6); }
     },
     up(g, s, p) {
       if (s.snd) { s.snd.off(); s.snd = null; }
       if (s.shred) { s.shred = null; H.decorate.act(g, s); return; } s.dotDrag = null;
+      if (s.penPlate) { const P = s.penPlate; s.penPlate = null; if (P.pts.length === 1) P.pts.push([P.pts[0][0] + .02, P.pts[0][1]]); if (P.pts.length) H.decorate.act(g, s); return; }
       if (s.sauce) { const n = s.sauce.n; s.sauce = null; if (n) H.decorate.act(g, s); return; }
       const st = s.stroke, h = s.cur; s.stroke = null; s.cur = null; if (!st || !h || s.fin) return;
       const pc = h.piece, tool = g.tool;
       if (!s.dragged || !st.target || st.pts.length < 2) {
         // a plain tap with icing: fill the whole shape (cookies) or frost it
         if (st.target) { const arr = pc.deco && pc.deco.strokes; if (arr) arr.splice(arr.indexOf(st.target), 1); }
-        if (pc.type === 'cookie' && icingOf(g, tool)) { const lx = (s.sp0.x - h.slot.x) / h.slot.r, ly = (s.sp0.y - h.slot.y) / h.slot.r; pc.deco = pc.deco || {}; (pc.deco.strokes = pc.deco.strokes || []).push({ col: icingOf(g, tool), pts: [[lx - .02, ly], [lx + .02, ly]] }); sfx.squirt(); g.fx.burst(h.slot.x, h.slot.y, 14, { colors: [icingOf(g, tool), '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); }
+        if (pc.type === 'cookie' && icingOf(g, tool)) { const lx = (s.sp0.x - h.slot.x) / h.slot.r, ly = (s.sp0.y - h.slot.y) / h.slot.r; pc.deco = pc.deco || {}; (pc.deco.strokes = pc.deco.strokes || []).push({ col: icingOf(g, tool), pts: [[lx - .02, ly], [lx + .02, ly]], z: g.zn() }); sfx.squirt(); g.fx.burst(h.slot.x, h.slot.y, 14, { colors: [icingOf(g, tool), '#fff'], speed: 130, g: 300, life: .5, size: 5 }); H.decorate.act(g, s); }
         else if ((pc.type === 'cupcake' || pc.type === 'cake') && icingOf(g, tool) && !pc.frost) { pc.frost = { col: icingOf(g, tool), t: 0 }; sfx.squirt(); H.decorate.act(g, s); if (s.spec.mode === 'frost' && g.pieces.every(q => q.frost)) g.finish(.9); }
         return;
       }
@@ -854,17 +878,17 @@
     // salt and pepper: shaken over whatever she touches; the grains fall and stay where they land
     grains(g, s, t, p, tool) {
       const col = SEASON[tool], U = g.U, list = t.plate ? g.paint.plate : (t.piece.paint = t.piece.paint || []);
-      let st = list.find(x => x.kind === 'grain' && x.col === col); if (!st) { st = { col, kind: 'grain', pts: [] }; list.push(st); }
+      const st = { col, kind: 'grain', pts: [], z: g.zn() }; list.push(st);   // each shake is its own layer, so later things land on top of it
       for (let i = 0; i < 16; i++) { const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * U * .075; st.pts.push({ x: t.lx + Math.cos(a) * d / t.k, y: t.ly + Math.sin(a) * d / t.k * .7, w: (U * .004 + Math.random() * U * .003) / t.k }); }
       sfx.shake(); g.fx.burst(p.x, p.y - U * .1, 18, { colors: [col === '#ffffff' ? '#e8f0ff' : '#555', col], speed: 25, g: 900, life: .32, size: 2.6, shape: 'circle' });
       H.decorate.act(g, s);
     },
     // the green check appears once there is enough on it (it never says "all done": she decides that by touching the check)
     act(g, s) { s.acts++; (s.usedTools || (s.usedTools = new Set())).add(g.tool); const first = !s.canDone; if (s.spec.mode === 'cover') return; if (s.spec.mode !== 'frost') { s.canDone = s.acts >= s.need; if (s.canDone && first) sfx.plink(4); } else if (g.pieces.every(q => q.frost)) g.finish(.9); },
-    dot(g, pc, id, lx, ly, i) {
+    dot(g, pc, id, lx, ly, i) {   // (g.zn() numbers every thing she adds so later ones are drawn over earlier ones)
       if (id === 'fruit') id = g.kinds.fruit; const kind = ['sprinkles', 'candy', 'candle'].includes(id) ? g.kinds[id] : undefined;
       const col = (id === 'sprinkles' && (kind === 'rainbow' || kind === 'dots')) || id === 'candy' ? SPRINKLE[Math.floor(Math.random() * 5)] : undefined, rot = ['sprinkles', 'star', 'pepperoni', 'olive', 'greenpepper', 'pineapple', 'basil', 'mushroom'].includes(id) ? Math.random() * 3 - 1.5 : (Math.random() - .5) * .3;
-      (pc.tops = pc.tops || []).push({ id, kind, x: lx, y: ly, col, rot });   // exactly where she touched
+      (pc.tops = pc.tops || []).push({ id, kind, x: lx, y: ly, col, rot, z: g.zn() });   // exactly where she touched
     },
     update(g, s, dt) {
       for (const p of g.pieces) if (p.frost && p.frost.t < 1) p.frost.t = Math.min(1, p.frost.t + dt * 3);
@@ -872,7 +896,7 @@
     },
     draw(g, s, c) {
       g.sceneBoard(c);
-      const pl = g.plate(); drawPlate(c, pl.x, pl.y, pl.r); drawPlatePaint(g, c);
+      g.drawPlates(c);
       const sl = g.slots(); g.pieces.forEach((p, i) => { const q = sl[i]; if (g.pieces.length > 1 || p.shape || !['stack', 'hotdog', 'sundae'].includes(p.type)) drawShadowDisc(c, q.x, q.y + q.r * .5, q.r * .9); drawPieceAt(c, p, q.x, q.y, q.r); });
       if (s.spec.mode === 'cover' && !s.fin) { const q = sl[0], k = s.cells.size / PZ.length; c.save(); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 5; c.setLineDash([12, 12]); c.lineDashOffset = -g.t * 24; c.beginPath(); c.ellipse(q.x, q.y, q.r * 1.07, q.r * .69, 0, 0, TAU); c.stroke(); c.setLineDash([]); c.strokeStyle = '#7ed957'; c.lineWidth = 9; c.lineCap = 'round'; c.beginPath(); c.ellipse(q.x, q.y + q.r * .05, q.r * 1.42, q.r * .98, 0, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(k / Math.min(.93, s.spec.need + .38), 0, 1)); c.stroke(); c.restore(); }
       if (g.tool && s.canDone === false && s.acts === 0 && g.idle > 2.5) { const q = sl[0]; drawTapHint(c, q.x, q.y - (FLAT.includes(g.pieces[0].type) ? pieceHeight(g.pieces[0], q.r) * .5 : q.r * .3), g.U * .1, g.t); }
@@ -941,7 +965,7 @@
     update(g, s, dt) { g.bounce = Math.max(0, (g.bounce || 0) - dt * 4); },
     draw(g, s, c) {
       g.sceneBoard(c, true);
-      const sl = g.slots(), pl = g.plate(); drawPlate(c, pl.x, pl.y, pl.r); drawPlatePaint(g, c);
+      const sl = g.slots(), pl = g.plate(); g.drawPlates(c);
       for (const k of g.crumbs || []) { c.fillStyle = k.col; c.beginPath(); c.ellipse(pl.x + k.x * g.U, pl.y + k.y * g.U, k.r * g.U, k.r * g.U * .7, k.x * 9, 0, TAU); c.fill(); }
       g.pieces.forEach((p, i) => { if (p.gone) return; const q = sl[i], bob = (g.finishedAll ? 0 : Math.sin(g.t * 3 + i) * 2) + (g.bounce || 0) * -4; drawEatenAt(g, c, p, q.x, q.y + bob, q.r); });
       if (!s.n && !g.finishedAll) { const q = sl[0]; drawTapHint(c, q.x, q.y - q.r * .4, g.U * .1, g.t); }
@@ -1058,7 +1082,12 @@
     },
     drawCam(c) {
       const b = this.camBtn(); if (!b) return; const done = this.finishedAll || (this.st && this.st.k === 'serve'), bob = done ? Math.abs(Math.sin(this.t * 3)) * 5 : 0;
-      this.drawRoundBtn(c, b, '#ff6b9d', bob); this.drawCamGlyph(c, b.x, b.y - bob, b.r * .8, this.t);
+      const left = Math.max(0, (this.camUntil || 0) - this.t), cool = left > 0, sh = (this.camShake = Math.max(0, (this.camShake || 0) - .05)) * Math.sin(this.t * 60) * 5;
+      this.drawRoundBtn(c, { x: b.x + sh, y: b.y, r: b.r }, cool ? '#b9b3c2' : '#ff6b9d', bob); this.drawCamGlyph(c, b.x + sh, b.y - bob, b.r * .8, this.t);
+      if (cool) {   // the button turns slightly gray and a ring fills back up while it recharges
+        c.save(); c.translate(b.x + sh, b.y - bob); c.fillStyle = 'rgba(150,146,160,.55)'; c.beginPath(); c.arc(0, 0, b.r, 0, TAU); c.fill();
+        c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = Math.max(4, b.r * .12); c.lineCap = 'round'; c.beginPath(); c.arc(0, 0, b.r * .88, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - left / CAM_COOL)); c.stroke(); c.restore();
+      }
     },
     drawAlbum(c) {
       const b = this.albumBtn(); this.drawRoundBtn(c, b, CAT_COL[this.tab].main, 0);
@@ -1070,7 +1099,9 @@
     },
     // takes a photo of the food on its plate (without any hints or buttons), keeps it in her album and, if a grown-up allows it, the device's photos
     snap() {
-      if (this.snapping || !this.R) return; this.snapping = true; this.flash = 1; sfx.snap(); setTimeout(() => sfx.chime(), 140);
+      if (this.snapping || !this.R) return;
+      if (this.t < (this.camUntil || 0)) { sfx.oops(); this.camShake = 1; return; }   // the camera is recharging: no photo spam
+      this.camUntil = this.t + CAM_COOL; this.snapping = true; this.flash = 1; sfx.snap(); setTimeout(() => sfx.chime(), 140);
       let out = null;
       try {
         const S = 1.5, w = this.w, h = this.h, oc = document.createElement('canvas'); oc.width = Math.round(w * S); oc.height = Math.round(h * S);

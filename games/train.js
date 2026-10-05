@@ -30,13 +30,15 @@
     c.save(); c.translate(0, shape === 'triangle' ? r * .22 : shape === 'star' ? r * .06 : 0); art.face(c, r * (shape === 'star' ? .5 : .58), { blink }); c.restore();
     c.restore();
   }
-  function silhouette(c, shape, r, col) {
+  function silhouette(c, shape, r, col, outline) {
     c.save(); c.fillStyle = col; c.beginPath();
     if (shape === 'circle') c.arc(0, 0, r, 0, TAU);
     else if (shape === 'square') art.rr(c, -r * .9, -r * .9, r * 1.8, r * 1.8, r * .25);
     else if (shape === 'triangle') { c.moveTo(0, -r * 1.05); c.lineTo(r * 1.05, r * .8); c.lineTo(-r * 1.05, r * .8); c.closePath(); }
     else { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .52 : r * 1.1; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath(); }
-    c.fill(); c.restore();
+    c.fill();
+    if (outline) { c.strokeStyle = outline; c.lineWidth = Math.max(3, r * .09); c.lineJoin = 'round'; c.setLineDash([r * .28, r * .2]); c.stroke(); c.setLineDash([]); }
+    c.restore();
   }
 
   class TrainGame {
@@ -316,7 +318,8 @@
       for (let k = 0; k < car.need; k++) {
         if (car.slots[k]) continue;
         const s = this.slotPos(car, k);
-        if (car.type === 'shape') { c.save(); c.translate(s.x, s.y); silhouette(c, car.val, s.r * 1.05, 'rgba(255,255,255,.6)'); c.restore(); }   // a ghost of the shape it wants
+        if (car.type === 'shape') { c.save(); c.translate(s.x, s.y); silhouette(c, car.val, s.r * 1.05, 'rgba(255,255,255,.55)', '#5a3f5e'); c.restore(); }   // a ghost of the shape it wants
+        else if (car.type === 'color') { c.save(); c.translate(s.x, s.y); c.globalAlpha = .6; silhouette(c, SHAPES[(Math.floor(this.t * .8) + k) % SHAPES.length], s.r * 1.0, COLORS[car.val], '#fff'); c.restore(); }   // any shape of this color fits: the preview cycles through them
         else { c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 3.5; c.setLineDash([7, 6]); c.beginPath(); c.arc(s.x, s.y, s.r * 1.1, 0, TAU); c.stroke(); c.setLineDash([]);
           c.fillStyle = 'rgba(255,255,255,.22)'; c.beginPath(); c.arc(s.x, s.y, s.r * 1.1, 0, TAU); c.fill(); }
       }
